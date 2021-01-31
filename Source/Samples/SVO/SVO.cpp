@@ -31,47 +31,47 @@ uint32_t mSampleGuiHeight = 200;
 uint32_t mSampleGuiPositionX = 20;
 uint32_t mSampleGuiPositionY = 40;
 
-void SVO::onGuiRender(Gui* pGui)
+void sparse_voxel_octree::onGuiRender(Gui* pGui)
 {
     Gui::Window w(pGui, "Falcor", { 250, 200 });
     gpFramework->renderGlobalUI(pGui);
 }
 
-void SVO::onLoad(RenderContext* pRenderContext)
+void sparse_voxel_octree::onLoad(RenderContext* pRenderContext)
 {
 }
 
-void SVO::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo)
+void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo)
 {
     const float4 clearColor(0.38f, 0.52f, 0.10f, 1);
     pRenderContext->clearFbo(pTargetFbo.get(), clearColor, 1.0f, 0, FboAttachmentType::All);
 }
 
-void SVO::onShutdown()
+void sparse_voxel_octree::onShutdown()
 {
 }
 
-bool SVO::onKeyEvent(const KeyboardEvent& keyEvent)
-{
-    return false;
-}
-
-bool SVO::onMouseEvent(const MouseEvent& mouseEvent)
+bool sparse_voxel_octree::onKeyEvent(const KeyboardEvent& keyEvent)
 {
     return false;
 }
 
-void SVO::onHotReload(HotReloadFlags reloaded)
+bool sparse_voxel_octree::onMouseEvent(const MouseEvent& mouseEvent)
+{
+    return false;
+}
+
+void sparse_voxel_octree::onHotReload(HotReloadFlags reloaded)
 {
 }
 
-void SVO::onResizeSwapChain(uint32_t width, uint32_t height)
+void sparse_voxel_octree::onResizeSwapChain(uint32_t width, uint32_t height)
 {
 }
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
 {
-    SVO::UniquePtr pRenderer = std::make_unique<SVO>();
+    sparse_voxel_octree::UniquePtr pRenderer = std::make_unique<sparse_voxel_octree>();
     SampleConfig config;
     config.windowDesc.title = "Falcor Project Template";
     config.windowDesc.resizableWindow = true;

@@ -30,7 +30,7 @@
 
 using namespace Falcor;
 
-class SVO : public IRenderer
+class sparse_voxel_octree : public IRenderer
 {
 public:
     void onLoad(RenderContext* pRenderContext) override;
