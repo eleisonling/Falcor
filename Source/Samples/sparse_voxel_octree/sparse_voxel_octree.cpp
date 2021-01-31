@@ -25,7 +25,7 @@
  # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **************************************************************************/
-#include "SVO.h"
+#include "sparse_voxel_octree.h"
 uint32_t mSampleGuiWidth = 250;
 uint32_t mSampleGuiHeight = 200;
 uint32_t mSampleGuiPositionX = 20;

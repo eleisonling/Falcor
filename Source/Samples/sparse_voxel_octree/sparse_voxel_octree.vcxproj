@@ -11,10 +11,10 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SVO.cpp" />
+    <ClCompile Include="sparse_voxel_octree.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SVO.h" />
+    <ClInclude Include="sparse_voxel_octree.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Falcor\Falcor.vcxproj">
@@ -22,9 +22,9 @@
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{22B0C923-A31F-4F08-8034-7BB84CC9CFEF}</ProjectGuid>
+    <ProjectGuid>{B966F14F-7CD3-4DC5-B8A6-91AEAE2206DB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>SVO</RootNamespace>
+    <RootNamespace>sparse_voxel_octree</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
