@@ -43,7 +43,7 @@ void sparse_voxel_octree::onLoad(RenderContext* pRenderContext)
 
 void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo)
 {
-    const float4 clearColor(0.38f, 0.52f, 0.10f, 1);
+    const float4 clearColor(0.f, 0.f, 0.f, 1);
     pRenderContext->clearFbo(pTargetFbo.get(), clearColor, 1.0f, 0, FboAttachmentType::All);
 }
 
@@ -73,7 +73,7 @@ int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _
 {
     sparse_voxel_octree::UniquePtr pRenderer = std::make_unique<sparse_voxel_octree>();
     SampleConfig config;
-    config.windowDesc.title = "Falcor Project Template";
+    config.windowDesc.title = "sparse voxel octree";
     config.windowDesc.resizableWindow = true;
     Sample::run(config, pRenderer);
     return 0;
