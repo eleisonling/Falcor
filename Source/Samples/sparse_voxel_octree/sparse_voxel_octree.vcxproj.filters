@@ -17,7 +17,7 @@
     <ClInclude Include="render_passes\projection_debug_pass.h">
       <Filter>render_passes</Filter>
     </ClInclude>
-    <ClInclude Include="render_passes\voxel_meta.slangh">
+    <ClInclude Include="render_passes\projection_debug_meta.slangh">
       <Filter>render_passes</Filter>
     </ClInclude>
   </ItemGroup>
@@ -31,6 +31,9 @@
       <Filter>render_passes</Filter>
     </ShaderSource>
     <ShaderSource Include="render_passes\projection_debug.slang">
+      <Filter>render_passes</Filter>
+    </ShaderSource>
+    <ShaderSource Include="render_passes\voxel_meta.slangh">
       <Filter>render_passes</Filter>
     </ShaderSource>
   </ItemGroup>

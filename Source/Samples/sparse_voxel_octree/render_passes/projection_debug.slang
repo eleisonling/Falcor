@@ -2,10 +2,10 @@
 import Scene.Shading;
 import Scene.Raster;
 import Utils.Math.AABB;
-#include "Samples/sparse_voxel_octree/render_passes/voxel_meta.slangh"
+#include "Samples/sparse_voxel_octree/render_passes/projection_debug_meta.slangh"
 
 cbuffer CB {
-    voxel_meta gProjectionMeta;
+    projection_debug_meta gProjectionMeta;
 }
 
 float4x4 look_at_rh(float3 eye, float3 center, float3 up) {

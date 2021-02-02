@@ -17,7 +17,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="render_passes\projection_debug_pass.h" />
-    <ClInclude Include="render_passes\voxel_meta.slangh" />
+    <ClInclude Include="render_passes\projection_debug_meta.slangh" />
     <ClInclude Include="render_passes\volumetric_pass.h" />
     <ClInclude Include="sparse_voxel_octree.h" />
   </ItemGroup>
@@ -29,6 +29,7 @@
   <ItemGroup>
     <ShaderSource Include="render_passes\projection_debug.slang" />
     <ShaderSource Include="render_passes\volumetric.slang" />
+    <ShaderSource Include="render_passes\voxel_meta.slangh" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B966F14F-7CD3-4DC5-B8A6-91AEAE2206DB}</ProjectGuid>

@@ -1,8 +1,10 @@
 #include "volumetric_pass.h"
+#include "voxel_meta.slangh"
 
 namespace {
     static std::string kVolumetricProg = "Samples/sparse_voxel_octree/render_passes/volumetric.slang";
     static std::string kDebugVolProg = "Samples/sparse_voxel_octree/render_passes/debug_volumetric.slang";
+    static voxel_meta kVoxelMeta{};
 }
 
 volumetric_pass::~volumetric_pass() {
@@ -82,5 +84,23 @@ volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::
 }
 
 void volumetric_pass::rebuild_buffer() {
+
     rebuildBuffer_ = false;
+    auto& bound = mpScene_->getSceneBounds();
+    glm::uvec3 cellDim = glm::ceil(bound.extent() / cellSize_);
+
+    size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(float4);
+    if (mpVoxelBuf_ && mpVoxelBuf_->getSize() == bufferSize) return;
+
+    mpVoxelBuf_ = Buffer::create(bufferSize);
+    void* data = mpVoxelBuf_->map(Buffer::MapType::WriteDiscard);
+    memset(data, 0, bufferSize);
+    mpVoxelBuf_->unmap();
+
+    kVoxelMeta.CellDim = cellDim;
+    kVoxelMeta.CellSize = cellSize_;
+    kVoxelMeta.Min = bound.minPoint;
+
+    mpVars["gVoxelColor"] = mpVoxelBuf_;
+    mpVars["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
 }

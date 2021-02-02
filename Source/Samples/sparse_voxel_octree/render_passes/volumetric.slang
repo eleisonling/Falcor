@@ -124,14 +124,30 @@ void gs_main(triangle VSOut input[3], uint InstanceID : SV_GSInstanceID, inout T
     outStream.RestartStrip();
 }
 
-float4 ps_main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
-    float3 viewDir = normalize(gScene.camera.getPosition() - vOut.posW);
-    ShadingData sd = prepareShadingData(vOut, triangleIndex, viewDir);
-    float4 finalColor = float4(0, 0, 0, 1);
+#include "Samples/sparse_voxel_octree/render_passes/voxel_meta.slangh"
 
-    for (int i = 0; i < gScene.getLightCount(); i++) {
-        finalColor.rgb += evalMaterial(sd, gScene.getLight(i), 1).color;
+cbuffer CB {
+    voxel_meta gVoxelMeta;
+}
+RWByteAddressBuffer gVoxelColor;
+
+float4 ps_main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
+    MaterialParams matParam = gScene.materials[vOut.materialID];
+    float3 posW = vOut.posW;
+
+    uint3 cellIndex = floor((posW - gVoxelMeta.Min) / gVoxelMeta.CellSize);
+    if(cellIndex.x >= 0 && cellIndex.x < gVoxelMeta.CellDim.x
+        && cellIndex.y >= 0 && cellIndex.y < gVoxelMeta.CellDim.y
+        && cellIndex.z >= 0 && cellIndex.z < gVoxelMeta.CellDim.z) {
+
+        // get linear index
+        uint32_t linearIndex = cellIndex.z * gVoxelMeta.CellDim.y * gVoxelMeta.CellDim.x + cellIndex.y * gVoxelMetal.Cell.Dim.x + cellIndex.x;
+        // jump to first address
+        uint address = linearIndex * 16;
+        // atomic float max
+        NvInterlockedAddFp16x2(gVoxelColor, adress + 0, float2(matParam.diffuseOpacity.xy));
+        NvInterlockedAddFp16x2(gVoxelColor, adress + 8, float2(matParam.diffuseOpacity.zw));
     }
 
-    return finalColor;
+    return float4(0,0,0,0);
 }

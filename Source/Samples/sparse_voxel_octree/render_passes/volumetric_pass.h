@@ -16,6 +16,8 @@ public:
 
 private:
     volumetric_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc, const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines);
+    void rebuild_buffer();
+
     Scene::SharedPtr mpScene_ = nullptr;
     GraphicsVars::SharedPtr mpDebugVars_ = nullptr;
     GraphicsState::SharedPtr mpDebugState_ = nullptr;
