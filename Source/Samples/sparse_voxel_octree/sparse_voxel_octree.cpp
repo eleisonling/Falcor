@@ -55,6 +55,11 @@ void sparse_voxel_octree::onGuiRender(Gui* pGui) {
     Gui::Window w(pGui, "sparse voxel octree", { 250, 200 });
     gpFramework->renderGlobalUI(pGui);
 
+    auto projectionDebugGroup = Gui::Group(pGui, "Projection Debug");
+    if (projectionDebugGroup.open()) {
+        mpDeubgProjection_->onGuiRender(projectionDebugGroup);
+    }
+
     // final output
     auto finalOutputGroup = Gui::Group(pGui, "Final Output");
     if (finalOutputGroup.open()) {
@@ -80,7 +85,7 @@ void sparse_voxel_octree::load_scene(const std::string& filename, const Fbo* pTa
 void sparse_voxel_octree::onLoad(RenderContext* pRenderContext) {
     load_scene(kDefaultScene, gpFramework->getTargetFbo().get());
     mpRasterPass_ = RasterScenePass::create(mpScene_, kRasterProg, "", "main");
-    mpDeubgProjection_ = debug_projection_pass::create(mpScene_);
+    mpDeubgProjection_ = projection_debug_pass::create(mpScene_);
 }
 
 void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {

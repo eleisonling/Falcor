@@ -7,8 +7,8 @@ import Scene.Raster;
 
 // faclor is right handed
 float4x4 calculate_orth_view_proj(AABB bound, int32_t dim) {
-   float4x4 view {};
-   float4x4 proj {};
+   float4x4 view = (float4x4)0;
+   float4x4 proj = (float4x4)0;
 
    switch(dim) {
    case 0:
@@ -37,7 +37,7 @@ float4x4 calculate_orth_view_proj(AABB bound, int32_t dim) {
 [maxvertexcount(3)]
 void gs_main(triangle VSOut input[3], uint InstanceID : SV_GSInstanceID, inout TriangleStream<VSOut> outStream) {
 
-    VSOut outputData;
+    VSOut outputData = (VSOut)0;
 
     float3 posW0 = input[0].posW;
     float3 posW1 = input[1].posW;

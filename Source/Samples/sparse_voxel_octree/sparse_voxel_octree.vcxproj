@@ -17,6 +17,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="render_passes\projection_debug_pass.h" />
+    <ClInclude Include="render_passes\projection_debug.slangh" />
     <ClInclude Include="render_passes\volumetric_pass.h" />
     <ClInclude Include="sparse_voxel_octree.h" />
   </ItemGroup>

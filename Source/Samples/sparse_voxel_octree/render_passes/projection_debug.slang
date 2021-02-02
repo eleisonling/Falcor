@@ -1,13 +1,28 @@
 #pragma once
 import Scene.Shading;
 import Scene.Raster;
+import Utils.Math.AABB;
+#include "Samples/sparse_voxel_octree/render_passes/projection_debug.slangh"
 
-VSOut vs_main(VSIn vIn)
-{
-    VSOut vOut{};
+cbuffer CB {
+    projection_meta gProjectionMeta;
+}
+
+float4x4 calculate_orth_view_proj(AABB bound, int32_t dim) {
+
+    // XZ space
+    
+}
+
+VSOut vs_main(VSIn vIn) {
+    VSOut vOut = (VSOut)0;
     float4x4 worldMat = gScene.getWorldMatrix(vIn.meshInstanceID);
     float4 posW = mul(float4(vIn.pos, 1.f), worldMat);
     vOut.posW = posW.xyz;
+
+    AABB bound(gProjectionMeta.Min, gProjectionMetag.Max);
+    float4x4 debugViewProj = calculate_orth_view_proj(bound, gProjectionMeta.Dim);
+
     vOut.posH = mul(posW, gScene.camera.getViewProj());
 
     vOut.meshInstanceID = vIn.meshInstanceID;
@@ -21,8 +36,7 @@ VSOut vs_main(VSIn vIn)
     return vOut;
 }
 
-float4 ps_main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET
-{    
+float4 ps_main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {    
     float3 viewDir = normalize(gScene.camera.getPosition() - vOut.posW);
     ShadingData sd = prepareShadingData(vOut, triangleIndex, viewDir);
     float4 finalColor = float4(0, 0, 0, 1);

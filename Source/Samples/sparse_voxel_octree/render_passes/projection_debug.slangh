@@ -1,0 +1,9 @@
+#pragma once
+#include "Utils/HostDeviceShared.slangh"
+#include "Utils/Math/MathConstants.slangh"
+
+struct projection_meta {
+    uint32_t Dim = 0;
+    float3 Min = float3(FLT_MAX);
+    float3 Max = float3(-FLT_MAX);
+};

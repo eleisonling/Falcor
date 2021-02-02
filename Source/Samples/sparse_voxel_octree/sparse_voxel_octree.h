@@ -48,6 +48,6 @@ private:
     Scene::SharedPtr mpScene_ = nullptr;
     Camera::SharedPtr mpMainCam_ = nullptr;
     RasterScenePass::SharedPtr mpRasterPass_ = nullptr;
-    debug_projection_pass::SharedPtr mpDeubgProjection_ = nullptr;
+    projection_debug_pass::SharedPtr mpDeubgProjection_ = nullptr;
     uint32_t finalOutputType_ = 0;
 };
