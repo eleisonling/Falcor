@@ -38,8 +38,11 @@ void volumetric_pass::debug_scene(RenderContext* pContext, const Fbo::SharedPtr&
 }
 
 void volumetric_pass::on_gui_render(Gui::Group& group) {
-    group.var("Cell Size", cellSize_, .5f, 1.0f, 0.1f);
+    rebuildBuffer_ = group.var("Cell Size", cellSize_, .5f, 1.0f, 0.1f);
     if (group.button("Rebuild")) {
+        if (rebuildBuffer_) {
+            rebuild_buffer();
+        }
         needRefresh_ = true;
     }
 }
@@ -49,6 +52,7 @@ volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::
     , mpScene_(pScene) {
 
     assert(mpScene_);
+    rebuild_buffer();
 
     {
         // setup volumetric states
@@ -75,4 +79,8 @@ volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::
     mpDebugState_ = GraphicsState::create();
     mpDebugState_->setProgram(pDebugProg);
     mpDebugVars_ = GraphicsVars::create(pDebugProg.get());
+}
+
+void volumetric_pass::rebuild_buffer() {
+    rebuildBuffer_ = false;
 }
