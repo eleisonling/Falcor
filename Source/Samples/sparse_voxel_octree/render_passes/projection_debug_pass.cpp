@@ -1,5 +1,5 @@
 #include "projection_debug_pass.h"
-#include "projection_debug.slangh"
+#include "voxel_meta.slangh"
 
 namespace {
     static std::string kDebugProg = "Samples/sparse_voxel_octree/render_passes/projection_debug.slang";

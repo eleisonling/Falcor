@@ -17,7 +17,7 @@
     <ClInclude Include="render_passes\projection_debug_pass.h">
       <Filter>render_passes</Filter>
     </ClInclude>
-    <ClInclude Include="render_passes\projection_debug.slangh">
+    <ClInclude Include="render_passes\voxel_meta.slangh">
       <Filter>render_passes</Filter>
     </ClInclude>
   </ItemGroup>

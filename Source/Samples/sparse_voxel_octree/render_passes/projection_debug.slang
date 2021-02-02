@@ -2,10 +2,10 @@
 import Scene.Shading;
 import Scene.Raster;
 import Utils.Math.AABB;
-#include "Samples/sparse_voxel_octree/render_passes/projection_debug.slangh"
+#include "Samples/sparse_voxel_octree/render_passes/voxel_meta.slangh"
 
 cbuffer CB {
-    projection_meta gProjectionMeta;
+    voxel_meta gProjectionMeta;
 }
 
 float4x4 look_at_rh(float3 eye, float3 center, float3 up) {
@@ -70,6 +70,7 @@ float4x4 calculate_orth_view_proj(AABB bound, int32_t dim) {
         break;
 
         case 2: {
+            // xy space
             float4x4 xyView = look_at_rh(float3(center.x, center.y, center.z + radius * 1.5f), center, float3(0, 1, 0));
             float4x4 xyProj = orth_rh_zo(-radius, radius, -radius, radius, 0.1f, 4.0f * radius);
             result = mul(xyView, xyProj);
