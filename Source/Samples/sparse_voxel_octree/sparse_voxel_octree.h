@@ -27,6 +27,7 @@
  **************************************************************************/
 #pragma once
 #include "Falcor.h"
+#include "render_passes/projection_debug_pass.h"
 
 using namespace Falcor;
 
@@ -47,4 +48,6 @@ private:
     Scene::SharedPtr mpScene_ = nullptr;
     Camera::SharedPtr mpMainCam_ = nullptr;
     RasterScenePass::SharedPtr mpRasterPass_ = nullptr;
+    debug_projection_pass::SharedPtr mpDeubgProjection_ = nullptr;
+    uint32_t finalOutputType_ = 0;
 };

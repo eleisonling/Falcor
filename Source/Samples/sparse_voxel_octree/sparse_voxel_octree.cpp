@@ -34,11 +34,32 @@ uint32_t mSampleGuiPositionY = 40;
 namespace {
     static const std::string kDefaultScene = "Arcade/Arcade.pyscene";
     static const std::string kRasterProg = "Samples/ModelViewer/ModelViewer.ps.slang";
+
+    enum class final_output_type {
+        defulat_type,
+        debug_projection,
+        debug_volumetric,
+
+        max_count,
+    };
+
+    const Gui::DropdownList kFinalOutputType = {
+        { (uint32_t)final_output_type::defulat_type, "defulat_type" },
+        { (uint32_t)final_output_type::debug_projection, "debug_projection" },
+        { (uint32_t)final_output_type::debug_volumetric, "debug_volumetric" },
+    };
+
 }
 
 void sparse_voxel_octree::onGuiRender(Gui* pGui) {
     Gui::Window w(pGui, "sparse voxel octree", { 250, 200 });
     gpFramework->renderGlobalUI(pGui);
+
+    // final output
+    auto finalOutputGroup = Gui::Group(pGui, "Final Output");
+    if (finalOutputGroup.open()) {
+        finalOutputGroup.dropdown("Output Type", kFinalOutputType, finalOutputType_);
+    }
 }
 
 void sparse_voxel_octree::load_scene(const std::string& filename, const Fbo* pTargetFbo) {
@@ -58,7 +79,8 @@ void sparse_voxel_octree::load_scene(const std::string& filename, const Fbo* pTa
 
 void sparse_voxel_octree::onLoad(RenderContext* pRenderContext) {
     load_scene(kDefaultScene, gpFramework->getTargetFbo().get());
-    mpRasterPass_ = RasterScenePass::create(mpScene_, kRasterProg, "", "main", mpScene_->getSceneDefines());
+    mpRasterPass_ = RasterScenePass::create(mpScene_, kRasterProg, "", "main");
+    mpDeubgProjection_ = debug_projection_pass::create(mpScene_);
 }
 
 void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
@@ -66,11 +88,24 @@ void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo
     pRenderContext->clearFbo(pTargetFbo.get(), clearColor, 1.0f, 0, FboAttachmentType::All);
     if (mpScene_) {
         mpScene_->update(pRenderContext, gpFramework->getGlobalClock().getTime());
-        mpRasterPass_->renderScene(pRenderContext, pTargetFbo);
+        switch ((final_output_type)finalOutputType_)
+        {
+        case final_output_type::debug_projection:
+            mpDeubgProjection_->debug_scene(pRenderContext, pTargetFbo);
+            break;
+        case final_output_type::debug_volumetric:
+        case final_output_type::defulat_type:
+        default:
+            mpRasterPass_->renderScene(pRenderContext, pTargetFbo);
+            break;
+        }
     }
 }
 
 void sparse_voxel_octree::onShutdown() {
+    mpRasterPass_ = nullptr;
+    mpDeubgProjection_ = nullptr;
+    mpScene_ = nullptr;
 }
 
 bool sparse_voxel_octree::onKeyEvent(const KeyboardEvent& keyEvent) {
