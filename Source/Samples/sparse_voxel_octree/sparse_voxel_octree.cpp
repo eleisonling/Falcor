@@ -57,7 +57,12 @@ void sparse_voxel_octree::onGuiRender(Gui* pGui) {
 
     auto projectionDebugGroup = Gui::Group(pGui, "Projection Debug");
     if (projectionDebugGroup.open()) {
-        mpDeubgProjection_->onGuiRender(projectionDebugGroup);
+        mpDeubgProjection_->on_gui_render(projectionDebugGroup);
+    }
+
+    auto volumetricGroup = Gui::Group(pGui, "Volumetric");
+    if (volumetricGroup.open()) {
+        mpVolumetric_->on_gui_render(volumetricGroup);
     }
 
     // final output
@@ -86,6 +91,7 @@ void sparse_voxel_octree::onLoad(RenderContext* pRenderContext) {
     load_scene(kDefaultScene, gpFramework->getTargetFbo().get());
     mpRasterPass_ = RasterScenePass::create(mpScene_, kRasterProg, "", "main");
     mpDeubgProjection_ = projection_debug_pass::create(mpScene_);
+    mpVolumetric_ = volumetric_pass::create(mpScene_);
 }
 
 void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
@@ -93,12 +99,19 @@ void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo
     pRenderContext->clearFbo(pTargetFbo.get(), clearColor, 1.0f, 0, FboAttachmentType::All);
     if (mpScene_) {
         mpScene_->update(pRenderContext, gpFramework->getGlobalClock().getTime());
+
+        if (mpVolumetric_->need_refresh()) {
+            mpVolumetric_->volumetric_scene(pRenderContext, pTargetFbo);
+        }
+
         switch ((final_output_type)finalOutputType_)
         {
         case final_output_type::debug_projection:
             mpDeubgProjection_->debug_scene(pRenderContext, pTargetFbo);
             break;
         case final_output_type::debug_volumetric:
+            mpVolumetric_->debug_scene(pRenderContext, pTargetFbo);
+            break;
         case final_output_type::defulat_type:
         default:
             mpRasterPass_->renderScene(pRenderContext, pTargetFbo);
@@ -110,6 +123,7 @@ void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo
 void sparse_voxel_octree::onShutdown() {
     mpRasterPass_ = nullptr;
     mpDeubgProjection_ = nullptr;
+    mpVolumetric_ = nullptr;
     mpScene_ = nullptr;
 }
 

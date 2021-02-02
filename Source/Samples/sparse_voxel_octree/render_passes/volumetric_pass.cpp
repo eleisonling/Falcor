@@ -27,10 +27,21 @@ volumetric_pass::SharedPtr volumetric_pass::create(const Scene::SharedPtr& pScen
 }
 
 void volumetric_pass::volumetric_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
+    mpState->setFbo(pDstFbo);
+    mpScene_->rasterize(pContext, mpState.get(), mpVars.get(), Scene::RenderFlags::UserRasterizerState);
+    needRefresh_ = false;
 }
 
 void volumetric_pass::debug_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
+    mpDebugState_->setFbo(pDstFbo);
+    mpScene_->rasterize(pContext, mpDebugState_.get(), mpDebugVars_.get());
+}
 
+void volumetric_pass::on_gui_render(Gui::Group& group) {
+    group.var("Cell Size", cellSize_, .5f, 1.0f, 0.1f);
+    if (group.button("Rebuild")) {
+        needRefresh_ = true;
+    }
 }
 
 volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc, const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines)
@@ -38,6 +49,28 @@ volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::
     , mpScene_(pScene) {
 
     assert(mpScene_);
+
+    {
+        // setup volumetric states
+        RasterizerState::Desc rasterDesc{};
+        rasterDesc.setFillMode(RasterizerState::FillMode::Solid)
+            .setCullMode(RasterizerState::CullMode::None)
+            .setConservativeRasterization(true);
+        RasterizerState::SharedPtr rasterState = RasterizerState::create(rasterDesc);
+        mpState->setRasterizerState(rasterState);
+
+        DepthStencilState::Desc dsDesc{};
+        dsDesc.setDepthEnabled(false);
+        DepthStencilState::SharedPtr dsState = DepthStencilState::create(dsDesc);
+        mpState->setDepthStencilState(dsState);
+
+        BlendState::Desc blendDesc{};
+        blendDesc.setRenderTargetWriteMask(0, false, false, false, false);
+        BlendState::SharedPtr blendState = BlendState::create(blendDesc);
+        mpState->setBlendState(blendState);
+    }
+
+    // create debug program
     auto pDebugProg = GraphicsProgram::create(debugVolProgDesc, programDefines);
     mpDebugState_ = GraphicsState::create();
     mpDebugState_->setProgram(pDebugProg);

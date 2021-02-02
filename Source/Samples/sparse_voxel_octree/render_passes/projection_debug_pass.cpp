@@ -32,7 +32,7 @@ void projection_debug_pass::debug_scene(RenderContext* pContext, const Fbo::Shar
     mpScene_->rasterize(pContext, mpState.get(), mpVars.get());
 }
 
-void projection_debug_pass::onGuiRender(Gui::Group& group) {
+void projection_debug_pass::on_gui_render(Gui::Group& group) {
     group.dropdown("Output Type", kDimType, orthDim_);
 }
 

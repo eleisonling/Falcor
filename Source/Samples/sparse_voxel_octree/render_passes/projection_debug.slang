@@ -78,7 +78,7 @@ float4x4 calculate_orth_view_proj(AABB bound, int32_t dim) {
         break;
     }
 
-        return result;
+    return result;
 }
 
 VSOut vs_main(VSIn vIn) {

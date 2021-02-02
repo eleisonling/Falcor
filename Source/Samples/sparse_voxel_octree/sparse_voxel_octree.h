@@ -28,6 +28,7 @@
 #pragma once
 #include "Falcor.h"
 #include "render_passes/projection_debug_pass.h"
+#include "render_passes/volumetric_pass.h"
 
 using namespace Falcor;
 
@@ -49,5 +50,6 @@ private:
     Camera::SharedPtr mpMainCam_ = nullptr;
     RasterScenePass::SharedPtr mpRasterPass_ = nullptr;
     projection_debug_pass::SharedPtr mpDeubgProjection_ = nullptr;
+    volumetric_pass::SharedPtr mpVolumetric_ = nullptr;
     uint32_t finalOutputType_ = 0;
 };

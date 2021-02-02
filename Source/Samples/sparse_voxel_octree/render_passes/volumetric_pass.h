@@ -11,10 +11,14 @@ public:
     static SharedPtr create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines = Program::DefineList());
     void volumetric_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
     void debug_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
+    void on_gui_render(Gui::Group& group);
+    bool need_refresh() const { return needRefresh_; }
 
 private:
     volumetric_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc, const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines);
     Scene::SharedPtr mpScene_ = nullptr;
     GraphicsVars::SharedPtr mpDebugVars_ = nullptr;
     GraphicsState::SharedPtr mpDebugState_ = nullptr;
+    bool needRefresh_ = true;
+    float cellSize_ = 1.0f;
 };

@@ -11,7 +11,7 @@ public:
     void debug_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
     const uint32_t get_orth_dim() const { return orthDim_; }
     void set_orth_dim(uint32_t dim) { orthDim_ = dim;  }
-    void onGuiRender(Gui::Group& group);
+    void on_gui_render(Gui::Group& group);
 
 private:
     projection_debug_pass(const Scene::SharedPtr& pScene, const Program::Desc& debugProgDesc, Program::DefineList& programDefines);
