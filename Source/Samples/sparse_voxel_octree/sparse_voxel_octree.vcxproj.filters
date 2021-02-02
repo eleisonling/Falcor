@@ -1,3 +1,29 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
+<<<<<<< HEAD
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+=======
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="sparse_voxel_octree.cpp" />
+    <ClCompile Include="render_passes\volumetric_pass.cpp">
+      <Filter>render_passes</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="sparse_voxel_octree.h" />
+    <ClInclude Include="render_passes\volumetric_pass.h">
+      <Filter>render_passes</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="render_passes">
+      <UniqueIdentifier>{24f507aa-de23-497e-9713-2f4054cb25b9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ShaderSource Include="render_passes\volumetric.slang">
+      <Filter>render_passes</Filter>
+    </ShaderSource>
+  </ItemGroup>
+>>>>>>> fcafd8be70e08f1dd31e061196dfc2b4867e5fd9
 </Project>

@@ -30,8 +30,7 @@
 
 using namespace Falcor;
 
-class sparse_voxel_octree : public IRenderer
-{
+class sparse_voxel_octree : public IRenderer {
 public:
     void onLoad(RenderContext* pRenderContext) override;
     void onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) override;
@@ -43,4 +42,9 @@ public:
     void onGuiRender(Gui* pGui) override;
 
 private:
+
+    void load_scene(const std::string& filename, const Fbo* pTargetFbo);
+    Scene::SharedPtr mpScene_ = nullptr;
+    Camera::SharedPtr mpMainCam_ = nullptr;
+    RasterScenePass::SharedPtr mpRasterPass_ = nullptr;
 };

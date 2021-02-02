@@ -31,46 +31,69 @@ uint32_t mSampleGuiHeight = 200;
 uint32_t mSampleGuiPositionX = 20;
 uint32_t mSampleGuiPositionY = 40;
 
-void sparse_voxel_octree::onGuiRender(Gui* pGui)
-{
-    Gui::Window w(pGui, "Falcor", { 250, 200 });
+namespace {
+    static const std::string kDefaultScene = "Arcade/Arcade.pyscene";
+    static const std::string kRasterProg = "Samples/ModelViewer/ModelViewer.ps.slang";
+}
+
+void sparse_voxel_octree::onGuiRender(Gui* pGui) {
+    Gui::Window w(pGui, "sparse voxel octree", { 250, 200 });
     gpFramework->renderGlobalUI(pGui);
 }
 
-void sparse_voxel_octree::onLoad(RenderContext* pRenderContext)
-{
+void sparse_voxel_octree::load_scene(const std::string& filename, const Fbo* pTargetFbo) {
+    mpScene_ = Scene::create(filename);
+    if (!mpScene_) return;
+
+    mpMainCam_ = mpScene_->getCamera();
+
+    // Update the controllers
+    float radius = mpScene_->getSceneBounds().radius();
+    mpScene_->setCameraSpeed(radius * 0.25f);
+    float nearZ = std::max(0.1f, radius / 750.0f);
+    float farZ = radius * 10;
+    mpMainCam_->setDepthRange(nearZ, farZ);
+    mpMainCam_->setAspectRatio((float)pTargetFbo->getWidth() / (float)pTargetFbo->getHeight());
 }
 
-void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo)
-{
+void sparse_voxel_octree::onLoad(RenderContext* pRenderContext) {
+    load_scene(kDefaultScene, gpFramework->getTargetFbo().get());
+    mpRasterPass_ = RasterScenePass::create(mpScene_, kRasterProg, "", "main", mpScene_->getSceneDefines());
+}
+
+void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
     const float4 clearColor(0.f, 0.f, 0.f, 1);
     pRenderContext->clearFbo(pTargetFbo.get(), clearColor, 1.0f, 0, FboAttachmentType::All);
+    if (mpScene_) {
+        mpScene_->update(pRenderContext, gpFramework->getGlobalClock().getTime());
+        mpRasterPass_->renderScene(pRenderContext, pTargetFbo);
+    }
 }
 
-void sparse_voxel_octree::onShutdown()
-{
+void sparse_voxel_octree::onShutdown() {
 }
 
-bool sparse_voxel_octree::onKeyEvent(const KeyboardEvent& keyEvent)
-{
+bool sparse_voxel_octree::onKeyEvent(const KeyboardEvent& keyEvent) {
+    if (mpScene_) {
+        mpRasterPass_->onKeyEvent(keyEvent);
+    }
     return false;
 }
 
-bool sparse_voxel_octree::onMouseEvent(const MouseEvent& mouseEvent)
-{
+bool sparse_voxel_octree::onMouseEvent(const MouseEvent& mouseEvent) {
+    if (mpScene_) {
+         mpRasterPass_->onMouseEvent(mouseEvent);
+    }
     return false;
 }
 
-void sparse_voxel_octree::onHotReload(HotReloadFlags reloaded)
-{
+void sparse_voxel_octree::onHotReload(HotReloadFlags reloaded) {
 }
 
-void sparse_voxel_octree::onResizeSwapChain(uint32_t width, uint32_t height)
-{
+void sparse_voxel_octree::onResizeSwapChain(uint32_t width, uint32_t height) {
 }
 
-int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd)
-{
+int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd) {
     sparse_voxel_octree::UniquePtr pRenderer = std::make_unique<sparse_voxel_octree>();
     SampleConfig config;
     config.windowDesc.title = "sparse voxel octree";

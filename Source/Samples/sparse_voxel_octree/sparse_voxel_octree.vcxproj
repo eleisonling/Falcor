@@ -11,15 +11,20 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="render_passes\volumetric_pass.cpp" />
     <ClCompile Include="sparse_voxel_octree.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="render_passes\volumetric_pass.h" />
     <ClInclude Include="sparse_voxel_octree.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Falcor\Falcor.vcxproj">
       <Project>{2c535635-e4c5-4098-a928-574f0e7cd5f9}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ShaderSource Include="render_passes\volumetric.slang" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B966F14F-7CD3-4DC5-B8A6-91AEAE2206DB}</ProjectGuid>
