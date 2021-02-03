@@ -18,9 +18,9 @@ float4 ps_main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
         && cellIndex.z >= 0 && cellIndex.z < gVoxelMeta.CellDim.z) {
 
         // get linear index
-        uint32_t linearIndex = cellIndex.z * gVoxelMeta.CellDim.y * gVoxelMeta.CellDim.x + cellIndex.y * gVoxelMetal.Cell.Dim.x + cellIndex.x;
+        uint32_t linearIndex = cellIndex.z * gVoxelMeta.CellDim.y * gVoxelMeta.CellDim.x + cellIndex.y * gVoxelMeta.CellDim.x + cellIndex.x;
         // jump to first address
-        uint_t address = linearIndex * 4;
+        uint32_t address = linearIndex * 4;
         // load and uncompress
         uint32_t compressedColor = gVoxelColor.Load(address);
         finalColor = decode_translucent_RGBA_uint(compressedColor);

@@ -54,8 +54,6 @@ volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::
     , mpScene_(pScene) {
 
     assert(mpScene_);
-    rebuild_buffer();
-
     {
         // setup volumetric states
         RasterizerState::Desc rasterDesc{};
@@ -76,11 +74,15 @@ volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::
         mpState->setBlendState(blendState);
     }
 
-    // create debug program
-    auto pDebugProg = GraphicsProgram::create(debugVolProgDesc, programDefines);
-    mpDebugState_ = GraphicsState::create();
-    mpDebugState_->setProgram(pDebugProg);
-    mpDebugVars_ = GraphicsVars::create(pDebugProg.get());
+    {
+        // create debug program
+        auto pDebugProg = GraphicsProgram::create(debugVolProgDesc, programDefines);
+        mpDebugState_ = GraphicsState::create();
+        mpDebugState_->setProgram(pDebugProg);
+        mpDebugVars_ = GraphicsVars::create(pDebugProg.get());
+    }
+
+    rebuild_buffer();
 }
 
 void volumetric_pass::rebuild_buffer() {
@@ -92,7 +94,7 @@ void volumetric_pass::rebuild_buffer() {
     size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(uint32_t);
     if (mpVoxelBuf_ && mpVoxelBuf_->getSize() == bufferSize) return;
 
-    mpVoxelBuf_ = Buffer::create(bufferSize);
+    mpVoxelBuf_ = Buffer::create(bufferSize,  Resource::BindFlags::ShaderResource | Resource::BindFlags::UnorderedAccess, Buffer::CpuAccess::Write);
     void* data = mpVoxelBuf_->map(Buffer::MapType::WriteDiscard);
     memset(data, 0, bufferSize);
     mpVoxelBuf_->unmap();
