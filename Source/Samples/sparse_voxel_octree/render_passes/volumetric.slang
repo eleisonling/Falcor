@@ -99,18 +99,18 @@ void gs_main(triangle VSOut input[3], uint InstanceID : SV_GSInstanceID, inout T
     // decide the projection area in each dim
     float areaXY = abs(edgeW01.x * edgeW02.y - edgeW02.x * edgeW01.y) / 2.0f;
     float areaXZ = abs(edgeW01.x * edgeW02.z - edgeW02.x * edgeW01.z) / 2.0f;
-    float areaYZ = abs(edgeW01.y * edgeW02.z - edgeW02.y * edgeW01.z) / 2.0f
+    float areaYZ = abs(edgeW01.y * edgeW02.z - edgeW02.y * edgeW01.z) / 2.0f;
 
     // choose projection matrix
     int32_t dim = 0;
     if(areaYZ > areaXY && areaYZ > areaXZ) dim = 0;
     else dim = areaXZ > areaXY ? 1 : 2;
 
-    float4x4 viewProjMat = caculate_orth_view_proj(bound, dim);
+    float4x4 viewProjMat = calculate_orth_view_proj(bound, dim);
 
     // reprojection & output
     outputData = input[0];
-    outputData.posH = mul(float4(posW0, 1.0f), vewProjMat);
+    outputData.posH = mul(float4(posW0, 1.0f), viewProjMat);
     outStream.Append(outputData);
 
     outputData = input[1];
@@ -125,6 +125,7 @@ void gs_main(triangle VSOut input[3], uint InstanceID : SV_GSInstanceID, inout T
 }
 
 #include "Samples/sparse_voxel_octree/render_passes/voxel_meta.slangh"
+import Scene.Material.MaterialData;
 
 cbuffer CB {
     voxel_meta gVoxelMeta;
@@ -132,7 +133,7 @@ cbuffer CB {
 RWByteAddressBuffer gVoxelColor;
 
 float4 ps_main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
-    MaterialParams matParam = gScene.materials[vOut.materialID];
+    MaterialData matData = gScene.materials[vOut.materialID];
     float3 posW = vOut.posW;
 
     uint3 cellIndex = floor((posW - gVoxelMeta.Min) / gVoxelMeta.CellSize);
@@ -141,12 +142,13 @@ float4 ps_main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
         && cellIndex.z >= 0 && cellIndex.z < gVoxelMeta.CellDim.z) {
 
         // get linear index
-        uint32_t linearIndex = cellIndex.z * gVoxelMeta.CellDim.y * gVoxelMeta.CellDim.x + cellIndex.y * gVoxelMetal.Cell.Dim.x + cellIndex.x;
+        uint32_t linearIndex = cellIndex.z * gVoxelMeta.CellDim.y * gVoxelMeta.CellDim.x + cellIndex.y * gVoxelMeta.CellDim.x + cellIndex.x;
         // jump to first address
-        uint address = linearIndex * 16;
+        uint32_t address = linearIndex * 4;
+        uint32_t compressedColor = encode_translucent_RGBA_uint(matData.baseColor);
+        uint32_t originColor = 0;
         // atomic float max
-        NvInterlockedAddFp16x2(gVoxelColor, adress + 0, float2(matParam.diffuseOpacity.xy));
-        NvInterlockedAddFp16x2(gVoxelColor, adress + 8, float2(matParam.diffuseOpacity.zw));
+        gVoxelColor.InterlockedMax(address, compressedColor, originColor);
     }
 
     return float4(0,0,0,0);

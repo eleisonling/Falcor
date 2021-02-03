@@ -20,9 +20,10 @@ float4 ps_main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
         // get linear index
         uint32_t linearIndex = cellIndex.z * gVoxelMeta.CellDim.y * gVoxelMeta.CellDim.x + cellIndex.y * gVoxelMetal.Cell.Dim.x + cellIndex.x;
         // jump to first address
-        uint address = linearIndex * 16;
-        // atomic float max
-        finalColor = { gVoxelColorg.Load(address + 0), gVoxelColor.Load(address + 4), gVoxelColorg.Load(address + 8), gVoxelColor.Load(address + 12) };
+        uint_t address = linearIndex * 4;
+        // load and uncompress
+        uint32_t compressedColor = gVoxelColor.Load(address);
+        finalColor = decode_translucent_RGBA_uint(compressedColor);
     }
 
     return finalColor;

@@ -89,7 +89,7 @@ void volumetric_pass::rebuild_buffer() {
     auto& bound = mpScene_->getSceneBounds();
     glm::uvec3 cellDim = glm::ceil(bound.extent() / cellSize_);
 
-    size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(float4);
+    size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(uint32_t);
     if (mpVoxelBuf_ && mpVoxelBuf_->getSize() == bufferSize) return;
 
     mpVoxelBuf_ = Buffer::create(bufferSize);
@@ -103,4 +103,7 @@ void volumetric_pass::rebuild_buffer() {
 
     mpVars["gVoxelColor"] = mpVoxelBuf_;
     mpVars["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
+
+    mpDebugVars_["gVoxelColor"] = mpVoxelBuf_;
+    mpDebugVars_["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
 }

@@ -7,3 +7,25 @@ struct voxel_meta {
     float CellSize = 1.0;
     float3 Min = float3(FLT_MAX);
 };
+
+
+uint32_t encode_translucent_RGBA_uint(float4 val) {
+	val = saturate(val);
+	val.rgb *= float3(255.0f, 255.0f, 255.0f);
+	val.a *= 127.0f;
+
+	return (uint(val.a) & 0x0000007F) << 24U |
+		   (uint(val.r) & 0x000000FF) << 16U |
+		   (uint(val.g) & 0x000000FF) << 8U  |
+		   (uint(val.b) & 0x000000FF);
+}
+
+float4 decode_translucent_RGBA_uint(uint32_t val) {
+	float4 decodeVal = float4(float((val & 0x00FF0000) >> 16U),
+							  float((val & 0x0000FF00) >> 8U),
+							  float((val & 0x000000FF)),
+							  float((val & 0x7F000000) >> 24U));
+	decodeVal.rgb /= float3(255.0f, 255.0f, 255.0f);
+	decodeVal.a /= 127.0f;
+	return decodeVal;
+}
