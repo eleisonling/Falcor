@@ -24,5 +24,5 @@ private:
     Buffer::SharedPtr mpVoxelBuf_ = nullptr;
     bool needRefresh_ = true;
     bool rebuildBuffer_ = false;
-    float cellSize_ = 1.0f;
+    float cellSize_ = 0.05f;
 };

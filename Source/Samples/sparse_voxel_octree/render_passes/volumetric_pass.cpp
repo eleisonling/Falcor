@@ -40,7 +40,7 @@ void volumetric_pass::debug_scene(RenderContext* pContext, const Fbo::SharedPtr&
 }
 
 void volumetric_pass::on_gui_render(Gui::Group& group) {
-    rebuildBuffer_ = group.var("Cell Size", cellSize_, .5f, 1.0f, 0.1f);
+    rebuildBuffer_ |= group.var("Cell Size", cellSize_, .05f, 0.1f, 0.01f);
     if (group.button("Rebuild")) {
         if (rebuildBuffer_) {
             rebuild_buffer();
