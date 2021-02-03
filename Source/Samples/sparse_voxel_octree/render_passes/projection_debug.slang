@@ -3,6 +3,9 @@ import Scene.Shading;
 import Scene.Raster;
 import Utils.Math.AABB;
 #include "Samples/sparse_voxel_octree/render_passes/projection_debug_meta.slangh"
+import Scene.TextureSampler;
+import Scene.Material.MaterialData;
+#include "Scene/Material/MaterialDefines.slangh"
 
 cbuffer CB {
     projection_debug_meta gProjectionMeta;
@@ -76,6 +79,11 @@ float4x4 calculate_orth_view_proj(AABB bound, int32_t dim) {
             result = mul(xyView, xyProj);
         }
         break;
+
+        case 3: {
+            result = gScene.camera.getViewProj();
+        }
+        break;
     }
 
     return result;
@@ -105,11 +113,11 @@ VSOut vs_main(VSIn vIn) {
 float4 ps_main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {    
     float3 viewDir = normalize(gScene.camera.getPosition() - vOut.posW);
     ShadingData sd = prepareShadingData(vOut, triangleIndex, viewDir);
-    float4 finalColor = float4(0, 0, 0, 1);
 
-    for (int i = 0; i < gScene.getLightCount(); i++)
-    {
-        finalColor.rgb += evalMaterial(sd, gScene.getLight(i), 1).color;
-    }
-    return finalColor;
+    ImplicitLodTextureSampler lod = { };
+    MaterialData md = gScene.materials[vOut.materialID];
+    MaterialResources mr = gScene.materialResources[vOut.materialID];
+    float4 baseColor = sampleTexture(mr.baseColor, mr.samplerState, vOut.texC, md.baseColor, EXTRACT_DIFFUSE_TYPE(md.flags), lod);
+
+    return baseColor;
 }

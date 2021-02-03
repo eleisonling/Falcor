@@ -7,6 +7,7 @@ namespace {
         { 0u, "YZ Space" },
         { 1u, "XZ Space" },
         { 2u, "XY Space" },
+        { 3u, "Perspective" },
     };
 }
 
