@@ -125,7 +125,9 @@ void gs_main(triangle VSOut input[3], uint InstanceID : SV_GSInstanceID, inout T
 }
 
 #include "Samples/sparse_voxel_octree/render_passes/voxel_meta.slangh"
+import Scene.TextureSampler;
 import Scene.Material.MaterialData;
+#include "Scene/Material/MaterialDefines.slangh"
 
 cbuffer CB {
     voxel_meta gVoxelMeta;
@@ -133,10 +135,10 @@ cbuffer CB {
 RWByteAddressBuffer gVoxelColor;
 
 float4 ps_main(VSOut vOut) : SV_TARGET {
-    MaterialData matData = gScene.materials[vOut.materialID];
-    float3 posW = vOut.posW;
 
+    float3 posW = vOut.posW;
     uint3 cellIndex = floor((posW - gVoxelMeta.Min) / gVoxelMeta.CellSize);
+
     if(cellIndex.x >= 0 && cellIndex.x < gVoxelMeta.CellDim.x
         && cellIndex.y >= 0 && cellIndex.y < gVoxelMeta.CellDim.y
         && cellIndex.z >= 0 && cellIndex.z < gVoxelMeta.CellDim.z) {
@@ -145,8 +147,14 @@ float4 ps_main(VSOut vOut) : SV_TARGET {
         uint32_t linearIndex = cellIndex.z * gVoxelMeta.CellDim.y * gVoxelMeta.CellDim.x + cellIndex.y * gVoxelMeta.CellDim.x + cellIndex.x;
         // jump to first address
         uint32_t address = linearIndex * 4;
-        uint32_t compressedColor = encode_translucent_RGBA_uint(matData.baseColor);
+
+        ImplicitLodTextureSampler lod = { };
+        MaterialData md = gScene.materials[vOut.materialID];
+        MaterialResources mr = gScene.materialResources[vOut.materialID];
+        float4 baseColor = sampleTexture(mr.baseColor, mr.samplerState, vOut.texC, md.baseColor, EXTRACT_DIFFUSE_TYPE(md.flags), lod);
+        uint32_t compressedColor = encode_translucent_RGBA_uint(baseColor);
         uint32_t originColor = 0;
+
         // atomic float max
         gVoxelColor.InterlockedMax(address, compressedColor, originColor);
     }
