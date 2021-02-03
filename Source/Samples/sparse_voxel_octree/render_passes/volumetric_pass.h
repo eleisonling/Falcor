@@ -16,14 +16,18 @@ public:
 
 private:
     volumetric_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc, const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines);
-    void rebuild_buffer();
+    void rebuild_voxel_buffers();
+    void rebuild_debug_drawbuffers(const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines);
 
     Scene::SharedPtr mpScene_ = nullptr;
-    GraphicsVars::SharedPtr mpDebugVars_ = nullptr;
-    GraphicsState::SharedPtr mpDebugState_ = nullptr;
     Buffer::SharedPtr mpPixelColorSum_ = nullptr;
     Buffer::SharedPtr mpPixelCountSum_ = nullptr;
     bool needRefresh_ = true;
     bool rebuildBuffer_ = false;
-    float cellSize_ = 1.f;
+    float cellSize_ = 0.1f;
+
+    GraphicsVars::SharedPtr mpDebugVars_ = nullptr;
+    GraphicsState::SharedPtr mpDebugState_ = nullptr;
+    TriangleMesh::SharedPtr mpDebugMesh_ = nullptr;
+    Vao::SharedPtr mpDebugVao_ = nullptr;
 };

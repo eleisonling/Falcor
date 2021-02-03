@@ -11,6 +11,8 @@ volumetric_pass::~volumetric_pass() {
     mpScene_ = nullptr;
     mpDebugVars_ = nullptr;
     mpDebugState_ = nullptr;
+    mpDebugMesh_ = nullptr;
+    mpDebugVao_ = nullptr;
 }
 
 volumetric_pass::SharedPtr volumetric_pass::create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines /*= Program::DefineList()*/) {
@@ -30,18 +32,8 @@ volumetric_pass::SharedPtr volumetric_pass::create(const Scene::SharedPtr& pScen
 
 void volumetric_pass::volumetric_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
     // do clear
-    std::vector<uint8_t> initData;
-    {
-        initData.resize(mpPixelColorSum_->getSize());
-        memset(initData.data(), 0, mpPixelColorSum_->getSize());
-        mpPixelColorSum_->setBlob(initData.data(), 0, mpPixelColorSum_->getSize());
-    }
-    {
-        initData.resize(mpPixelCountSum_->getSize());
-        memset(initData.data(), 0, mpPixelCountSum_->getSize());
-        mpPixelCountSum_->setBlob(initData.data(), 0, mpPixelCountSum_->getSize());
-    }
-
+    pContext->clearUAV(mpPixelColorSum_->getUAV().get(), float4(0, 0, 0 ,0));
+    pContext->clearUAV(mpPixelCountSum_->getUAV().get(), uint4(0, 0, 0, 0));
     mpState->setFbo(pDstFbo);
     mpScene_->rasterize(pContext, mpState.get(), mpVars.get(), Scene::RenderFlags::UserRasterizerState);
     needRefresh_ = false;
@@ -53,10 +45,10 @@ void volumetric_pass::debug_scene(RenderContext* pContext, const Fbo::SharedPtr&
 }
 
 void volumetric_pass::on_gui_render(Gui::Group& group) {
-    rebuildBuffer_ |= group.var("Cell Size", cellSize_, .5f, 1.f, 0.1f);
+    rebuildBuffer_ |= group.var("Cell Size", cellSize_, .05f, 0.1f, 0.01f);
     if (group.button("Rebuild")) {
         if (rebuildBuffer_) {
-            rebuild_buffer();
+            rebuild_voxel_buffers();
         }
         needRefresh_ = true;
     }
@@ -87,18 +79,11 @@ volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::
         mpState->setBlendState(blendState);
     }
 
-    {
-        // create debug program
-        auto pDebugProg = GraphicsProgram::create(debugVolProgDesc, programDefines);
-        mpDebugState_ = GraphicsState::create();
-        mpDebugState_->setProgram(pDebugProg);
-        mpDebugVars_ = GraphicsVars::create(pDebugProg.get());
-    }
-
-    rebuild_buffer();
+    rebuild_debug_drawbuffers(debugVolProgDesc, programDefines);
+    rebuild_voxel_buffers();
 }
 
-void volumetric_pass::rebuild_buffer() {
+void volumetric_pass::rebuild_voxel_buffers() {
 
     rebuildBuffer_ = false;
     auto& bound = mpScene_->getSceneBounds();
@@ -107,19 +92,13 @@ void volumetric_pass::rebuild_buffer() {
     {
         size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(float4);
         if (mpPixelColorSum_ && mpPixelColorSum_->getSize() == bufferSize) return;
-        std::vector<uint8_t> initData;
-        initData.resize(bufferSize);
-        memset(initData.data(), 0, bufferSize);
-        mpPixelColorSum_ = Buffer::create(bufferSize, Resource::BindFlags::ShaderResource | Resource::BindFlags::UnorderedAccess, Buffer::CpuAccess::None, initData.data());
+        mpPixelColorSum_ = Buffer::create(bufferSize);
     }
 
     {
         size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(uint32_t);
         if (mpPixelCountSum_ && mpPixelCountSum_->getSize() == bufferSize) return;
-        std::vector<uint8_t> initData;
-        initData.resize(bufferSize);
-        memset(initData.data(), 0, bufferSize);
-        mpPixelCountSum_ = Buffer::create(bufferSize, Resource::BindFlags::ShaderResource | Resource::BindFlags::UnorderedAccess, Buffer::CpuAccess::None, initData.data());
+        mpPixelCountSum_ = Buffer::create(bufferSize);
     }
 
     kVoxelMeta.CellDim = cellDim;
@@ -130,7 +109,31 @@ void volumetric_pass::rebuild_buffer() {
     mpVars["gPixelCount"] = mpPixelCountSum_;
     mpVars["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
 
+    mpDebugMesh_ = TriangleMesh::createCube(cellSize_);
+    mpDebugVao_->getVertexBuffer(0)->setBlob(mpDebugMesh_->getVertices().data(), 0, sizeof(TriangleMesh::Vertex) * mpDebugMesh_->getVertices().size());
+    mpDebugVao_->getIndexBuffer()->setBlob(mpDebugMesh_->getIndices().data(), 0, sizeof(uint32_t) * mpDebugMesh_->getIndices().size());
     mpDebugVars_["gPixelColorSum"] = mpPixelColorSum_;
     mpDebugVars_["gPixelCount"] = mpPixelCountSum_;
     mpDebugVars_["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
+}
+
+void volumetric_pass::rebuild_debug_drawbuffers(const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines) {
+    // create debug program
+    auto pDebugProg = GraphicsProgram::create(debugVolProgDesc, programDefines);
+    mpDebugState_ = GraphicsState::create();
+    mpDebugState_->setProgram(pDebugProg);
+    mpDebugVars_ = GraphicsVars::create(pDebugProg.get());
+
+    VertexBufferLayout::SharedPtr pBufferLayout = VertexBufferLayout::create();
+    pBufferLayout->addElement("POSITION",   offsetof(TriangleMesh::Vertex, position),   ResourceFormat::RGB32Float, 1, 0);
+    pBufferLayout->addElement("NORMAL",     offsetof(TriangleMesh::Vertex, normal),     ResourceFormat::RGB32Float, 1, 1);
+    pBufferLayout->addElement("TEXCOORD",   offsetof(TriangleMesh::Vertex, texCoord),   ResourceFormat::RG32Float,  1, 2);
+    VertexLayout::SharedPtr pVertexLayout = VertexLayout::create();
+    pVertexLayout->addBufferLayout(0, pBufferLayout);
+
+    mpDebugMesh_ = TriangleMesh::createCube(cellSize_);
+    Buffer::SharedPtr pVB = Buffer::createStructured(sizeof(TriangleMesh::Vertex), (uint32_t)mpDebugMesh_->getVertices().size(), Resource::BindFlags::Vertex, Buffer::CpuAccess::None, mpDebugMesh_->getVertices().data(), false);
+    Buffer::SharedPtr pIB = Buffer::create(sizeof(uint32_t), Resource::BindFlags::Index, Buffer::CpuAccess::None, mpDebugMesh_->getIndices().data());
+
+    mpDebugVao_ = Vao::create(Vao::Topology::TriangleList, pVertexLayout, { pVB }, pIB);
 }
