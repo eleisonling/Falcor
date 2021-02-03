@@ -94,10 +94,11 @@ void volumetric_pass::rebuild_buffer() {
     size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(uint32_t);
     if (mpVoxelBuf_ && mpVoxelBuf_->getSize() == bufferSize) return;
 
-    mpVoxelBuf_ = Buffer::create(bufferSize,  Resource::BindFlags::ShaderResource | Resource::BindFlags::UnorderedAccess, Buffer::CpuAccess::Write);
-    void* data = mpVoxelBuf_->map(Buffer::MapType::WriteDiscard);
-    memset(data, 0, bufferSize);
-    mpVoxelBuf_->unmap();
+    std::vector<uint8_t> initData;
+    initData.resize(bufferSize);
+    memset(initData.data(), 0, bufferSize);
+
+    mpVoxelBuf_ = Buffer::create(bufferSize,Resource::BindFlags::ShaderResource | Resource::BindFlags::UnorderedAccess, Buffer::CpuAccess::None, initData.data());
 
     kVoxelMeta.CellDim = cellDim;
     kVoxelMeta.CellSize = cellSize_;

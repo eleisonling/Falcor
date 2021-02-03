@@ -132,7 +132,7 @@ cbuffer CB {
 }
 RWByteAddressBuffer gVoxelColor;
 
-float4 ps_main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
+float4 ps_main(VSOut vOut) : SV_TARGET {
     MaterialData matData = gScene.materials[vOut.materialID];
     float3 posW = vOut.posW;
 
