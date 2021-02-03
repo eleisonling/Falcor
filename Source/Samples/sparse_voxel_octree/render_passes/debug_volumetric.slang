@@ -7,7 +7,9 @@ import Scene.Raster;
 cbuffer CB {
     voxel_meta gVoxelMeta;
 }
-RWByteAddressBuffer gVoxelColor;
+
+RWByteAddressBuffer gPixelColorSum;
+RWByteAddressBuffer gPixelCount;
 
 float4 ps_main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
     float3 posW = vOut.posW;
@@ -20,10 +22,15 @@ float4 ps_main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
         // get linear index
         uint32_t linearIndex = cellIndex.z * gVoxelMeta.CellDim.y * gVoxelMeta.CellDim.x + cellIndex.y * gVoxelMeta.CellDim.x + cellIndex.x;
         // jump to first address
-        uint32_t address = linearIndex * 4;
+        uint32_t colorAddress = linearIndex * 16;
+        uint32_t countAddress = linearIndex * 4;
+
         // load and uncompress
-        uint32_t compressedColor = gVoxelColor.Load(address);
-        finalColor = decode_translucent_RGBA_uint(compressedColor);
+        uint4 color = gPixelColorSum.Load4(colorAddress);
+        uint count = gPixelCount.Load(countAddress);
+
+        finalColor = { asfloat(color.x), asfloat(color.y), asfloat(color.z), asfloat(color.w) };
+        finalColor /= count;
     }
 
     return finalColor;

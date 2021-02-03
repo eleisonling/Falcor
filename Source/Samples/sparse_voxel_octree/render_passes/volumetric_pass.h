@@ -21,8 +21,9 @@ private:
     Scene::SharedPtr mpScene_ = nullptr;
     GraphicsVars::SharedPtr mpDebugVars_ = nullptr;
     GraphicsState::SharedPtr mpDebugState_ = nullptr;
-    Buffer::SharedPtr mpVoxelBuf_ = nullptr;
+    Buffer::SharedPtr mpPixelColorSum_ = nullptr;
+    Buffer::SharedPtr mpPixelCountSum_ = nullptr;
     bool needRefresh_ = true;
     bool rebuildBuffer_ = false;
-    float cellSize_ = 0.05f;
+    float cellSize_ = 1.f;
 };

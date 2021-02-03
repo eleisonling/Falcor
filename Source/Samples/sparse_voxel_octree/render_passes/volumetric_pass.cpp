@@ -29,6 +29,19 @@ volumetric_pass::SharedPtr volumetric_pass::create(const Scene::SharedPtr& pScen
 }
 
 void volumetric_pass::volumetric_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
+    // do clear
+    std::vector<uint8_t> initData;
+    {
+        initData.resize(mpPixelColorSum_->getSize());
+        memset(initData.data(), 0, mpPixelColorSum_->getSize());
+        mpPixelColorSum_->setBlob(initData.data(), 0, mpPixelColorSum_->getSize());
+    }
+    {
+        initData.resize(mpPixelCountSum_->getSize());
+        memset(initData.data(), 0, mpPixelCountSum_->getSize());
+        mpPixelCountSum_->setBlob(initData.data(), 0, mpPixelCountSum_->getSize());
+    }
+
     mpState->setFbo(pDstFbo);
     mpScene_->rasterize(pContext, mpState.get(), mpVars.get(), Scene::RenderFlags::UserRasterizerState);
     needRefresh_ = false;
@@ -40,7 +53,7 @@ void volumetric_pass::debug_scene(RenderContext* pContext, const Fbo::SharedPtr&
 }
 
 void volumetric_pass::on_gui_render(Gui::Group& group) {
-    rebuildBuffer_ |= group.var("Cell Size", cellSize_, .05f, 0.1f, 0.01f);
+    rebuildBuffer_ |= group.var("Cell Size", cellSize_, .5f, 1.f, 0.1f);
     if (group.button("Rebuild")) {
         if (rebuildBuffer_) {
             rebuild_buffer();
@@ -91,22 +104,33 @@ void volumetric_pass::rebuild_buffer() {
     auto& bound = mpScene_->getSceneBounds();
     glm::uvec3 cellDim = glm::ceil(bound.extent() / cellSize_);
 
-    size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(uint32_t);
-    if (mpVoxelBuf_ && mpVoxelBuf_->getSize() == bufferSize) return;
+    {
+        size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(float4);
+        if (mpPixelColorSum_ && mpPixelColorSum_->getSize() == bufferSize) return;
+        std::vector<uint8_t> initData;
+        initData.resize(bufferSize);
+        memset(initData.data(), 0, bufferSize);
+        mpPixelColorSum_ = Buffer::create(bufferSize, Resource::BindFlags::ShaderResource | Resource::BindFlags::UnorderedAccess, Buffer::CpuAccess::None, initData.data());
+    }
 
-    std::vector<uint8_t> initData;
-    initData.resize(bufferSize);
-    memset(initData.data(), 0, bufferSize);
-
-    mpVoxelBuf_ = Buffer::create(bufferSize,Resource::BindFlags::ShaderResource | Resource::BindFlags::UnorderedAccess, Buffer::CpuAccess::None, initData.data());
+    {
+        size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(uint32_t);
+        if (mpPixelCountSum_ && mpPixelCountSum_->getSize() == bufferSize) return;
+        std::vector<uint8_t> initData;
+        initData.resize(bufferSize);
+        memset(initData.data(), 0, bufferSize);
+        mpPixelCountSum_ = Buffer::create(bufferSize, Resource::BindFlags::ShaderResource | Resource::BindFlags::UnorderedAccess, Buffer::CpuAccess::None, initData.data());
+    }
 
     kVoxelMeta.CellDim = cellDim;
     kVoxelMeta.CellSize = cellSize_;
     kVoxelMeta.Min = bound.minPoint;
 
-    mpVars["gVoxelColor"] = mpVoxelBuf_;
+    mpVars["gPixelColorSum"] = mpPixelColorSum_;
+    mpVars["gPixelCount"] = mpPixelCountSum_;
     mpVars["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
 
-    mpDebugVars_["gVoxelColor"] = mpVoxelBuf_;
+    mpDebugVars_["gPixelColorSum"] = mpPixelColorSum_;
+    mpDebugVars_["gPixelCount"] = mpPixelCountSum_;
     mpDebugVars_["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
 }

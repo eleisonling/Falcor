@@ -128,11 +128,15 @@ void gs_main(triangle VSOut input[3], uint InstanceID : SV_GSInstanceID, inout T
 import Scene.TextureSampler;
 import Scene.Material.MaterialData;
 #include "Scene/Material/MaterialDefines.slangh"
+#define NV_SHADER_EXTN_SLOT u63
+#define NV_SHADER_EXTN_REGISTER_SPACE space0
+#include "NVAPI/nvHLSLExtns.h"
 
 cbuffer CB {
     voxel_meta gVoxelMeta;
 }
-RWByteAddressBuffer gVoxelColor;
+RWByteAddressBuffer gPixelColorSum;
+RWByteAddressBuffer gPixelCount;
 
 float4 ps_main(VSOut vOut) : SV_TARGET {
 
@@ -146,17 +150,20 @@ float4 ps_main(VSOut vOut) : SV_TARGET {
         // get linear index
         uint32_t linearIndex = cellIndex.z * gVoxelMeta.CellDim.y * gVoxelMeta.CellDim.x + cellIndex.y * gVoxelMeta.CellDim.x + cellIndex.x;
         // jump to first address
-        uint32_t address = linearIndex * 4;
+        uint32_t colorAddress = linearIndex * 16;
+        uint32_t countAddress = linearIndex * 4;
 
         ImplicitLodTextureSampler lod = { };
         MaterialData md = gScene.materials[vOut.materialID];
         MaterialResources mr = gScene.materialResources[vOut.materialID];
         float4 baseColor = sampleTexture(mr.baseColor, mr.samplerState, vOut.texC, md.baseColor, EXTRACT_DIFFUSE_TYPE(md.flags), lod);
-        uint32_t compressedColor = encode_translucent_RGBA_uint(baseColor);
-        uint32_t originColor = 0;
 
         // atomic float max
-        gVoxelColor.InterlockedMax(address, compressedColor, originColor);
+        NvInterlockedAddFp32(gPixelColorSum, colorAddress + 0, baseColor.r);
+        NvInterlockedAddFp32(gPixelColorSum, colorAddress + 4, baseColor.g);
+        NvInterlockedAddFp32(gPixelColorSum, colorAddress + 8, baseColor.b);
+        NvInterlockedAddFp32(gPixelColorSum, colorAddress + 16, baseColor.a);
+        gPixelCount.InterlockedAdd(countAddress, 1);
     }
 
     return float4(0,0,0,0);
