@@ -21,7 +21,7 @@ volumetric_pass::SharedPtr volumetric_pass::create(const Scene::SharedPtr& pScen
     d_volumetric.addShaderLibrary(kVolumetricProg).vsEntry("").gsEntry("gs_main").psEntry("ps_main");
 
     Program::Desc d_debugVol;
-    d_debugVol.addShaderLibrary(kDebugVolProg).vsEntry("").psEntry("ps_main");
+    d_debugVol.addShaderLibrary(kDebugVolProg).vsEntry("vs_main").psEntry("ps_main");
 
     if (pScene == nullptr) throw std::exception("Can't create a RasterScenePass object without a scene");
     Program::DefineList dl = programDefines;
@@ -40,8 +40,12 @@ void volumetric_pass::volumetric_scene(RenderContext* pContext, const Fbo::Share
 }
 
 void volumetric_pass::debug_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
+    PROFILE("debug volumetric");
+    uint32_t instanceCount = kVoxelMeta.CellDim.x * kVoxelMeta.CellDim.y * kVoxelMeta.CellDim.z;
     mpDebugState_->setFbo(pDstFbo);
-    mpScene_->rasterize(pContext, mpDebugState_.get(), mpDebugVars_.get());
+    mpDebugState_->setVao(mpDebugVao_);
+    mpDebugVars_->setParameterBlock("gScene", mpScene_->getParameterBlock());
+    pContext->drawIndexedInstanced(mpDebugState_.get(), mpDebugVars_.get(), (uint32_t)mpDebugMesh_->getIndices().size(), instanceCount, 0, 0, 0);
 }
 
 void volumetric_pass::on_gui_render(Gui::Group& group) {
@@ -124,6 +128,14 @@ void volumetric_pass::rebuild_debug_drawbuffers(const Program::Desc& debugVolPro
     mpDebugState_->setProgram(pDebugProg);
     mpDebugVars_ = GraphicsVars::create(pDebugProg.get());
 
+    // create render state
+    RasterizerState::Desc rasterDesc{};
+    rasterDesc.setFillMode(RasterizerState::FillMode::Wireframe)
+        .setCullMode(RasterizerState::CullMode::None);
+    RasterizerState::SharedPtr rasterState = RasterizerState::create(rasterDesc);
+    mpDebugState_->setRasterizerState(rasterState);
+
+
     VertexBufferLayout::SharedPtr pBufferLayout = VertexBufferLayout::create();
     pBufferLayout->addElement("POSITION",   offsetof(TriangleMesh::Vertex, position),   ResourceFormat::RGB32Float, 1, 0);
     pBufferLayout->addElement("NORMAL",     offsetof(TriangleMesh::Vertex, normal),     ResourceFormat::RGB32Float, 1, 1);
@@ -133,7 +145,7 @@ void volumetric_pass::rebuild_debug_drawbuffers(const Program::Desc& debugVolPro
 
     mpDebugMesh_ = TriangleMesh::createCube(cellSize_);
     Buffer::SharedPtr pVB = Buffer::createStructured(sizeof(TriangleMesh::Vertex), (uint32_t)mpDebugMesh_->getVertices().size(), Resource::BindFlags::Vertex, Buffer::CpuAccess::None, mpDebugMesh_->getVertices().data(), false);
-    Buffer::SharedPtr pIB = Buffer::create(sizeof(uint32_t), Resource::BindFlags::Index, Buffer::CpuAccess::None, mpDebugMesh_->getIndices().data());
+    Buffer::SharedPtr pIB = Buffer::create(sizeof(uint32_t) * mpDebugMesh_->getIndices().size(), Resource::BindFlags::Index, Buffer::CpuAccess::None, mpDebugMesh_->getIndices().data());
 
-    mpDebugVao_ = Vao::create(Vao::Topology::TriangleList, pVertexLayout, { pVB }, pIB);
+    mpDebugVao_ = Vao::create(Vao::Topology::TriangleList, pVertexLayout, { pVB }, pIB, ResourceFormat::R32Uint);
 }
