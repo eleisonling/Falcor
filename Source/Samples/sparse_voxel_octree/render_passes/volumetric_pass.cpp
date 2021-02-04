@@ -91,7 +91,7 @@ void volumetric_pass::rebuild_voxel_buffers() {
 
     rebuildBuffer_ = false;
     auto& bound = mpScene_->getSceneBounds();
-    glm::uvec3 cellDim = glm::ceil(bound.extent() / cellSize_);
+    glm::uvec3 cellDim = glm::ceil((bound.extent() + cellSize_) / cellSize_);
 
     {
         size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(float4);
