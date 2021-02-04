@@ -135,8 +135,8 @@ import Scene.Material.MaterialData;
 cbuffer CB {
     voxel_meta gVoxelMeta;
 }
-RWByteAddressBuffer gPixelColorSum;
-RWByteAddressBuffer gPixelCount;
+
+RWByteAddressBuffer gPixelPacked;
 
 float4 ps_main(VSOut vOut) : SV_TARGET {
 
@@ -150,8 +150,7 @@ float4 ps_main(VSOut vOut) : SV_TARGET {
         // get linear index
         uint32_t linearIndex = cellIndex.z * gVoxelMeta.CellDim.y * gVoxelMeta.CellDim.x + cellIndex.y * gVoxelMeta.CellDim.x + cellIndex.x;
         // jump to first address
-        uint32_t colorAddress = linearIndex * 16;
-        uint32_t countAddress = linearIndex * 4;
+        uint32_t packedAddress = linearIndex * 20;
 
         ImplicitLodTextureSampler lod = { };
         MaterialData md = gScene.materials[vOut.materialID];
@@ -159,11 +158,11 @@ float4 ps_main(VSOut vOut) : SV_TARGET {
         float4 baseColor = sampleTexture(mr.baseColor, mr.samplerState, vOut.texC, md.baseColor, EXTRACT_DIFFUSE_TYPE(md.flags), lod);
 
         // atomic float max
-        NvInterlockedAddFp32(gPixelColorSum, colorAddress + 0, baseColor.r);
-        NvInterlockedAddFp32(gPixelColorSum, colorAddress + 4, baseColor.g);
-        NvInterlockedAddFp32(gPixelColorSum, colorAddress + 8, baseColor.b);
-        NvInterlockedAddFp32(gPixelColorSum, colorAddress + 12, baseColor.a);
-        gPixelCount.InterlockedAdd(countAddress, 1);
+        NvInterlockedAddFp32(gPixelPacked, packedAddress + 0, baseColor.x);
+        NvInterlockedAddFp32(gPixelPacked, packedAddress + 4, baseColor.y);
+        NvInterlockedAddFp32(gPixelPacked, packedAddress + 8, baseColor.z);
+        NvInterlockedAddFp32(gPixelPacked, packedAddress + 12, baseColor.w);
+        gPixelPacked.InterlockedAdd(packedAddress + 16, 1);
     }
 
     return float4(0,0,0,0);

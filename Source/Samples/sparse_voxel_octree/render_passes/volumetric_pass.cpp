@@ -9,6 +9,7 @@ namespace {
 
 volumetric_pass::~volumetric_pass() {
     mpScene_ = nullptr;
+    mpPixelPacked_ = nullptr;
     mpDebugVars_ = nullptr;
     mpDebugState_ = nullptr;
     mpDebugMesh_ = nullptr;
@@ -32,8 +33,7 @@ volumetric_pass::SharedPtr volumetric_pass::create(const Scene::SharedPtr& pScen
 
 void volumetric_pass::volumetric_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
     // do clear
-    pContext->clearUAV(mpPixelColorSum_->getUAV().get(), float4(0, 0, 0 ,0));
-    pContext->clearUAV(mpPixelCountSum_->getUAV().get(), uint4(0, 0, 0, 0));
+    pContext->clearUAV(mpPixelPacked_->getUAV().get(), float4(0, 0, 0 ,0));
     mpState->setFbo(pDstFbo);
     mpScene_->rasterize(pContext, mpState.get(), mpVars.get(), Scene::RenderFlags::UserRasterizerState);
     needRefresh_ = false;
@@ -94,30 +94,22 @@ void volumetric_pass::rebuild_voxel_buffers() {
     glm::uvec3 cellDim = glm::ceil((bound.extent() + cellSize_) / cellSize_);
 
     {
-        size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(float4);
-        if (mpPixelColorSum_ && mpPixelColorSum_->getSize() == bufferSize) return;
-        mpPixelColorSum_ = Buffer::create(bufferSize);
-    }
-
-    {
-        size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(uint32_t);
-        if (mpPixelCountSum_ && mpPixelCountSum_->getSize() == bufferSize) return;
-        mpPixelCountSum_ = Buffer::create(bufferSize);
+        size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(uint32_t) * 5;
+        if (mpPixelPacked_ && mpPixelPacked_->getSize() == bufferSize) return;
+        mpPixelPacked_ = Buffer::create(bufferSize);
     }
 
     kVoxelMeta.CellDim = cellDim;
     kVoxelMeta.CellSize = cellSize_;
     kVoxelMeta.Min = bound.minPoint;
 
-    mpVars["gPixelColorSum"] = mpPixelColorSum_;
-    mpVars["gPixelCount"] = mpPixelCountSum_;
+    mpVars["gPixelPacked"] = mpPixelPacked_;
     mpVars["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
 
     mpDebugMesh_ = TriangleMesh::createCube(cellSize_);
     mpDebugVao_->getVertexBuffer(0)->setBlob(mpDebugMesh_->getVertices().data(), 0, sizeof(TriangleMesh::Vertex) * mpDebugMesh_->getVertices().size());
     mpDebugVao_->getIndexBuffer()->setBlob(mpDebugMesh_->getIndices().data(), 0, sizeof(uint32_t) * mpDebugMesh_->getIndices().size());
-    mpDebugVars_["gPixelColorSum"] = mpPixelColorSum_;
-    mpDebugVars_["gPixelCount"] = mpPixelCountSum_;
+    mpDebugVars_["gPixelPacked"] = mpPixelPacked_;
     mpDebugVars_["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
 }
 

@@ -20,8 +20,7 @@ private:
     void rebuild_debug_drawbuffers(const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines);
 
     Scene::SharedPtr mpScene_ = nullptr;
-    Buffer::SharedPtr mpPixelColorSum_ = nullptr;
-    Buffer::SharedPtr mpPixelCountSum_ = nullptr;
+    Buffer::SharedPtr mpPixelPacked_ = nullptr;
     bool needRefresh_ = true;
     bool rebuildBuffer_ = false;
     float cellSize_ = 0.1f;

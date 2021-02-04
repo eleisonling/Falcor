@@ -6,8 +6,7 @@ cbuffer CB {
     voxel_meta gVoxelMeta;
 }
 
-RWByteAddressBuffer gPixelColorSum;
-RWByteAddressBuffer gPixelCount;
+RWByteAddressBuffer gPixelPacked;
 
 struct vs_in {
     float3 pos                      : POSITION;
@@ -59,15 +58,14 @@ float4 ps_main(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
         // get linear index
         uint32_t linearIndex = cellIndex.z * gVoxelMeta.CellDim.y * gVoxelMeta.CellDim.x + cellIndex.y * gVoxelMeta.CellDim.x + cellIndex.x;
         // jump to first address
-        uint32_t colorAddress = linearIndex * 16;
-        uint32_t countAddress = linearIndex * 4;
+        uint32_t packedAddress = linearIndex * 20;
 
         // load and uncompress
-        uint4 color = gPixelColorSum.Load4(colorAddress);
-        pixelCount = gPixelCount.Load(countAddress);
+        uint4 packedColor = gPixelPacked.Load4(packedAddress);
+        pixelCount = gPixelPacked.Load(packedAddress + 16);
 
         if(pixelCount != 0) {
-            finalColor = { asfloat(color.x), asfloat(color.y), asfloat(color.z), asfloat(color.w) };
+            finalColor = { asfloat(packedColor.x), asfloat(packedColor.y), asfloat(packedColor.z), asfloat(packedColor.w) };
             finalColor /= pixelCount;
         }
     }
