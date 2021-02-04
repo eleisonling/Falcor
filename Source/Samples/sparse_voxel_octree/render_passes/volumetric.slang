@@ -162,7 +162,7 @@ float4 ps_main(VSOut vOut) : SV_TARGET {
         NvInterlockedAddFp32(gPixelColorSum, colorAddress + 0, baseColor.r);
         NvInterlockedAddFp32(gPixelColorSum, colorAddress + 4, baseColor.g);
         NvInterlockedAddFp32(gPixelColorSum, colorAddress + 8, baseColor.b);
-        NvInterlockedAddFp32(gPixelColorSum, colorAddress + 16, baseColor.a);
+        NvInterlockedAddFp32(gPixelColorSum, colorAddress + 12, baseColor.a);
         gPixelCount.InterlockedAdd(countAddress, 1);
     }
 
