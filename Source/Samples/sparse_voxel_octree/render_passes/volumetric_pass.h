@@ -16,12 +16,14 @@ public:
 
 private:
     volumetric_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc, const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines);
-    void rebuild_voxel_buffers();
+    void rebuild_pixel_data_buffers();
+    void rebuild_svo_buffers();
     void rebuild_debug_drawbuffers(const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines);
+    void build_svo(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
 
     // pixel volumetric
     Scene::SharedPtr mpScene_ = nullptr;
-    Buffer::SharedPtr mpPixelPacked_ = nullptr;
+    Buffer::SharedPtr mpPackedPixelBuffer_ = nullptr;
     ComputeState::SharedPtr mpPixelAvgState_ = nullptr;
     ComputeVars::SharedPtr mpPixelAvgVars_ = nullptr;
 
@@ -31,6 +33,7 @@ private:
     float cellSize_ = 0.1f;
 
     // sparse Oct-tree builder
+    Buffer::SharedPtr mpSVONodeBuffer_ = nullptr;
 
     // volumetric debug
     GraphicsVars::SharedPtr mpDebugVars_ = nullptr;

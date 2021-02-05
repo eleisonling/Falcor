@@ -4,15 +4,18 @@
 namespace {
     static std::string kVolumetricProg = "Samples/sparse_voxel_octree/render_passes/volumetric.slang";
     static std::string kPixelAvgProg = "Samples/sparse_voxel_octree/render_passes/pixel_avg.cs.slang";
+    static std::string kBuildSVOProg = "Samples/sparse_voxel_octree/render_passes/build_svo.cs.slang";
     static std::string kDebugVolProg = "Samples/sparse_voxel_octree/render_passes/debug_volumetric.slang";
     static voxel_meta kVoxelMeta{};
 }
 
 volumetric_pass::~volumetric_pass() {
     mpScene_ = nullptr;
-    mpPixelPacked_ = nullptr;
+    mpPackedPixelBuffer_ = nullptr;
     mpPixelAvgState_ = nullptr;
     mpPixelAvgVars_ = nullptr;
+
+    mpSVONodeBuffer_ = nullptr;
 
     mpDebugVars_ = nullptr;
     mpDebugState_ = nullptr;
@@ -39,17 +42,27 @@ volumetric_pass::SharedPtr volumetric_pass::create(const Scene::SharedPtr& pScen
 }
 
 void volumetric_pass::volumetric_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
-    PROFILE("debug volumetric");
+    PROFILE("do volumetric");
 
     // do clear
-    pContext->clearUAV(mpPixelPacked_->getUAV().get(), float4(0, 0, 0 ,0));
+    pContext->clearUAV(mpPackedPixelBuffer_->getUAV().get(), float4(0, 0, 0 ,0));
     mpState->setFbo(pDstFbo);
     mpScene_->rasterize(pContext, mpState.get(), mpVars.get(), Scene::RenderFlags::UserRasterizerState);
 
     // avg result
     uint3 group = { (kVoxelMeta.CellDim.x * kVoxelMeta.CellDim.y * kVoxelMeta.CellDim.z + g_avgThreads - 1) / g_avgThreads, 1, 1 };
     pContext->dispatch(mpPixelAvgState_.get(), mpPixelAvgVars_.get(), group);
+
+    build_svo(pContext, pDstFbo);
+
     needRefresh_ = false;
+}
+
+void volumetric_pass::build_svo(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
+
+    PROFILE("build svo");
+    pContext->clearUAV(mpSVONodeBuffer_->getUAV().get(), uint4{ 0, 0, 0, 0 });
+
 }
 
 void volumetric_pass::debug_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
@@ -65,7 +78,8 @@ void volumetric_pass::on_gui_render(Gui::Group& group) {
     rebuildBuffer_ |= group.var("Cell Size", cellSize_, .05f, 0.1f, 0.01f);
     if (group.button("Rebuild")) {
         if (rebuildBuffer_) {
-            rebuild_voxel_buffers();
+            rebuild_pixel_data_buffers();
+            rebuild_svo_buffers();
         }
         needRefresh_ = true;
     }
@@ -104,10 +118,11 @@ volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::
     }
 
     rebuild_debug_drawbuffers(debugVolProgDesc, programDefines);
-    rebuild_voxel_buffers();
+    rebuild_pixel_data_buffers();
+    rebuild_svo_buffers();
 }
 
-void volumetric_pass::rebuild_voxel_buffers() {
+void volumetric_pass::rebuild_pixel_data_buffers() {
 
     rebuildBuffer_ = false;
     auto& bound = mpScene_->getSceneBounds();
@@ -115,25 +130,38 @@ void volumetric_pass::rebuild_voxel_buffers() {
 
     {
         size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(uint32_t) * 5;
-        if (mpPixelPacked_ && mpPixelPacked_->getSize() == bufferSize) return;
-        mpPixelPacked_ = Buffer::create(bufferSize);
+        if (mpPackedPixelBuffer_ && mpPackedPixelBuffer_->getSize() == bufferSize) return;
+        mpPackedPixelBuffer_ = Buffer::create(bufferSize);
     }
 
     kVoxelMeta.CellDim = cellDim;
     kVoxelMeta.CellSize = cellSize_;
     kVoxelMeta.Min = bound.minPoint;
 
-    mpVars["gPixelPacked"] = mpPixelPacked_;
+    mpVars["gPixelPacked"] = mpPackedPixelBuffer_;
     mpVars["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
 
-    mpPixelAvgVars_["gPixelPacked"] = mpPixelPacked_;
+    mpPixelAvgVars_["gPixelPacked"] = mpPackedPixelBuffer_;
     mpPixelAvgVars_["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
 
     mpDebugMesh_ = TriangleMesh::createCube(cellSize_);
     mpDebugVao_->getVertexBuffer(0)->setBlob(mpDebugMesh_->getVertices().data(), 0, sizeof(TriangleMesh::Vertex) * mpDebugMesh_->getVertices().size());
     mpDebugVao_->getIndexBuffer()->setBlob(mpDebugMesh_->getIndices().data(), 0, sizeof(uint32_t) * mpDebugMesh_->getIndices().size());
-    mpDebugVars_["gPixelPacked"] = mpPixelPacked_;
+    mpDebugVars_["gPixelPacked"] = mpPackedPixelBuffer_;
     mpDebugVars_["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
+}
+
+void volumetric_pass::rebuild_svo_buffers() {
+    uint32_t maxDim = std::max(std::max(kVoxelMeta.CellDim.x, kVoxelMeta.CellDim.y), kVoxelMeta.CellDim.z);
+    uint32_t maxLevel = (uint32_t)std::ceil(std::log2f((float)maxDim));
+    maxDim = (uint32_t)std::pow(2, maxLevel);
+
+    size_t bufferSize = 0;
+    for (uint32_t i = 1; i <= maxLevel; ++i) {
+        bufferSize += (size_t)std::powf(8, (float)i);
+    }
+    bufferSize *= sizeof(uint32_t);
+    mpSVONodeBuffer_ = Buffer::create(bufferSize);
 }
 
 void volumetric_pass::rebuild_debug_drawbuffers(const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines) {

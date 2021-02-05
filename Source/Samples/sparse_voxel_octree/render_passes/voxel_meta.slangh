@@ -8,4 +8,27 @@ struct voxel_meta {
     float3 Min = float3(FLT_MAX);
 };
 
- #define g_avgThreads 1024
+ #define g_avgThreads       1024
+ #define g_tagThreads       1024
+ #define g_divideThreads    64
+
+ struct svo_meta {
+    uint3 CellDim = uint3(0);
+    uint32_t CellNum = 0;
+    uint3 SvoDim = uint3(0);
+    uint32_t CurLevel = 0;
+    uint32_t TotalLevel = 0;
+ };
+
+
+uint3 extract_index_form_linear(uint32_t linearIndex, uint3 dim) {
+    uint32_t z = linearIndex / (dim.x * dim.y);
+    linearIndex -= (z * dim.x * dim.y);
+    uint32_t y = linearIndex / dim.x;
+    uint32_t x = linearIndex % dim.x;
+
+    return { x, y, z };
+}
+
+
+#define g_internalFlag 0x80000000

@@ -21,21 +21,12 @@ struct vs_out {
     float4 posH                     : SV_POSITION;
 };
 
-uint3 extract_index_form_linear(uint32_t linearIndex) {
-    uint32_t z = linearIndex / (gVoxelMeta.CellDim.x * gVoxelMeta.CellDim.y);
-    linearIndex -= (z * gVoxelMeta.CellDim.x * gVoxelMeta.CellDim.y);
-    uint32_t y = linearIndex / gVoxelMeta.CellDim.x;
-    uint32_t x = linearIndex % gVoxelMeta.CellDim.x;
-
-    return { x, y, z };
-}
-
 vs_out vs_main(vs_in vIn)
 {
     vs_out vOut = {};
 
     // from instance id to input position
-    uint3 cellIndex = extract_index_form_linear(vIn.instanceID);
+    uint3 cellIndex = extract_index_form_linear(vIn.instanceID, gVoxelMeta.CellDim);
     float3 instancePos = vIn.pos + gVoxelMeta.Min +
         float3(cellIndex.x + 0.5f, cellIndex.y + 0.5f, cellIndex.z + 0.5f) * float3(gVoxelMeta.CellSize, gVoxelMeta.CellSize, gVoxelMeta.CellSize);
     vOut.posW = instancePos;
