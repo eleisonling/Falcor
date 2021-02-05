@@ -28,6 +28,7 @@
   </ItemGroup>
   <ItemGroup>
     <ShaderSource Include="render_passes\debug_volumetric.slang" />
+    <ShaderSource Include="render_passes\pixel_avg.cs.slang" />
     <ShaderSource Include="render_passes\projection_debug.slang" />
     <ShaderSource Include="render_passes\volumetric.slang" />
     <ShaderSource Include="render_passes\voxel_meta.slangh" />

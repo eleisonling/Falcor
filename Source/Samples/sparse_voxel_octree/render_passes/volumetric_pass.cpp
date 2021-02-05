@@ -3,6 +3,7 @@
 
 namespace {
     static std::string kVolumetricProg = "Samples/sparse_voxel_octree/render_passes/volumetric.slang";
+    static std::string kPixelAvgProg = "Samples/sparse_voxel_octree/render_passes/pixel_avg.cs.slang";
     static std::string kDebugVolProg = "Samples/sparse_voxel_octree/render_passes/debug_volumetric.slang";
     static voxel_meta kVoxelMeta{};
 }
@@ -10,6 +11,9 @@ namespace {
 volumetric_pass::~volumetric_pass() {
     mpScene_ = nullptr;
     mpPixelPacked_ = nullptr;
+    mpPixelAvgState_ = nullptr;
+    mpPixelAvgVars_ = nullptr;
+
     mpDebugVars_ = nullptr;
     mpDebugState_ = nullptr;
     mpDebugMesh_ = nullptr;
@@ -19,7 +23,10 @@ volumetric_pass::~volumetric_pass() {
 volumetric_pass::SharedPtr volumetric_pass::create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines /*= Program::DefineList()*/) {
 
     Program::Desc d_volumetric;
-    d_volumetric.addShaderLibrary(kVolumetricProg).vsEntry("").gsEntry("gs_main").psEntry("ps_main");
+    d_volumetric.addShaderLibrary(kVolumetricProg)
+        .vsEntry("")
+        .gsEntry("gs_main")
+        .psEntry("ps_main");
 
     Program::Desc d_debugVol;
     d_debugVol.addShaderLibrary(kDebugVolProg).vsEntry("vs_main").psEntry("ps_main");
@@ -32,10 +39,16 @@ volumetric_pass::SharedPtr volumetric_pass::create(const Scene::SharedPtr& pScen
 }
 
 void volumetric_pass::volumetric_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
+    PROFILE("debug volumetric");
+
     // do clear
     pContext->clearUAV(mpPixelPacked_->getUAV().get(), float4(0, 0, 0 ,0));
     mpState->setFbo(pDstFbo);
     mpScene_->rasterize(pContext, mpState.get(), mpVars.get(), Scene::RenderFlags::UserRasterizerState);
+
+    // avg result
+    uint3 group = { (kVoxelMeta.CellDim.x * kVoxelMeta.CellDim.y * kVoxelMeta.CellDim.z + g_avgThreads - 1) / g_avgThreads, 1, 1 };
+    pContext->dispatch(mpPixelAvgState_.get(), mpPixelAvgVars_.get(), group);
     needRefresh_ = false;
 }
 
@@ -81,6 +94,13 @@ volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::
         blendDesc.setRenderTargetWriteMask(0, false, false, false, false);
         BlendState::SharedPtr blendState = BlendState::create(blendDesc);
         mpState->setBlendState(blendState);
+
+        Program::Desc d_pixelAvg;
+        d_pixelAvg.addShaderLibrary(kPixelAvgProg).csEntry("cs_avg");
+        auto pAvgProg = ComputeProgram::create(d_pixelAvg, programDefines);
+        mpPixelAvgState_ = ComputeState::create();
+        mpPixelAvgState_->setProgram(pAvgProg);
+        mpPixelAvgVars_ = ComputeVars::create(pAvgProg.get());
     }
 
     rebuild_debug_drawbuffers(debugVolProgDesc, programDefines);
@@ -105,6 +125,9 @@ void volumetric_pass::rebuild_voxel_buffers() {
 
     mpVars["gPixelPacked"] = mpPixelPacked_;
     mpVars["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
+
+    mpPixelAvgVars_["gPixelPacked"] = mpPixelPacked_;
+    mpPixelAvgVars_["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
 
     mpDebugMesh_ = TriangleMesh::createCube(cellSize_);
     mpDebugVao_->getVertexBuffer(0)->setBlob(mpDebugMesh_->getVertices().data(), 0, sizeof(TriangleMesh::Vertex) * mpDebugMesh_->getVertices().size());

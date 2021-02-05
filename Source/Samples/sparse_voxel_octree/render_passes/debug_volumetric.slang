@@ -63,14 +63,9 @@ float4 ps_main(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
         // load and uncompress
         uint4 packedColor = gPixelPacked.Load4(packedAddress);
         pixelCount = gPixelPacked.Load(packedAddress + 16);
-
-        if(pixelCount != 0) {
-            finalColor = { asfloat(packedColor.x), asfloat(packedColor.y), asfloat(packedColor.z), asfloat(packedColor.w) };
-            finalColor /= pixelCount;
-        }
+        finalColor = { asfloat(packedColor.x), asfloat(packedColor.y), asfloat(packedColor.z), asfloat(packedColor.w) };
     }
 
     if(pixelCount == 0) discard;
-
     return finalColor;
 }

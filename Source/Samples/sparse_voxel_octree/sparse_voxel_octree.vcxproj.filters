@@ -39,5 +39,8 @@
     <ShaderSource Include="render_passes\debug_volumetric.slang">
       <Filter>render_passes</Filter>
     </ShaderSource>
+    <ShaderSource Include="render_passes\pixel_avg.cs.slang">
+      <Filter>render_passes</Filter>
+    </ShaderSource>
   </ItemGroup>
 </Project>

@@ -19,12 +19,20 @@ private:
     void rebuild_voxel_buffers();
     void rebuild_debug_drawbuffers(const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines);
 
+    // pixel volumetric
     Scene::SharedPtr mpScene_ = nullptr;
     Buffer::SharedPtr mpPixelPacked_ = nullptr;
+    ComputeState::SharedPtr mpPixelAvgState_ = nullptr;
+    ComputeVars::SharedPtr mpPixelAvgVars_ = nullptr;
+
+    // pixel volumetric vars
     bool needRefresh_ = true;
     bool rebuildBuffer_ = false;
     float cellSize_ = 0.1f;
 
+    // sparse Oct-tree builder
+
+    // volumetric debug
     GraphicsVars::SharedPtr mpDebugVars_ = nullptr;
     GraphicsState::SharedPtr mpDebugState_ = nullptr;
     TriangleMesh::SharedPtr mpDebugMesh_ = nullptr;
