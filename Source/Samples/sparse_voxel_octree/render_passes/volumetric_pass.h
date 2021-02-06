@@ -17,6 +17,7 @@ public:
 private:
     volumetric_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc, const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines);
     void rebuild_pixel_data_buffers();
+    void create_svo_shaders(Program::DefineList& programDefines);
     void rebuild_svo_buffers();
     void rebuild_debug_drawbuffers(const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines);
     void build_svo(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
@@ -34,6 +35,13 @@ private:
 
     // sparse Oct-tree builder
     Buffer::SharedPtr mpSVONodeBuffer_ = nullptr;
+    Buffer::SharedPtr mpIndirectDrawArgs_ = nullptr;
+    ComputeState::SharedPtr mpTagNode_ = nullptr;
+    ComputeVars::SharedPtr mpTagNodeVars_ = nullptr;
+    ComputeState::SharedPtr mpDivideArg_ = nullptr;
+    ComputeVars::SharedPtr mpDivideArgVars_ = nullptr;
+    ComputeState::SharedPtr mpDivideSubNode_ = nullptr;
+    ComputeVars::SharedPtr mpDivideSubNodeVars_ = nullptr;
 
     // volumetric debug
     GraphicsVars::SharedPtr mpDebugVars_ = nullptr;

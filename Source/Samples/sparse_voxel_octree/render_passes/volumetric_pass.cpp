@@ -16,6 +16,13 @@ volumetric_pass::~volumetric_pass() {
     mpPixelAvgVars_ = nullptr;
 
     mpSVONodeBuffer_ = nullptr;
+    mpIndirectDrawArgs_ = nullptr;
+    mpTagNode_ = nullptr;
+    mpTagNodeVars_ = nullptr;
+    mpDivideArg_ = nullptr;
+    mpDivideArgVars_ = nullptr;
+    mpDivideSubNode_ = nullptr;
+    mpDivideSubNodeVars_ = nullptr;
 
     mpDebugVars_ = nullptr;
     mpDebugState_ = nullptr;
@@ -117,6 +124,8 @@ volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::
         mpPixelAvgVars_ = ComputeVars::create(pAvgProg.get());
     }
 
+    create_svo_shaders(programDefines);
+
     rebuild_debug_drawbuffers(debugVolProgDesc, programDefines);
     rebuild_pixel_data_buffers();
     rebuild_svo_buffers();
@@ -151,6 +160,36 @@ void volumetric_pass::rebuild_pixel_data_buffers() {
     mpDebugVars_["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
 }
 
+void volumetric_pass::create_svo_shaders(Program::DefineList& programDefines) {
+
+    {
+        Program::Desc d_tagNode;
+        d_tagNode.addShaderLibrary(kBuildSVOProg).csEntry("tag_node");
+        auto pProg = ComputeProgram::create(d_tagNode, programDefines);
+        mpTagNode_ = ComputeState::create();
+        mpTagNode_->setProgram(pProg);
+        mpTagNodeVars_ = ComputeVars::create(pProg.get());
+    }
+
+    {
+        Program::Desc d_divideArg;
+        d_divideArg.addShaderLibrary(kBuildSVOProg).csEntry("caculate_divide_indirect_arg");
+        auto pProg = ComputeProgram::create(d_divideArg, programDefines);
+        mpDivideArg_ = ComputeState::create();
+        mpDivideArg_->setProgram(pProg);
+        mpDivideArgVars_ = ComputeVars::create(pProg.get());
+    }
+
+    {
+        Program::Desc d_divideSubNode;
+        d_divideSubNode.addShaderLibrary(kBuildSVOProg).csEntry("sub_divide_node");
+        auto pProg = ComputeProgram::create(d_divideSubNode, programDefines);
+        mpDivideSubNode_ = ComputeState::create();
+        mpDivideSubNode_ ->setProgram(pProg);
+        mpDivideSubNodeVars_ = ComputeVars::create(pProg.get());
+    }
+}
+
 void volumetric_pass::rebuild_svo_buffers() {
     uint32_t maxDim = std::max(std::max(kVoxelMeta.CellDim.x, kVoxelMeta.CellDim.y), kVoxelMeta.CellDim.z);
     uint32_t maxLevel = (uint32_t)std::ceil(std::log2f((float)maxDim));
@@ -162,6 +201,9 @@ void volumetric_pass::rebuild_svo_buffers() {
     }
     bufferSize *= sizeof(uint32_t);
     mpSVONodeBuffer_ = Buffer::create(bufferSize);
+
+    uint32_t initialValue[7] = { 1, 1, 1, 0, 1, 0, 0 };
+    mpIndirectDrawArgs_ = Buffer::create(7 * sizeof(uint32_t), ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess, Buffer::CpuAccess::None, initialValue);
 }
 
 void volumetric_pass::rebuild_debug_drawbuffers(const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines) {
