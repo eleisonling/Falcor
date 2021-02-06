@@ -12,13 +12,13 @@ RWByteAddressBuffer gSvoNodeBuffer;
 // 16 curNode num
 // 20 deltaNode num
 // 24 node offset
-constexpr uint32_t g_dispathX = 0;
-constexpr uint32_t g_dispathY = 4;
-constexpr uint32_t g_dispathZ = 8;
-constexpr uint32_t g_preNodeNum = 12;
-constexpr uint32_t g_curNodeNum = 16;
-constexpr uint32_t g_deltaNodeNum = 20;
-constexpr uint32_t g_nodeOffset = 24;
+static constexpr uint32_t g_dispathX = 0;
+static constexpr uint32_t g_dispathY = 4;
+static constexpr uint32_t g_dispathZ = 8;
+static constexpr uint32_t g_preNodeNum = 12;
+static constexpr uint32_t g_curNodeNum = 16;
+static constexpr uint32_t g_deltaNodeNum = 20;
+static constexpr uint32_t g_nodeOffset = 24;
 
 RWByteAddressBuffer gDivideIndirectArg;
 
