@@ -7,6 +7,7 @@ namespace {
     static std::string kBuildSVOProg = "Samples/sparse_voxel_octree/render_passes/build_svo.cs.slang";
     static std::string kDebugVolProg = "Samples/sparse_voxel_octree/render_passes/debug_volumetric.slang";
     static voxel_meta kVoxelMeta{};
+    static svo_meta kSvoMeta{};
 }
 
 volumetric_pass::~volumetric_pass() {
@@ -16,11 +17,11 @@ volumetric_pass::~volumetric_pass() {
     mpPixelAvgVars_ = nullptr;
 
     mpSVONodeBuffer_ = nullptr;
-    mpIndirectDrawArgs_ = nullptr;
+    mpIndirectArgBuffer_ = nullptr;
     mpTagNode_ = nullptr;
     mpTagNodeVars_ = nullptr;
-    mpDivideArg_ = nullptr;
-    mpDivideArgVars_ = nullptr;
+    mpCaculateIndirectArg_ = nullptr;
+    mpCaculateIndirectArgVars_ = nullptr;
     mpDivideSubNode_ = nullptr;
     mpDivideSubNodeVars_ = nullptr;
 
@@ -70,6 +71,20 @@ void volumetric_pass::build_svo(RenderContext* pContext, const Fbo::SharedPtr& p
     PROFILE("build svo");
     pContext->clearUAV(mpSVONodeBuffer_->getUAV().get(), uint4{ 0, 0, 0, 0 });
 
+    uint3 tagGroup = { (kSvoMeta.CellNum + g_tagThreads - 1) / g_tagThreads, 1, 1 };
+
+    for (uint32_t i = 1; i <= kSvoMeta.TotalLevel; ++i) {
+        // tag
+        kSvoMeta.CurLevel = i;
+        mpTagNodeVars_["CB"]["gSvoMeta"].setBlob(kSvoMeta);
+        pContext->dispatch(mpTagNode_.get(), mpTagNodeVars_.get(), tagGroup);
+
+        // calculate indirect
+        pContext->dispatch(mpCaculateIndirectArg_.get(), mpCaculateIndirectArgVars_.get(), uint3{ 1 ,1 ,1 });
+
+        // sub-divide
+        pContext->dispatchIndirect(mpDivideSubNode_.get(), mpDivideSubNodeVars_.get(), mpIndirectArgBuffer_.get(), 0);
+    }
 }
 
 void volumetric_pass::debug_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
@@ -175,9 +190,9 @@ void volumetric_pass::create_svo_shaders(Program::DefineList& programDefines) {
         Program::Desc d_divideArg;
         d_divideArg.addShaderLibrary(kBuildSVOProg).csEntry("caculate_divide_indirect_arg");
         auto pProg = ComputeProgram::create(d_divideArg, programDefines);
-        mpDivideArg_ = ComputeState::create();
-        mpDivideArg_->setProgram(pProg);
-        mpDivideArgVars_ = ComputeVars::create(pProg.get());
+        mpCaculateIndirectArg_ = ComputeState::create();
+        mpCaculateIndirectArg_->setProgram(pProg);
+        mpCaculateIndirectArgVars_ = ComputeVars::create(pProg.get());
     }
 
     {
@@ -192,18 +207,31 @@ void volumetric_pass::create_svo_shaders(Program::DefineList& programDefines) {
 
 void volumetric_pass::rebuild_svo_buffers() {
     uint32_t maxDim = std::max(std::max(kVoxelMeta.CellDim.x, kVoxelMeta.CellDim.y), kVoxelMeta.CellDim.z);
-    uint32_t maxLevel = (uint32_t)std::ceil(std::log2f((float)maxDim));
-    maxDim = (uint32_t)std::pow(2, maxLevel);
+    kSvoMeta.TotalLevel = (uint32_t)std::ceil(std::log2f((float)maxDim));
+    maxDim = (uint32_t)std::pow(2, kSvoMeta.TotalLevel);
+    kSvoMeta.CellDim = kVoxelMeta.CellDim;
+    kSvoMeta.CellNum = kSvoMeta.CellDim.x * kSvoMeta.CellDim.y * kSvoMeta.CellDim.z;
+    kSvoMeta.SvoDim = uint3(maxDim, maxDim, maxDim);
 
     size_t bufferSize = 0;
-    for (uint32_t i = 1; i <= maxLevel; ++i) {
+    for (uint32_t i = 1; i <= kSvoMeta.TotalLevel; ++i) {
         bufferSize += (size_t)std::powf(8, (float)i);
     }
     bufferSize *= sizeof(uint32_t);
     mpSVONodeBuffer_ = Buffer::create(bufferSize);
 
     uint32_t initialValue[7] = { 1, 1, 1, 0, 1, 0, 0 };
-    mpIndirectDrawArgs_ = Buffer::create(7 * sizeof(uint32_t), ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess, Buffer::CpuAccess::None, initialValue);
+    mpIndirectArgBuffer_ = Buffer::create(7 * sizeof(uint32_t), ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess, Buffer::CpuAccess::None, initialValue);
+
+    // bound resource to shader
+    mpTagNodeVars_["CB"]["gSvoMeta"].setBlob(kSvoMeta);
+    mpTagNodeVars_["gPixelPacked"] = mpPackedPixelBuffer_;
+    mpTagNodeVars_["gSvoNodeBuffer"] = mpSVONodeBuffer_;
+
+    mpCaculateIndirectArgVars_["gDivideIndirectArg"] = mpIndirectArgBuffer_;
+
+    mpDivideSubNodeVars_["gDivideIndirectArg"] = mpIndirectArgBuffer_;
+    mpDivideSubNodeVars_["gSvoNodeBuffer"] = mpSVONodeBuffer_;
 }
 
 void volumetric_pass::rebuild_debug_drawbuffers(const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines) {

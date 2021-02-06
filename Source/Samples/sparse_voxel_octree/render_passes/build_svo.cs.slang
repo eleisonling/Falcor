@@ -20,7 +20,7 @@ constexpr uint32_t g_curNodeNum = 16;
 constexpr uint32_t g_deltaNodeNum = 20;
 constexpr uint32_t g_nodeOffset = 24;
 
-RWByteAddressBuffer gDividIndirectArg;
+RWByteAddressBuffer gDivideIndirectArg;
 
 uint32_t get_child_index(uint32_t nodeData) {
     return nodeData & (g_internalFlag - 1);
@@ -66,32 +66,32 @@ void tag_node(uint3 g_threadId : SV_DispatchThreadID){
 
 [numthreads(1, 1, 1)]
 void caculate_divide_indirect_arg() {
-    uint32_t preNodeNum = gDividIndirectArg.Load(g_preNodeNum);
-    uint32_t curNodeNum = gDividIndirectArg.Load(g_curNodeNum);
+    uint32_t preNodeNum = gDivideIndirectArg.Load(g_preNodeNum);
+    uint32_t curNodeNum = gDivideIndirectArg.Load(g_curNodeNum);
 
     uint32_t num = (curNodeNum - preNodeNum) * 8;
-    gDividIndirectArg.Store(g_deltaNodeNum, num);
+    gDivideIndirectArg.Store(g_deltaNodeNum, num);
 
     num = (num + g_divideThreads - 1) / g_divideThreads;
-    gDividIndirectArg.Store(g_dispathX, num);
-    gDividIndirectArg.Store(g_dispathY, 1);
-    gDividIndirectArg.Store(g_dispathZ, 1);
+    gDivideIndirectArg.Store(g_dispathX, num);
+    gDivideIndirectArg.Store(g_dispathY, 1);
+    gDivideIndirectArg.Store(g_dispathZ, 1);
 
-    gDividIndirectArg.Store(g_preNodeNum, curNodeNum);
-    gDividIndirectArg.Store(g_nodeOffset, preNodeNum * 8);
+    gDivideIndirectArg.Store(g_preNodeNum, curNodeNum);
+    gDivideIndirectArg.Store(g_nodeOffset, preNodeNum * 8);
 }
 
 
 [numthreads(g_divideThreads, 1, 1)]
 void sub_divide_node(uint3 g_threadId : SV_DispatchThreadID){
-    if(g_threadId.x >= gDividIndirectArg.Load(g_deltaNodeNum)) return;
-    uint32_t index = g_threadId.x + gDividIndirectArg.Load(g_nodeOffset);
+    if(g_threadId.x >= gDivideIndirectArg.Load(g_deltaNodeNum)) return;
+    uint32_t index = g_threadId.x + gDivideIndirectArg.Load(g_nodeOffset);
 
     uint32_t nodeData = gSvoNodeBuffer.Load(index * 4);
 
     if(is_valid_node(nodeData) && get_child_index(nodeData) == 0) {
         uint32_t nodeNum = 0;
-        gDividIndirectArg.InterlockedAdd(g_curNodeNum, 1, nodeNum);
+        gDivideIndirectArg.InterlockedAdd(g_curNodeNum, 1, nodeNum);
 
         gSvoNodeBuffer.Store(nodeNum * 4, set_child_index(nodeNum));
         uint32_t childNodeStart = nodeNum * 8;

@@ -35,11 +35,12 @@ private:
 
     // sparse Oct-tree builder
     Buffer::SharedPtr mpSVONodeBuffer_ = nullptr;
-    Buffer::SharedPtr mpIndirectDrawArgs_ = nullptr;
+    Buffer::SharedPtr mpIndirectArgBuffer_ = nullptr;
+
     ComputeState::SharedPtr mpTagNode_ = nullptr;
     ComputeVars::SharedPtr mpTagNodeVars_ = nullptr;
-    ComputeState::SharedPtr mpDivideArg_ = nullptr;
-    ComputeVars::SharedPtr mpDivideArgVars_ = nullptr;
+    ComputeState::SharedPtr mpCaculateIndirectArg_ = nullptr;
+    ComputeVars::SharedPtr mpCaculateIndirectArgVars_ = nullptr;
     ComputeState::SharedPtr mpDivideSubNode_ = nullptr;
     ComputeVars::SharedPtr mpDivideSubNodeVars_ = nullptr;
 
