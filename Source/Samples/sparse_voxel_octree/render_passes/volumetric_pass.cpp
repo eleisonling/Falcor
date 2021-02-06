@@ -79,11 +79,13 @@ void volumetric_pass::build_svo(RenderContext* pContext, const Fbo::SharedPtr& p
         mpTagNodeVars_["CB"]["gSvoMeta"].setBlob(kSvoMeta);
         pContext->dispatch(mpTagNode_.get(), mpTagNodeVars_.get(), tagGroup);
 
-        // calculate indirect
-        pContext->dispatch(mpCaculateIndirectArg_.get(), mpCaculateIndirectArgVars_.get(), uint3{ 1 ,1 ,1 });
+        if (i < kSvoMeta.TotalLevel) {
+            // calculate indirect
+            pContext->dispatch(mpCaculateIndirectArg_.get(), mpCaculateIndirectArgVars_.get(), uint3{ 1 ,1 ,1 });
 
-        // sub-divide
-        pContext->dispatchIndirect(mpDivideSubNode_.get(), mpDivideSubNodeVars_.get(), mpIndirectArgBuffer_.get(), 0);
+            // sub-divide
+            pContext->dispatchIndirect(mpDivideSubNode_.get(), mpDivideSubNodeVars_.get(), mpIndirectArgBuffer_.get(), 0);
+        }
     }
 }
 
