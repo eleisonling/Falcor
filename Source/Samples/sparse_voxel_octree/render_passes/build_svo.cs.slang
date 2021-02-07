@@ -40,7 +40,7 @@ void tag_node(uint3 g_threadId : SV_DispatchThreadID){
     if(g_threadId.x >= gSvoMeta.CellNum) return;
     uint3 cellIndex = extract_index_form_linear(g_threadId.x, gSvoMeta.CellDim);
 
-    uint32_t address = g_threadId.x * 4 + 16;
+    uint32_t address = g_threadId.x * 20 + 16;
     if(gPixelPacked.Load(address) == 0) return;
 
     uint32_t childID = 0;
@@ -93,7 +93,7 @@ void sub_divide_node(uint3 g_threadId : SV_DispatchThreadID){
         uint32_t nodeNum = 0;
         gDivideIndirectArg.InterlockedAdd(g_curNodeNum, 1, nodeNum);
 
-        gSvoNodeBuffer.Store(nodeNum * 4, set_child_index(nodeNum));
+        gSvoNodeBuffer.Store(index * 4, set_child_index(nodeNum));
         uint32_t childNodeStart = nodeNum * 8;
         for (int32_t i = 0; i < 8; ++i) {
             uint32_t address = (childNodeStart + i) * 4;
