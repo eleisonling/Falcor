@@ -137,7 +137,7 @@ void volumetric_pass::on_gui_render(Gui::Group& group) {
         needRefresh_ = true;
     }
 
-    group.checkbox("Debug SVO Tracing", debugSVOTracing_);
+    group.checkbox("Use Tracing Method", debugSVOTracing_);
 }
 
 volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc, const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines)
