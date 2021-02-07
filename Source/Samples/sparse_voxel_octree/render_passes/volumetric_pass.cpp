@@ -97,7 +97,7 @@ void volumetric_pass::fixture_cell_size() {
     uint32_t maxDim = std::max(cellDim.x, std::max(cellDim.y, cellDim.z));
 
     uint32_t totalLevel = (uint32_t)std::ceil(std::log2f((float)maxDim));
-    maxDim = (uint32_t)std::pow(2, totalLevel);
+    maxDim = (uint32_t)std::pow(2, totalLevel) - 1;
 
     float maxSceneDim = std::max(bound.extent().x, std::max(bound.extent().y, bound.extent().z));
     cellSize_ = maxSceneDim / maxDim;
@@ -168,7 +168,7 @@ void volumetric_pass::rebuild_pixel_data_buffers() {
 
     rebuildBuffer_ = false;
     auto& bound = mpScene_->getSceneBounds();
-    glm::uvec3 cellDim = glm::ceil(bound.extent() / cellSize_);
+    glm::uvec3 cellDim = glm::ceil((bound.extent() + cellSize_) / cellSize_ );
 
     {
         size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(uint32_t) * 5;
