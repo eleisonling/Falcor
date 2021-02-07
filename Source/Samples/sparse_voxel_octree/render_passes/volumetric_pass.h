@@ -21,6 +21,10 @@ private:
     void rebuild_svo_buffers();
     void rebuild_debug_drawbuffers(const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines);
     void build_svo(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
+    /// <summary>
+    /// because svo need pow(2,n) size, for the full usage, we must modify the cellSize
+    /// </summary>
+    void fixture_cell_size();
 
     // pixel volumetric
     Scene::SharedPtr mpScene_ = nullptr;
@@ -31,7 +35,7 @@ private:
     // pixel volumetric vars
     bool needRefresh_ = true;
     bool rebuildBuffer_ = false;
-    float cellSize_ = 0.1f;
+    float cellSize_ = 1.0f;
 
     // sparse Oct-tree builder
     Buffer::SharedPtr mpSVONodeBuffer_ = nullptr;

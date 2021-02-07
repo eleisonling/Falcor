@@ -70,6 +70,8 @@ void volumetric_pass::build_svo(RenderContext* pContext, const Fbo::SharedPtr& p
 
     PROFILE("build svo");
     pContext->clearUAV(mpSVONodeBuffer_->getUAV().get(), uint4{ 0, 0, 0, 0 });
+    uint32_t initialValue[7] = { 1, 1, 1, 0, 1, 0, 0 };
+    mpIndirectArgBuffer_->setBlob(initialValue, 0, sizeof(uint32_t) * 7);
 
     uint3 tagGroup = { (kSvoMeta.CellNum + g_tagThreads - 1) / g_tagThreads, 1, 1 };
 
@@ -89,6 +91,18 @@ void volumetric_pass::build_svo(RenderContext* pContext, const Fbo::SharedPtr& p
     }
 }
 
+void volumetric_pass::fixture_cell_size() {
+    auto& bound = mpScene_->getSceneBounds();
+    glm::uvec3 cellDim = glm::ceil((bound.extent() + cellSize_) / cellSize_);
+    uint32_t maxDim = std::max(cellDim.x, std::max(cellDim.y, cellDim.z));
+
+    uint32_t totalLevel = (uint32_t)std::ceil(std::log2f((float)maxDim));
+    maxDim = (uint32_t)std::pow(2, totalLevel);
+
+    float maxSceneDim = std::max(bound.extent().x, std::max(bound.extent().y, bound.extent().z));
+    cellSize_ = maxSceneDim / maxDim;
+}
+
 void volumetric_pass::debug_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
     PROFILE("debug volumetric");
     uint32_t instanceCount = kVoxelMeta.CellDim.x * kVoxelMeta.CellDim.y * kVoxelMeta.CellDim.z;
@@ -99,9 +113,10 @@ void volumetric_pass::debug_scene(RenderContext* pContext, const Fbo::SharedPtr&
 }
 
 void volumetric_pass::on_gui_render(Gui::Group& group) {
-    rebuildBuffer_ |= group.var("Cell Size", cellSize_, .05f, 0.1f, 0.01f);
+    rebuildBuffer_ |= group.var("Cell Size", cellSize_);
     if (group.button("Rebuild")) {
         if (rebuildBuffer_) {
+            fixture_cell_size();
             rebuild_pixel_data_buffers();
             rebuild_svo_buffers();
         }
@@ -144,6 +159,7 @@ volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::
     create_svo_shaders(programDefines);
 
     rebuild_debug_drawbuffers(debugVolProgDesc, programDefines);
+    fixture_cell_size();
     rebuild_pixel_data_buffers();
     rebuild_svo_buffers();
 }
@@ -152,7 +168,7 @@ void volumetric_pass::rebuild_pixel_data_buffers() {
 
     rebuildBuffer_ = false;
     auto& bound = mpScene_->getSceneBounds();
-    glm::uvec3 cellDim = glm::ceil((bound.extent() + cellSize_) / cellSize_);
+    glm::uvec3 cellDim = glm::ceil(bound.extent() / cellSize_);
 
     {
         size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(uint32_t) * 5;
