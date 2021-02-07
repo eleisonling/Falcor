@@ -246,10 +246,13 @@ void volumetric_pass::create_svo_shaders(Program::DefineList& programDefines) {
 void volumetric_pass::rebuild_svo_buffers() {
     uint32_t maxDim = std::max(std::max(kVoxelMeta.CellDim.x, kVoxelMeta.CellDim.y), kVoxelMeta.CellDim.z);
     kSvoMeta.TotalLevel = (uint32_t)std::ceil(std::log2f((float)maxDim));
+    assert(kSvoMeta.TotalLevel <= g_maxLevel);
     maxDim = (uint32_t)std::pow(2, kSvoMeta.TotalLevel);
     kSvoMeta.CellDim = kVoxelMeta.CellDim;
     kSvoMeta.CellNum = kSvoMeta.CellDim.x * kSvoMeta.CellDim.y * kSvoMeta.CellDim.z;
     kSvoMeta.SvoDim = uint3(maxDim, maxDim, maxDim);
+    kSvoMeta.Min = kVoxelMeta.Min;
+    kSvoMeta.CellSize = kVoxelMeta.CellSize;
 
     size_t bufferSize = 0;
     for (uint32_t i = 1; i <= kSvoMeta.TotalLevel; ++i) {
@@ -271,6 +274,9 @@ void volumetric_pass::rebuild_svo_buffers() {
     mpDivideSubNodeVars_["gDivideIndirectArg"] = mpIndirectArgBuffer_;
     mpDivideSubNodeVars_["gSvoNodeBuffer"] = mpSVONodeBuffer_;
 
+    mpTracingSvo_->getVars()["CB"]["gSvoMeta"].setBlob(kSvoMeta);
+    mpTracingSvo_->getVars()["gPixelPacked"] = mpPackedPixelBuffer_;
+    mpTracingSvo_->getVars()["gSvoNodeBuffer"] = mpSVONodeBuffer_;
 
     mpSvoDebugTracingData_ = Buffer::create(sizeof(float) * 6);
 }

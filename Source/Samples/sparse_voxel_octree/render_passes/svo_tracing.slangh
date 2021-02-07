@@ -1,0 +1,183 @@
+#pragma once
+import Scene.Raytracing;
+
+inline float3 convert_world_to_svo_space(float3 worldPos, float cellSize, float3 cellDim, float3 cellMin) {
+    float3 boundSize = cellSize * cellDim;  
+    float3 convertedPos = (worldPos - cellMin) / boundSize + float3(1.0);
+    return convertedPos;
+}
+
+struct tracing_result {
+    float4 Color;
+    bool IsMissing;
+};
+
+inline float copy_sign_32f(float newVal, float oldVal) {
+    uint32_t oldValSign = asuint(oldVal) & g_32SignBit;
+    uint32_t clearSign = asuint(newVal) & (g_32SignBit - 1);
+    return newVal | oldValSign;
+}
+
+inline void get_node_info(uint32_t parent, uint32_t shift, out uint32_t childNode, RWByteAddressBuffer svoNode) {
+    uint32_t childAddress = parent * 8 + shift;
+    childNode = svoNode.Load(childAddress * 4);
+}
+
+inline bool is_valid_node(uint32_t nodeData) {
+    return (nodeData & g_internalFlag) > 0;
+}
+
+inline bool is_leaf_node(uint32_t nodeData, int32_t scale, int32_t leafLevel) {
+    return is_valid_node(nodeData) && (scale + leafLevel == g_maxLevel);
+}
+
+uint32_t get_child_index(uint32_t nodeData) {
+    return nodeData & (g_internalFlag - 1);
+}
+
+
+inline float4 get_color(uint32_t nodeData, RWByteAddressBuffer packedPixel, out uint32_t pixelCount) {
+    uint32_t pixelAddress = get_child_index(nodeData);
+    uint32_t packedAddress = pixelAddress * 20;
+
+    // load and uncompress
+    uint4 packedColor = gPixelPacked.Load4(packedAddress);
+    pixelCount = gPixelPacked.Load(packedAddress + 16);
+    float4 finalColor = { asfloat(packedColor.x), asfloat(packedColor.y), asfloat(packedColor.z), asfloat(packedColor.w) };
+    return finalColor;
+}
+
+tracing_result trace_sparse_voxel_ray(inout RayDesc ray, RWByteAddressBuffer pixelPacked, RWByteAddressBuffer svoNode, uint32_t leafLevel) {
+    const float epsilon = exp2(-g_maxLevel);
+	tracing_result hitInfo = {};
+	int2 stack[g_maxLevel + 1] = {};
+
+    float3 p = ray.Origin;
+    float3 d = ray.Direction;
+
+    // get rid of small ray direction
+    if(abs(d.x) < epsilon) d.x = copy_sign_32f(epsilon, d.x);
+    if(abs(d.y) < epsilon) d.y = copy_sign_32f(epsilon, d.y);
+    if(abs(d.z) < epsilon) d.z = copy_sign_32f(epsilon, d.z);
+
+    // first means negtive dir
+	float3 t_coef = 1.0 / -abs(d);
+	float3 t_bias = t_coef * p;
+
+    // this means positive dir
+	uint32_t octant_mask = 0;
+	if (d.x > 0) octant_mask ^= 1, t_bias.x = 3.0 * t_coef.x - t_bias.x;
+	if (d.y > 0) octant_mask ^= 2, t_bias.y = 3.0 * t_coef.y - t_bias.y;
+	if (d.z > 0) octant_mask ^= 4, t_bias.z = 3.0 * t_coef.z - t_bias.z;
+
+	float3 txyz = 2.0 * t_coef - t_bias;
+	float t_min = max(max(txyz.x, txyz.y), txyz.z);
+
+	txyz -= t_coef;
+	float t_max = min(min(txyz.x, txyz.y), txyz.z);
+	float h = t_max;
+
+    t_min = max(t_min, 0.0);
+	//t_max = min(t_max, 1.0);
+
+	uint32_t parent = 0;
+	uint32_t childNodeInParent = 0;
+	uint32_t idx = 0;
+	float3 pos = float3(1.0, 1.0, 1.0);
+	int32_t scale = g_maxLevel - 1;
+	float scale_exp2 = 0.5;
+
+	if (1.5 * t_coef.x - t_bias.x > t_min) idx ^= 1, pos.x = 1.5;
+	if (1.5 * t_coef.y - t_bias.y > t_min) idx ^= 2, pos.y = 1.5;
+	if (1.5 * t_coef.z - t_bias.z > t_min) idx ^= 4, pos.z = 1.5;
+
+	hitInfo.IsMissing = true;
+
+	while (scale < g_maxLevel) {
+		if (childNodeInParent == 0) {
+			uint32_t child_shift = idx ^ octant_mask;
+			get_node_info(parent, child_shift, childNodeInParent, svoNode);
+		}
+
+		float3 t_corner = pos * t_coef - t_bias;
+		float tc_max = min(min(t_corner.x, t_corner.y), t_corner.z);
+		
+        // check is child is a node
+		if (is_valid_node(childNodeInParent)) {
+			float tv_max = min(t_max, tc_max);
+			float half_scale = scale_exp2 * 0.5;
+			float3 t_center = half_scale * t_coef + t_corner;
+			
+			if (t_min <= tv_max)
+			{
+				if (is_leaf_node(childNodeInParent, scale, leafLevel))
+				{
+                    uint32_t pixelCount = 0;
+					float4 color = get_color(childNodeInParent, pixelPacked, pixelCount);
+                    if(pixelCount != 0) {
+                        hitInfo.Color = color;
+                        hitInfo.IsMissing = false;
+                        ray.TMin = t_min;
+                        ray.TMax = t_max;
+				        return hitInfo;
+                    }
+				}
+
+                // push
+				if (tc_max < h)
+					stack[scale] = int2(parent, asint(t_max));
+				h = tc_max;
+				parent = get_child_index(childNodeInParent);
+
+				idx = 0;
+				--scale;
+				scale_exp2 = half_scale;
+
+				if (t_center.x > t_min) idx ^= 1, pos.x += scale_exp2;
+				if (t_center.y > t_min) idx ^= 2, pos.y += scale_exp2;
+				if (t_center.z > t_min) idx ^= 4, pos.z += scale_exp2;
+
+				t_max = tv_max;
+				childNodeInParent = 0;
+				continue;
+			}
+		}
+
+        // advance
+		int32_t step_mask = 0;
+		if (t_corner.x <= tc_max) step_mask ^= 1, pos.x -= scale_exp2;
+		if (t_corner.y <= tc_max) step_mask ^= 2, pos.y -= scale_exp2;
+		if (t_corner.z <= tc_max) step_mask ^= 4, pos.z -= scale_exp2;
+
+		t_min = tc_max;
+		idx ^= step_mask;
+
+        // pop
+		if ((idx & step_mask) != 0)
+		{
+			uint32_t differing_bits = 0;
+			if ((step_mask & 1) != 0) differing_bits |= asint(pos.x) ^ asint(pos.x + scale_exp2);
+			if ((step_mask & 2) != 0) differing_bits |= asint(pos.y) ^ asint(pos.y + scale_exp2);
+			if ((step_mask & 4) != 0) differing_bits |= asint(pos.z) ^ asint(pos.z + scale_exp2);
+			scale = (asint((float)differing_bits) >> 23) - 127;
+			scale_exp2 = asfloat((scale - g_maxLevel + 127) << 23);
+
+			int2 stackEntry = stack[scale];
+			parent = stackEntry.x;
+			t_max = asfloat(stackEntry.y);
+			
+			int shx = asint(pos.x) >> scale;
+			int shy = asint(pos.y) >> scale;
+			int shz = asint(pos.z) >> scale;
+			pos.x = asfloat(shx << scale);
+			pos.y = asfloat(shy << scale);
+			pos.z = asfloat(shz << scale);
+			idx = (shx & 1) | ((shy & 1) << 1) | ((shz & 1) << 2);
+
+			h = 0.0;
+			childNodeInParent = 0;
+		}
+	}
+
+	return hitInfo;
+}

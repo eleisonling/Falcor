@@ -1,27 +1,38 @@
 #pragma once
 #include "Samples/sparse_voxel_octree/render_passes/voxel_meta.slangh"
+#include "Samples/sparse_voxel_octree/render_passes/svo_tracing.slangh"
 import Scene.Shading;
 import Scene.Raytracing;
 
 cbuffer CB {
+    svo_meta gSvoMeta;
     float2 ViewportDims;   
 }
 
+RWByteAddressBuffer gPixelPacked;
+RWByteAddressBuffer gSvoNodeBuffer;
 RWByteAddressBuffer gDebugTracingData;
+
 
 float4 main(float2 texC : TEXCOORD, float4 posS : SV_POSITION) : SV_TARGET {
     uint2 launchIndex = uint2(texC.xy * ViewportDims);
     RayDesc ray = gScene.camera.computeRayPinhole(launchIndex.xy, ViewportDims).toRayDesc();
+    ray.Origin = convert_world_to_svo_space(ray.Origin, gSvoMeta.CellSize, gSvoMeta.SvoDim, gSvoMeta.Min);
+
+    tracing_result hitInfo = trace_sparse_voxel_ray(ray, gPixelPacked, gSvoNodeBuffer, gSvoMeta.TotalLevel);
 
     // debuging
-    if(launchIndex.x == 0 && launchIndex.y == 0){
-       gDebugTracingData.Store(0, asuint(ray.Origin.x)); 
-       gDebugTracingData.Store(4, asuint(ray.Origin.y)); 
-       gDebugTracingData.Store(8, asuint(ray.Origin.z)); 
-       gDebugTracingData.Store(12, asuint(ray.Direction.x)); 
-       gDebugTracingData.Store(16, asuint(ray.Direction.y)); 
-       gDebugTracingData.Store(20, asuint(ray.Direction.z)); 
+    if(launchIndex.x == 960 && launchIndex.y == 540){
+    
+        float3 viewDir = mul(ray.Direction, float3x3(gScene.camera.data.viewMat));
+
+        gDebugTracingData.Store(0, asuint(ray.Origin.x)); 
+        gDebugTracingData.Store(4, asuint(ray.Origin.y)); 
+        gDebugTracingData.Store(8, asuint(ray.Origin.z)); 
+        gDebugTracingData.Store(12, asuint(viewDir.x)); 
+        gDebugTracingData.Store(16, asuint(viewDir.y)); 
+        gDebugTracingData.Store(20, asuint(viewDir.z)); 
     }
 
-    return {1, 0, 0, 1};
+    return hitInfo.Color;
 }

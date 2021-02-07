@@ -57,7 +57,7 @@ void tag_node(uint3 g_threadId : SV_DispatchThreadID){
 
     if(gSvoMeta.CurLevel == gSvoMeta.TotalLevel) {
         // svo node is same as the pixel cell node count
-        gSvoNodeBuffer.Store(curID * 4, g_threadId.x);
+        gSvoNodeBuffer.Store(curID * 4, set_child_index(g_threadId.x));
     } else {
         gSvoNodeBuffer.InterlockedOr(curID * 4, g_internalFlag); 
     }

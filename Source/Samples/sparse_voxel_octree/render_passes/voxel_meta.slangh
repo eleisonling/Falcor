@@ -17,7 +17,9 @@ struct voxel_meta {
     uint32_t CellNum = 0;
     uint3 SvoDim = uint3(0);
     uint32_t CurLevel = 0;
+    float3 Min = float3(FLT_MAX);
     uint32_t TotalLevel = 0;
+    float CellSize = 1.0;
  };
 
 
@@ -32,3 +34,5 @@ uint3 extract_index_form_linear(uint32_t linearIndex, uint3 dim) {
 
 
 #define g_internalFlag 0x80000000
+#define g_32SignBit 0x80000000
+#define g_maxLevel 23
