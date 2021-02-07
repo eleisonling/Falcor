@@ -195,6 +195,7 @@ void volumetric_pass::rebuild_pixel_data_buffers() {
     kVoxelMeta.CellDim = cellDim;
     kVoxelMeta.CellSize = cellSize_;
     kVoxelMeta.Min = bound.minPoint;
+    kVoxelMeta.Max = bound.maxPoint;
 
     mpVars["gPixelPacked"] = mpPackedPixelBuffer_;
     mpVars["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);

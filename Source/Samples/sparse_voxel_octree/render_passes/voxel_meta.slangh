@@ -6,6 +6,7 @@ struct voxel_meta {
     uint3 CellDim = uint3(0);
     float CellSize = 1.0;
     float3 Min = float3(FLT_MAX);
+    float3 Max = float3(-FLT_MAX);
 };
 
  #define g_avgThreads       1024

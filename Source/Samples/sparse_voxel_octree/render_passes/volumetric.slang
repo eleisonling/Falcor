@@ -78,6 +78,12 @@ float4x4 calculate_orth_view_proj(AABB bound, int32_t dim) {
 
 }
 
+#include "Samples/sparse_voxel_octree/render_passes/voxel_meta.slangh"
+cbuffer CB {
+    voxel_meta gVoxelMeta;
+}
+
+
 [maxvertexcount(3)]
 void gs_main(triangle VSOut input[3], uint InstanceID : SV_GSInstanceID, inout TriangleStream<VSOut> outStream) {
 
@@ -88,10 +94,7 @@ void gs_main(triangle VSOut input[3], uint InstanceID : SV_GSInstanceID, inout T
     float3 posW2 = input[2].posW;
 
     // cacluate AABB
-    AABB bound = AABB::create(FLT_MAX, -FLT_MAX);
-    bound.include(posW0);
-    bound.include(posW1);
-    bound.include(posW2);
+    AABB bound = AABB::create(gVoxelMeta.Min, gVoxelMeta.Max);
 
     float3 edgeW01 = posW1 - posW0;
     float3 edgeW02 = posW2 - posW0;
@@ -124,17 +127,12 @@ void gs_main(triangle VSOut input[3], uint InstanceID : SV_GSInstanceID, inout T
     outStream.RestartStrip();
 }
 
-#include "Samples/sparse_voxel_octree/render_passes/voxel_meta.slangh"
 import Scene.TextureSampler;
 import Scene.Material.MaterialData;
 #include "Scene/Material/MaterialDefines.slangh"
 #define NV_SHADER_EXTN_SLOT u63
 #define NV_SHADER_EXTN_REGISTER_SPACE space0
 #include "NVAPI/nvHLSLExtns.h"
-
-cbuffer CB {
-    voxel_meta gVoxelMeta;
-}
 
 RWByteAddressBuffer gPixelPacked;
 
