@@ -6,6 +6,7 @@ namespace {
     static std::string kPixelAvgProg = "Samples/sparse_voxel_octree/render_passes/pixel_avg.cs.slang";
     static std::string kBuildSVOProg = "Samples/sparse_voxel_octree/render_passes/build_svo.cs.slang";
     static std::string kDebugVolProg = "Samples/sparse_voxel_octree/render_passes/debug_volumetric.slang";
+    static std::string kDebugSvoProg = "Samples/sparse_voxel_octree/render_passes/debug_svo.ps.slang";
     static voxel_meta kVoxelMeta{};
     static svo_meta kSvoMeta{};
 }
@@ -24,6 +25,9 @@ volumetric_pass::~volumetric_pass() {
     mpCaculateIndirectArgVars_ = nullptr;
     mpDivideSubNode_ = nullptr;
     mpDivideSubNodeVars_ = nullptr;
+
+    mpTracingSvo_ = nullptr;
+    mpSvoDebugTracingData_ = nullptr;
 
     mpDebugVars_ = nullptr;
     mpDebugState_ = nullptr;
@@ -105,11 +109,21 @@ void volumetric_pass::fixture_cell_size() {
 
 void volumetric_pass::debug_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
     PROFILE("debug volumetric");
-    uint32_t instanceCount = kVoxelMeta.CellDim.x * kVoxelMeta.CellDim.y * kVoxelMeta.CellDim.z;
-    mpDebugState_->setFbo(pDstFbo);
-    mpDebugState_->setVao(mpDebugVao_);
-    mpDebugVars_->setParameterBlock("gScene", mpScene_->getParameterBlock());
-    pContext->drawIndexedInstanced(mpDebugState_.get(), mpDebugVars_.get(), (uint32_t)mpDebugMesh_->getIndices().size(), instanceCount, 0, 0, 0);
+
+    if (debugSVOTracing_) {
+        // do clear
+        pContext->clearUAV(mpSvoDebugTracingData_->getUAV().get(), float4{ 0.0f, 0.0f, 0.0f, 0.0f });
+        mpTracingSvo_->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
+        mpTracingSvo_->getVars()["CB"]["ViewportDims"] = float2{ pDstFbo->getWidth(), pDstFbo->getHeight() };
+        mpTracingSvo_->getVars()["gDebugTracingData"] = mpSvoDebugTracingData_;
+        mpTracingSvo_->execute(pContext, pDstFbo);
+    } else {
+        uint32_t instanceCount = kVoxelMeta.CellDim.x * kVoxelMeta.CellDim.y * kVoxelMeta.CellDim.z;
+        mpDebugState_->setFbo(pDstFbo);
+        mpDebugState_->setVao(mpDebugVao_);
+        mpDebugVars_->setParameterBlock("gScene", mpScene_->getParameterBlock());
+        pContext->drawIndexedInstanced(mpDebugState_.get(), mpDebugVars_.get(), (uint32_t)mpDebugMesh_->getIndices().size(), instanceCount, 0, 0, 0);
+    }
 }
 
 void volumetric_pass::on_gui_render(Gui::Group& group) {
@@ -122,6 +136,8 @@ void volumetric_pass::on_gui_render(Gui::Group& group) {
         }
         needRefresh_ = true;
     }
+
+    group.checkbox("Debug SVO Tracing", debugSVOTracing_);
 }
 
 volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc, const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines)
@@ -221,6 +237,10 @@ void volumetric_pass::create_svo_shaders(Program::DefineList& programDefines) {
         mpDivideSubNode_ ->setProgram(pProg);
         mpDivideSubNodeVars_ = ComputeVars::create(pProg.get());
     }
+
+    {
+        mpTracingSvo_ = FullScreenPass::create(kDebugSvoProg, programDefines);
+    }
 }
 
 void volumetric_pass::rebuild_svo_buffers() {
@@ -250,6 +270,9 @@ void volumetric_pass::rebuild_svo_buffers() {
 
     mpDivideSubNodeVars_["gDivideIndirectArg"] = mpIndirectArgBuffer_;
     mpDivideSubNodeVars_["gSvoNodeBuffer"] = mpSVONodeBuffer_;
+
+
+    mpSvoDebugTracingData_ = Buffer::create(sizeof(float) * 6);
 }
 
 void volumetric_pass::rebuild_debug_drawbuffers(const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines) {

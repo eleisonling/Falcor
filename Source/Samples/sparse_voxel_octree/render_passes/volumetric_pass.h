@@ -48,6 +48,11 @@ private:
     ComputeState::SharedPtr mpDivideSubNode_ = nullptr;
     ComputeVars::SharedPtr mpDivideSubNodeVars_ = nullptr;
 
+    // debug tracing svo
+    FullScreenPass::SharedPtr mpTracingSvo_ = nullptr;
+    bool debugSVOTracing_ = false;
+    Buffer::SharedPtr mpSvoDebugTracingData_ = nullptr;
+
     // volumetric debug
     GraphicsVars::SharedPtr mpDebugVars_ = nullptr;
     GraphicsState::SharedPtr mpDebugState_ = nullptr;
