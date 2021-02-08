@@ -149,6 +149,7 @@ namespace Falcor
             FloatingPointModeFast       = 0x4,
             FloatingPointModePrecise    = 0x8,
             GenerateDebugInfo           = 0x10,
+            DisableOptimize             = 0x20,
         };
 
         class DefineList : public std::map<std::string, std::string>

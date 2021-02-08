@@ -525,7 +525,12 @@ namespace Falcor
 
         if (is_set(mDesc.getCompilerFlags(), Shader::CompilerFlags::GenerateDebugInfo))
         {
-            spSetDebugInfoLevel(pSlangRequest, SLANG_DEBUG_INFO_LEVEL_STANDARD);
+            spSetDebugInfoLevel(pSlangRequest, SLANG_DEBUG_INFO_LEVEL_MAXIMAL);
+        }
+
+        if (is_set(mDesc.getCompilerFlags(), Shader::CompilerFlags::DisableOptimize))
+        {
+            spSetOptimizationLevel(pSlangRequest, SLANG_OPTIMIZATION_LEVEL_NONE);
         }
 
         // Configure any flags for the Slang compilation step
