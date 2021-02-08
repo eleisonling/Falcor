@@ -60,7 +60,8 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, RWByteAddressBuffer pix
     if(abs(d.y) < epsilon) d.y = copy_sign_32f(epsilon, d.y);
     if(abs(d.z) < epsilon) d.z = copy_sign_32f(epsilon, d.z);
 
-    // first means negtive dir
+    // change range to [1,2] means we can easy to handle positive and negtive ray directions 
+    // x = Px + t * dx ==> t = x/dx - Ox/dx 
 	float3 t_coef = 1.0 / -abs(d);
 	float3 t_bias = t_coef * p;
 
@@ -77,8 +78,8 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, RWByteAddressBuffer pix
 	float t_max = min(min(txyz.x, txyz.y), txyz.z);
 	float h = t_max;
 
+    // min should clamp to zero，max should not
     t_min = max(t_min, 0.0);
-	//t_max = min(t_max, 1.0);
 
 	uint32_t parent = 0;
 	uint32_t childNodeInParent = 0;
@@ -87,6 +88,8 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, RWByteAddressBuffer pix
 	int32_t scale = g_maxLevel - 1;
 	float scale_exp2 = 0.5;
 
+    // this meas the mid point's t > t_min
+    // e.g is x direction is positive, and mid min gt t_min, next child should choose child which x axis is left
 	if (1.5 * t_coef.x - t_bias.x > t_min) idx ^= 1, pos.x = 1.5;
 	if (1.5 * t_coef.y - t_bias.y > t_min) idx ^= 2, pos.y = 1.5;
 	if (1.5 * t_coef.z - t_bias.z > t_min) idx ^= 4, pos.z = 1.5;
@@ -99,6 +102,10 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, RWByteAddressBuffer pix
 			get_node_info(parent, child_shift, childNodeInParent, svoNode);
 		}
 
+        // determind the max-t value of the cube
+        // for the [1,2] range and the euqaltion: x = Px + t * dx ==> t = x/dx - Ox/dx 
+        // we can caculate the right t time now despite of the positive/negtive direction
+        // notice: pos may modified to 1.5
 		float3 t_corner = pos * t_coef - t_bias;
 		float tc_max = min(min(t_corner.x, t_corner.y), t_corner.z);
 		
