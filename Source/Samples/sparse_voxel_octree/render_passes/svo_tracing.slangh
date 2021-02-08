@@ -15,7 +15,7 @@ struct tracing_result {
 inline float copy_sign_32f(float newVal, float oldVal) {
     uint32_t oldValSign = asuint(oldVal) & g_32SignBit;
     uint32_t clearSign = asuint(newVal) & (g_32SignBit - 1);
-    return newVal | oldValSign;
+    return asfloat(clearSign | oldValSign);
 }
 
 inline void get_node_info(uint32_t parent, uint32_t shift, out uint32_t childNode, RWByteAddressBuffer svoNode) {
@@ -115,8 +115,7 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, RWByteAddressBuffer pix
 			float half_scale = scale_exp2 * 0.5;
 			float3 t_center = half_scale * t_coef + t_corner;
 			
-			if (t_min <= tv_max)
-			{
+			if (t_min <= tv_max) {
 				if (is_leaf_node(childNodeInParent, scale, leafLevel))
 				{
                     uint32_t pixelCount = 0;
