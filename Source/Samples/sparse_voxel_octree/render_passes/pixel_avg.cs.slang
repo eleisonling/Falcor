@@ -6,13 +6,14 @@ cbuffer CB {
 }
 RWByteAddressBuffer gPixelPacked;
 
-[numthreads(g_avgThreads, 1, 1)]
+[numthreads(g_avgThreads, g_avgThreads, g_avgThreads)]
 void cs_avg(uint3 g_threadId : SV_DispatchThreadID){
 
-    if(g_threadId.x >= gVoxelMeta.CellDim.x * gVoxelMeta.CellDim.y * gVoxelMeta.CellDim.z) return;
+    if(g_threadId.x >= gVoxelMeta.CellDim.x || g_threadId.y >= gVoxelMeta.CellDim.y || g_threadId.z >= gVoxelMeta.CellDim.z) return;
+    uint32_t linearIndex = g_threadId.z * gVoxelMeta.CellDim.y * gVoxelMeta.CellDim.x + g_threadId.y * gVoxelMeta.CellDim.x + g_threadId.x;
 
     // jump to first address
-    uint32_t packedAddress = g_threadId.x * 20;
+    uint32_t packedAddress = linearIndex * 20;
 
     // load and uncompress
     uint4 packedColor = gPixelPacked.Load4(packedAddress);

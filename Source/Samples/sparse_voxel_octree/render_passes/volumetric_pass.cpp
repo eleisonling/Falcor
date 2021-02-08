@@ -62,11 +62,11 @@ void volumetric_pass::volumetric_scene(RenderContext* pContext, const Fbo::Share
     mpScene_->rasterize(pContext, mpState.get(), mpVars.get(), Scene::RenderFlags::UserRasterizerState);
 
     // avg result
-    uint3 group = { (kVoxelMeta.CellDim.x * kVoxelMeta.CellDim.y * kVoxelMeta.CellDim.z + g_avgThreads - 1) / g_avgThreads, 1, 1 };
+    uint3 group = { (kVoxelMeta.CellDim.x + g_avgThreads - 1) / g_avgThreads, (kVoxelMeta.CellDim.y + g_avgThreads - 1) / g_avgThreads,
+        (kVoxelMeta.CellDim.z + g_avgThreads - 1) / g_avgThreads };
     pContext->dispatch(mpPixelAvgState_.get(), mpPixelAvgVars_.get(), group);
 
     build_svo(pContext, pDstFbo);
-
     needRefresh_ = false;
 }
 
@@ -77,7 +77,8 @@ void volumetric_pass::build_svo(RenderContext* pContext, const Fbo::SharedPtr& p
     uint32_t initialValue[7] = { 1, 1, 1, 0, 1, 0, 0 };
     mpIndirectArgBuffer_->setBlob(initialValue, 0, sizeof(uint32_t) * 7);
 
-    uint3 tagGroup = { (kSvoMeta.CellNum + g_tagThreads - 1) / g_tagThreads, 1, 1 };
+    uint3 tagGroup = { (kSvoMeta.CellDim.x + g_tagThreads - 1) / g_tagThreads, (kSvoMeta.CellDim.y + g_tagThreads - 1) / g_tagThreads,
+        (kSvoMeta.CellDim.z + g_tagThreads - 1) / g_tagThreads };
 
     for (uint32_t i = 1; i <= kSvoMeta.TotalLevel; ++i) {
         // tag

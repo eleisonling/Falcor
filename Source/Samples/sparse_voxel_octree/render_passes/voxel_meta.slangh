@@ -9,8 +9,8 @@ struct voxel_meta {
     float3 Max = float3(-FLT_MAX);
 };
 
- #define g_avgThreads       1024
- #define g_tagThreads       1024
+ #define g_avgThreads       10
+ #define g_tagThreads       10
  #define g_divideThreads    64
 
  struct svo_meta {

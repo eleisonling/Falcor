@@ -34,13 +34,14 @@ bool is_valid_node(uint32_t nodeData) {
     return (nodeData & g_internalFlag) != 0;
 }
 
-[numthreads(g_avgThreads, 1, 1)]
+[numthreads(g_tagThreads, g_tagThreads, g_tagThreads)]
 void tag_node(uint3 g_threadId : SV_DispatchThreadID){
 
-    if(g_threadId.x >= gSvoMeta.CellNum) return;
-    uint3 cellIndex = extract_index_form_linear(g_threadId.x, gSvoMeta.CellDim);
+    if(g_threadId.x >= gSvoMeta.CellDim.x || g_threadId.y >= gSvoMeta.CellDim.y || g_threadId.z >= gSvoMeta.CellDim.z) return;
+    uint32_t linearIndex = g_threadId.z * gSvoMeta.CellDim.y * gSvoMeta.CellDim.x + g_threadId.y * gSvoMeta.CellDim.x + g_threadId.x;
 
-    uint32_t address = g_threadId.x * 20 + 16;
+    uint3 cellIndex =  g_threadId;
+    uint32_t address = linearIndex * 20 + 16;
     if(gPixelPacked.Load(address) == 0) return;
 
     uint32_t childID = 0;
@@ -57,7 +58,7 @@ void tag_node(uint3 g_threadId : SV_DispatchThreadID){
 
     if(gSvoMeta.CurLevel == gSvoMeta.TotalLevel) {
         // svo node is same as the pixel cell node count
-        gSvoNodeBuffer.Store(curID * 4, set_child_index(g_threadId.x));
+        gSvoNodeBuffer.Store(curID * 4, set_child_index(linearIndex));
     } else {
         gSvoNodeBuffer.InterlockedOr(curID * 4, g_internalFlag); 
     }
