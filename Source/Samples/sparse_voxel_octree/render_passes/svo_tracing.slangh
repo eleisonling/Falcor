@@ -24,7 +24,7 @@ inline void get_node_info(uint32_t parent, uint32_t shift, out uint32_t childNod
 }
 
 inline bool is_valid_node(uint32_t nodeData) {
-    return (nodeData & g_internalFlag) > 0;
+    return (nodeData & g_internalFlag) != 0;
 }
 
 inline bool is_leaf_node(uint32_t nodeData, int32_t scale, int32_t leafLevel) {
@@ -108,29 +108,30 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, RWByteAddressBuffer pix
         // for the [1,2] range and the euqaltion: x = Px + t * dx ==> t = x/dx - Ox/dx 
         // we can caculate the right t time now despite of the positive/negtive direction
         // notice: pos may modified to 1.5
+        // corner means the middle point of t
 		float3 t_corner = pos * t_coef - t_bias;
 		float tc_max = min(min(t_corner.x, t_corner.y), t_corner.z);
 		
+        if (is_leaf_node(childNodeInParent, scale, leafLevel)) {
+            uint32_t pixelCount = 0;
+	        float4 color = get_color(childNodeInParent, pixelPacked, pixelCount);
+            if(pixelCount != 0) {
+                hitInfo.Color = color;
+                hitInfo.IsMissing = false;
+                ray.TMin = t_min;
+                ray.TMax = t_max;
+                return hitInfo;
+            }
+	    }
+
         // check is child is a node
-		if (is_valid_node(childNodeInParent)) {
+		if (is_valid_node(childNodeInParent) && !is_leaf_node(childNodeInParent, scale, leafLevel) && t_min <= t_max) {
 			float tv_max = min(t_max, tc_max);
 			float half_scale = scale_exp2 * 0.5;
+            // center means is the center of min * corner
 			float3 t_center = half_scale * t_coef + t_corner;
 			
 			if (t_min <= tv_max) {
-				if (is_leaf_node(childNodeInParent, scale, leafLevel))
-				{
-                    uint32_t pixelCount = 0;
-					float4 color = get_color(childNodeInParent, pixelPacked, pixelCount);
-                    if(pixelCount != 0) {
-                        hitInfo.Color = color;
-                        hitInfo.IsMissing = false;
-                        ray.TMin = t_min;
-                        ray.TMax = t_max;
-				        return hitInfo;
-                    }
-				}
-
                 // push
 				if (tc_max < h)
 					stack[scale] = int2(parent, asint(t_max));
@@ -153,6 +154,8 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, RWByteAddressBuffer pix
 
         // advance
 		int32_t step_mask = 0;
+        // if t_corner is min than tc_max, we should choose the axis to next
+        // notice: in our [1,2] algorithm pos sub means advance, add means backword 
 		if (t_corner.x <= tc_max) step_mask ^= 1, pos.x -= scale_exp2;
 		if (t_corner.y <= tc_max) step_mask ^= 2, pos.y -= scale_exp2;
 		if (t_corner.z <= tc_max) step_mask ^= 4, pos.z -= scale_exp2;
@@ -161,12 +164,15 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, RWByteAddressBuffer pix
 		idx ^= step_mask;
 
         // pop
+        // index flip & direction is not same, need pop
 		if ((idx & step_mask) != 0)
 		{
 			uint32_t differing_bits = 0;
 			if ((step_mask & 1) != 0) differing_bits |= asint(pos.x) ^ asint(pos.x + scale_exp2);
 			if ((step_mask & 2) != 0) differing_bits |= asint(pos.y) ^ asint(pos.y + scale_exp2);
 			if ((step_mask & 4) != 0) differing_bits |= asint(pos.z) ^ asint(pos.z + scale_exp2);
+            // for some number magic, we can decide parent scale
+            // also can decide the exp2
 			scale = (asint((float)differing_bits) >> 23) - 127;
 			scale_exp2 = asfloat((scale - g_maxLevel + 127) << 23);
 
