@@ -60,6 +60,8 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, RWByteAddressBuffer pix
     if(abs(d.y) < epsilon) d.y = copy_sign_32f(epsilon, d.y);
     if(abs(d.z) < epsilon) d.z = copy_sign_32f(epsilon, d.z);
 
+    d = normalize(d);
+
     // change range to [1,2] means we can easy to handle positive and negtive ray directions 
     // x = Px + t * dx ==> t = x/dx - Ox/dx 
 	float3 t_coef = 1.0 / -abs(d);
