@@ -11,11 +11,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="render_passes\pcf_shadow_pass.cpp" />
     <ClCompile Include="render_passes\projection_debug_pass.cpp" />
     <ClCompile Include="render_passes\volumetric_pass.cpp" />
     <ClCompile Include="sparse_voxel_octree.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="render_passes\pcf_shadow_pass.h" />
     <ClInclude Include="render_passes\projection_debug_pass.h" />
     <ClInclude Include="render_passes\projection_debug_meta.slangh" />
     <ClInclude Include="render_passes\volumetric_pass.h" />

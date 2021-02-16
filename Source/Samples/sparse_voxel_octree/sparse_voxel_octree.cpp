@@ -57,6 +57,9 @@ void sparse_voxel_octree::onGuiRender(Gui* pGui) {
 
     if (mpScene_) mpScene_->renderUI(w);
 
+    auto shadowGroup = Gui::Group(pGui, "ShadowPass");
+    mpShadow_->on_gui_render(shadowGroup);
+
     auto projectionDebugGroup = Gui::Group(pGui, "Projection Debug");
     if (projectionDebugGroup.open()) {
         mpDeubgProjection_->on_gui_render(projectionDebugGroup);
@@ -94,16 +97,19 @@ void sparse_voxel_octree::onLoad(RenderContext* pRenderContext) {
     mpRasterPass_ = RasterScenePass::create(mpScene_, kRasterProg, "", "main");
     mpDeubgProjection_ = projection_debug_pass::create(mpScene_);
     mpVolumetric_ = volumetric_pass::create(mpScene_);
+    mpShadow_ = pcf_shadow_pass::create(mpScene_);
 }
 
 void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
     const float4 clearColor(0.f, 0.f, 0.f, 1);
     pRenderContext->clearFbo(pTargetFbo.get(), clearColor, 1.0f, 0, FboAttachmentType::All);
+    pRenderContext->clearFbo(mpSceneFbo_.get(), clearColor, 1.0f, 0, FboAttachmentType::All);
+
     if (mpScene_) {
         mpScene_->update(pRenderContext, gpFramework->getGlobalClock().getTime());
 
         if (mpVolumetric_->need_refresh()) {
-            mpVolumetric_->volumetric_scene(pRenderContext, pTargetFbo);
+            mpVolumetric_->volumetric_scene(pRenderContext, mpSceneFbo_);
         }
 
         switch ((final_output_type)finalOutputType_)
@@ -116,7 +122,11 @@ void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo
             break;
         case final_output_type::defulat_type:
         default:
-            mpRasterPass_->renderScene(pRenderContext, pTargetFbo);
+            if (mpShadow_->refresh_rebuild()) {
+                mpShadow_->generate_shadowmap(pRenderContext);
+            }
+            mpRasterPass_->renderScene(pRenderContext, mpSceneFbo_);
+            mpShadow_->deferred_apply(pRenderContext, pTargetFbo);
             break;
         }
     }
@@ -127,6 +137,7 @@ void sparse_voxel_octree::onShutdown() {
     mpDeubgProjection_ = nullptr;
     mpVolumetric_ = nullptr;
     mpScene_ = nullptr;
+    mpSceneFbo_ = nullptr;
 }
 
 bool sparse_voxel_octree::onKeyEvent(const KeyboardEvent& keyEvent) {
@@ -147,6 +158,8 @@ void sparse_voxel_octree::onHotReload(HotReloadFlags reloaded) {
 }
 
 void sparse_voxel_octree::onResizeSwapChain(uint32_t width, uint32_t height) {
+    const auto& bkFbo = gpDevice->getSwapChainFbo();
+    mpSceneFbo_ = Fbo::create2D(width, height, bkFbo->getDesc());
 }
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd) {

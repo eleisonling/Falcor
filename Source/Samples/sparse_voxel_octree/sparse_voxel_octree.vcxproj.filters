@@ -8,6 +8,9 @@
     <ClCompile Include="render_passes\projection_debug_pass.cpp">
       <Filter>render_passes</Filter>
     </ClCompile>
+    <ClCompile Include="render_passes\pcf_shadow_pass.cpp">
+      <Filter>render_passes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sparse_voxel_octree.h" />
@@ -18,6 +21,9 @@
       <Filter>render_passes</Filter>
     </ClInclude>
     <ClInclude Include="render_passes\projection_debug_meta.slangh">
+      <Filter>render_passes</Filter>
+    </ClInclude>
+    <ClInclude Include="render_passes\pcf_shadow_pass.h">
       <Filter>render_passes</Filter>
     </ClInclude>
   </ItemGroup>

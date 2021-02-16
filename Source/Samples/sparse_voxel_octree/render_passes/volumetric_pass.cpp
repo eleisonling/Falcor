@@ -66,11 +66,11 @@ void volumetric_pass::volumetric_scene(RenderContext* pContext, const Fbo::Share
         (kVoxelMeta.CellDim.z + g_avgThreads - 1) / g_avgThreads };
     pContext->dispatch(mpPixelAvgState_.get(), mpPixelAvgVars_.get(), group);
 
-    build_svo(pContext, pDstFbo);
+    build_svo(pContext);
     needRefresh_ = false;
 }
 
-void volumetric_pass::build_svo(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
+void volumetric_pass::build_svo(RenderContext* pContext) {
 
     PROFILE("build svo");
     pContext->clearUAV(mpSVONodeBuffer_->getUAV().get(), uint4{ 0, 0, 0, 0 });
@@ -175,7 +175,7 @@ volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::
 
     create_svo_shaders(programDefines);
 
-    rebuild_debug_drawbuffers(debugVolProgDesc, programDefines);
+    rebuild_debug_vol_resources(debugVolProgDesc, programDefines);
     fixture_cell_size();
     rebuild_pixel_data_buffers();
     rebuild_svo_buffers();
@@ -283,7 +283,7 @@ void volumetric_pass::rebuild_svo_buffers() {
     mpSvoDebugTracingData_ = Buffer::create(sizeof(float) * 6);
 }
 
-void volumetric_pass::rebuild_debug_drawbuffers(const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines) {
+void volumetric_pass::rebuild_debug_vol_resources(const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines) {
     // create debug program
     auto pDebugProg = GraphicsProgram::create(debugVolProgDesc, programDefines);
     mpDebugState_ = GraphicsState::create();
