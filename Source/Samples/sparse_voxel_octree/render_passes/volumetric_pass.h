@@ -35,7 +35,7 @@ private:
     // pixel volumetric vars
     bool needRefresh_ = true;
     bool rebuildBuffer_ = false;
-    float cellSize_ = 1.0f;
+    float cellSize_ = 10.0f;
 
     // sparse Oct-tree builder
     Buffer::SharedPtr mpSVONodeBuffer_ = nullptr;

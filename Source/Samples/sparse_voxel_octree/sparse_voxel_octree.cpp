@@ -32,7 +32,7 @@ uint32_t mSampleGuiPositionX = 20;
 uint32_t mSampleGuiPositionY = 40;
 
 namespace {
-    static const std::string kDefaultScene = "Arcade/Arcade.pyscene";
+    static const std::string kDefaultScene = "sponza/sponza.pyscene";
     static const std::string kRasterProg = "Samples/ModelViewer/ModelViewer.ps.slang";
 
     enum class final_output_type {
@@ -54,6 +54,8 @@ namespace {
 void sparse_voxel_octree::onGuiRender(Gui* pGui) {
     Gui::Window w(pGui, "sparse voxel octree", { 250, 200 });
     gpFramework->renderGlobalUI(pGui);
+
+    if (mpScene_) mpScene_->renderUI(w);
 
     auto projectionDebugGroup = Gui::Group(pGui, "Projection Debug");
     if (projectionDebugGroup.open()) {
