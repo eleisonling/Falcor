@@ -18,9 +18,7 @@ SamplerState g_texSampler;
 float4 load_position(float2 uv)
 {
     float depth = g_sceneDepth.SampleLevel(g_texSampler, uv, 0).r;
-    float2 invSize = 1.0f / g_screen_dimension.xy;
-    // Recompute position by unprojecting the depth stored in the z-buffer 
-    float2 ndc = 2 * uv + invSize - 1;
+    float2 ndc = 2 * uv - 1;
 #ifdef FALCOR_D3D
     ndc.y = -ndc.y;
 #endif
@@ -37,7 +35,7 @@ float fixed_size_pcf(float2 texC, float depthRef) {
 float4 main(float2 texC : TEXCOORD, float4 posS : SV_POSITION) : SV_TARGET  {
     float4 posW = load_position(texC);
     float4 lightposH = mul(posW, g_shadow_matrix);
-    lightposH.z /= lightposH.w;
+    lightposH /= lightposH.w;
 
     float factor = fixed_size_pcf(lightposH.xy, lightposH.z);
     float4 finalColor = g_sceneColor.Sample(g_texSampler, texC);
