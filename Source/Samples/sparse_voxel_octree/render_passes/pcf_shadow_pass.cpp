@@ -23,6 +23,12 @@ pcf_shadow_pass::pcf_shadow_pass(const Scene::SharedPtr& pScene, const Program::
     desc.setComparisonMode(Sampler::ComparisonMode::LessEqual);
     mpPCFSampler_ = Sampler::create(desc);
 
+
+    RasterizerState::Desc rasterDesc{};
+    rasterDesc.setDepthBias(100000, 1.0);
+    auto rasterState = RasterizerState::create(rasterDesc);
+    mpState->setRasterizerState(rasterState);
+
     rebuild_shadowmap_buffers();
 }
 
@@ -87,7 +93,7 @@ void pcf_shadow_pass::generate_shadowmap(RenderContext* pContext) {
     mpVars->setParameterBlock("gScene", mpScene_->getParameterBlock());
     pContext->clearFbo(mpShadowMap_.get(), { 0, 0, 0, 0}, 1, 0, FboAttachmentType::All);
     mpState->setFbo(mpShadowMap_);
-    mpScene_->rasterize(pContext, mpState.get(), mpVars.get());
+    mpScene_->rasterize(pContext, mpState.get(), mpVars.get(), Scene::RenderFlags::UserRasterizerState);
 }
 
 void pcf_shadow_pass::deferred_apply(RenderContext* pContext,const Fbo::SharedPtr& pSceneFbo, const Fbo::SharedPtr& pDstFbo) {
