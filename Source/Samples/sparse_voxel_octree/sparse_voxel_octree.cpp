@@ -33,7 +33,7 @@ uint32_t mSampleGuiPositionY = 40;
 
 namespace {
     static const std::string kDefaultScene = "Arcade/Arcade.pyscene";
-    static const std::string kRasterProg = "Samples/sparse_voxel_octree/render_passes/scene.ps.slang";
+    static const std::string kRasterProg = "Samples/sparse_voxel_octree/render_passes/lighting.ps.slang";
 
     enum class final_output_type {
         defulat_type,
@@ -125,6 +125,7 @@ void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo
             if (mpShadow_->refresh_rebuild()) {
                 mpShadow_->generate_shadowmap(pRenderContext);
             }
+
             mpRasterPass_->renderScene(pRenderContext, mpSceneFbo_);
             mpShadow_->deferred_apply(pRenderContext, mpSceneFbo_, pTargetFbo);
             break;

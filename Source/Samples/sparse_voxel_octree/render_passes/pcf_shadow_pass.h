@@ -4,11 +4,12 @@
 using namespace Falcor;
 
 class pcf_shadow_pass : public BaseGraphicsPass, public std::enable_shared_from_this<pcf_shadow_pass> {
+public:
     pcf_shadow_pass(const Scene::SharedPtr& pScene, const Program::Desc& genMapProgDesc, Program::DefineList& programDefines);
     void rebuild_shadowmap_buffers();
     void rebuild_shadow_matrix(float3 lightDir, const AABB& bounds);
     uint2 mpSize_ = uint2(2048, 2048);
-    float2 pcf_kernel_size_ = { 2.0f, 2.0f };
+    int2 pcf_kernel_size_ = { 2, 2 };
     Scene::SharedPtr mpScene_ = nullptr;
     Fbo::SharedPtr mpShadowMap_ = nullptr;
     bool smChanged_ = false;

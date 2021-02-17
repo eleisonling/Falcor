@@ -51,9 +51,7 @@ void pcf_shadow_pass::rebuild_shadow_matrix(float3 lightDir, const AABB& bounds)
     }
 
     lightViewProj_ = lightProj * lightView;
-    float4x4 affine = glm::scale(glm::identity<float4x4>(), { 0.5f, 0.5f, 1.f });
-    affine = glm::translate(affine, { 0.5f, 0.5f, 0.0f });
-    shadowMatrix_ = affine * lightViewProj_;
+    shadowMatrix_ = lightViewProj_;
 }
 
 pcf_shadow_pass::~pcf_shadow_pass() {
@@ -105,6 +103,7 @@ void pcf_shadow_pass::deferred_apply(RenderContext* pContext,const Fbo::SharedPt
     var["CB"]["g_pcf_kernel_size"] = pcf_kernel_size_;
     var["CB"]["g_shadow_matrix"] = shadowMatrix_;
     var["CB"]["g_screen_dimension"] = float2{ pSceneFbo->getWidth(), pSceneFbo->getHeight() };
+    var["CB"]["g_shadowmap_dimension"] = mpSize_;
     mpApplyPass_->execute(pContext, pDstFbo);
 }
 

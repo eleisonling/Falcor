@@ -3,8 +3,9 @@ import Scene.Raster;
 
 cbuffer CB {
     float4x4 g_shadow_matrix;
-    float2 g_pcf_kernel_size;
+    int2 g_pcf_kernel_size;
     float2 g_screen_dimension;
+    uint2 g_shadowmap_dimension;
 }
 
 
@@ -27,9 +28,20 @@ float4 load_position(float2 uv)
 }
 
 float fixed_size_pcf(float2 texC, float depthRef) {
+
+    float2 pixelSize = 1.0 / float2(g_shadowmap_dimension.xy);
     float res = 0;
-    res = g_shadowMap.SampleCmpLevelZero(g_pcfSampler, texC, depthRef).r;
-    return res;
+
+    int2 halfKernelSize = g_pcf_kernel_size / 2;
+    for(int i = -halfKernelSize.x; i <= halfKernelSize.x; i++)
+    {
+        for(int j = -halfKernelSize.y; j <= halfKernelSize.y; j++)
+        {
+            float2 sampleCrd = texC + float2(i, j) * pixelSize;
+            res += g_shadowMap.SampleCmpLevelZero(g_pcfSampler, sampleCrd, depthRef).r;
+        }
+    }
+    return res / (g_pcf_kernel_size.x * g_pcf_kernel_size.y);
 }
 
 float4 main(float2 texC : TEXCOORD, float4 posS : SV_POSITION) : SV_TARGET  {
@@ -37,9 +49,9 @@ float4 main(float2 texC : TEXCOORD, float4 posS : SV_POSITION) : SV_TARGET  {
     float4 lightposH = mul(posW, g_shadow_matrix);
     lightposH /= lightposH.w;
 
-    float factor = fixed_size_pcf(lightposH.xy, lightposH.z);
+    float factor = fixed_size_pcf(lightposH.xy * float2(0.5, -0.5) + 0.5, lightposH.z);
     float4 finalColor = g_sceneColor.Sample(g_texSampler, texC);
-    finalColor = lerp(finalColor, float4(0,0,0,0), factor);
+    finalColor = lerp(float4(0,0,0,1), finalColor, factor);
 
     return finalColor;
 }

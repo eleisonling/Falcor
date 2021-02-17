@@ -59,7 +59,7 @@
     </ShaderSource>
     <ShaderSource Include="render_passes\deferred_apply.slang" />
     <ShaderSource Include="render_passes\gen_shadowmap.slang" />
-    <ShaderSource Include="render_passes\scene.ps.slang">
+    <ShaderSource Include="render_passes\lighting.ps.slang">
       <Filter>render_passes</Filter>
     </ShaderSource>
   </ItemGroup>
