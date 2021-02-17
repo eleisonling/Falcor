@@ -33,6 +33,29 @@ void pcf_shadow_pass::rebuild_shadowmap_buffers() {
     smChanged_ = true;
 }
 
+void pcf_shadow_pass::rebuild_shadow_matrix(float3 lightDir, const AABB& bounds) {
+    float3 up = glm::normalize(glm::cross(glm::cross(cachedMainLightDir_, { 0,1,0 }), cachedMainLightDir_));
+    float4x4 lightView = glm::lookAt(bounds.center() - bounds.radius() * cachedMainLightDir_, bounds.center(), up);
+    float3 viewMax = lightView * float4(bounds.maxPoint, 1.0f);
+    float3 viewMin = lightView * float4(bounds.minPoint, 1.0f);
+    float hWidth = glm::abs(viewMax - viewMin).x / 2.0f;
+    float hHeight = glm::abs(viewMax - viewMin).y / 2.0f;
+
+    float4x4 lightProj = {};
+    if (hWidth > hHeight) {
+        float scale = (float)mpSize_.y / (float)mpSize_.x;
+        lightProj = glm::ortho(-hWidth, hWidth, -hWidth * scale, hWidth * scale, 0.1f, 4.0f * bounds.radius());
+    } else {
+        float scale = (float)mpSize_.x / (float)mpSize_.y;
+        lightProj = glm::ortho(-hHeight * scale, hHeight * scale, -hHeight, hHeight, 0.1f, 4.0f * bounds.radius());
+    }
+
+    lightViewProj_ = lightProj * lightView;
+    float4x4 affine = glm::scale(glm::identity<float4x4>(), { 0.5f, 0.5f, 1.f });
+    affine = glm::translate(affine, { 0.5f, 0.5f, 0.0f });
+    shadowMatrix_ = affine * lightViewProj_;
+}
+
 pcf_shadow_pass::~pcf_shadow_pass() {
     mpScene_ = nullptr;
     mpShadowMap_ = nullptr;
@@ -80,7 +103,7 @@ void pcf_shadow_pass::deferred_apply(RenderContext* pContext,const Fbo::SharedPt
     var["g_texSampler"] = mpTextureSampler_;
     var["g_pcfSampler"] = mpPCFSampler_;
     var["CB"]["g_pcf_kernel_size"] = pcf_kernel_size_;
-    var["CB"]["g_light_view_proj"] = lightViewProj_;
+    var["CB"]["g_shadow_matrix"] = shadowMatrix_;
     var["CB"]["g_screen_dimension"] = float2{ pSceneFbo->getWidth(), pSceneFbo->getHeight() };
     mpApplyPass_->execute(pContext, pDstFbo);
 }
@@ -104,17 +127,10 @@ bool pcf_shadow_pass::refresh_rebuild() {
     }
 
     needRefresh |= smChanged_;
-    //smChanged_ = false;
+    smChanged_ = false;
 
     if (needRefresh) {
-        float3 up = glm::normalize(glm::cross(glm::cross(cachedMainLightDir_, {0,1,0}), cachedMainLightDir_));
-        lightView = glm::lookAt(bounds.center() - bounds.radius() * cachedMainLightDir_, bounds.center(), up);
-        float3 viewMax = lightView * float4(bounds.maxPoint, 1.0f);
-        float3 viewMin = lightView * float4(bounds.minPoint, 1.0f);
-        float hWidth = glm::abs(viewMax - viewMin).x / 2.0f;
-        float hHeight = glm::abs(viewMax - viewMin).y / 2.0f;
-        lightProj = glm::ortho(-hWidth, hWidth,-hHeight, hHeight,0.1f, 4.0f * bounds.radius());
-        lightViewProj_ = lightProj * lightView;
+        rebuild_shadow_matrix(cachedMainLightDir_, bounds);
     }
 
     return needRefresh;

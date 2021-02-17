@@ -32,8 +32,8 @@ uint32_t mSampleGuiPositionX = 20;
 uint32_t mSampleGuiPositionY = 40;
 
 namespace {
-    static const std::string kDefaultScene = "sponza/sponza.pyscene";
-    static const std::string kRasterProg = "Samples/ModelViewer/ModelViewer.ps.slang";
+    static const std::string kDefaultScene = "Arcade/Arcade.pyscene";
+    static const std::string kRasterProg = "Samples/sparse_voxel_octree/render_passes/scene.ps.slang";
 
     enum class final_output_type {
         defulat_type,
