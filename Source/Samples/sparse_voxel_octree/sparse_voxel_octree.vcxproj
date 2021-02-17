@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -32,6 +32,8 @@
     <ShaderSource Include="render_passes\build_svo.cs.slang" />
     <ShaderSource Include="render_passes\debug_svo.ps.slang" />
     <ShaderSource Include="render_passes\debug_volumetric.slang" />
+    <ShaderSource Include="render_passes\deferred_apply.slang" />
+    <ShaderSource Include="render_passes\gen_shadowmap.slang" />
     <ShaderSource Include="render_passes\pixel_avg.cs.slang" />
     <ShaderSource Include="render_passes\projection_debug.slang" />
     <ShaderSource Include="render_passes\svo_tracing.slangh" />

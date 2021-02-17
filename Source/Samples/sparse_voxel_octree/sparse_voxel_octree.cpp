@@ -126,7 +126,7 @@ void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo
                 mpShadow_->generate_shadowmap(pRenderContext);
             }
             mpRasterPass_->renderScene(pRenderContext, mpSceneFbo_);
-            mpShadow_->deferred_apply(pRenderContext, pTargetFbo);
+            mpShadow_->deferred_apply(pRenderContext, mpSceneFbo_, pTargetFbo);
             break;
         }
     }
