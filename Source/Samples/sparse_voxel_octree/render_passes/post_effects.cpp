@@ -14,7 +14,15 @@ post_effects::post_effects(const Program::DefineList& programDefines) {
 void post_effects::create_bloom_resource(const Program::DefineList& programDefines) {
     mpExtractAndDownsample_ = ComputePass::create(kBloomProg, "extract_and_downsample", programDefines);
     mpDownSample_ = ComputePass::create(kBloomProg, "down_sample", programDefines);
+    mpBlur_ = ComputePass::create(kBloomProg, "blur", programDefines);
+    mpUpBlur_ = ComputePass::create(kBloomProg, "up_blur", programDefines);
     mpExposure_ = Buffer::createStructured(sizeof(exposure_meta), 1);
+
+    Sampler::Desc desc = {};
+    desc.setFilterMode(Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Filter::Point)
+        .setAddressingMode(Sampler::AddressMode::Border, Sampler::AddressMode::Border, Sampler::AddressMode::Border)
+        .setBorderColor({ 0.0f,0.0f,0.0f,0.0f });
+    mpUpBlurSample_ = Sampler::create(desc);
 }
 
 void post_effects::rebuild_bloom_buffers(uint32_t width, uint32_t height) {
@@ -62,7 +70,31 @@ void post_effects::do_bloom(RenderContext* pContext, const Sampler::SharedPtr& t
         mpDownSample_->execute(pContext, uint3{ mpBloomUAV1_[0]->getWidth() / 2, mpBloomUAV1_[0]->getHeight() / 2, 1 });
     }
 
+    // blur
+    {
+        mpBlur_->getVars()["g_blurInput"] = mpBloomUAV5_[0];
+        mpBlur_->getVars()["g_blurResult"] = mpBloomUAV5_[1];
+        mpBlur_->execute(pContext, mpBloomUAV5_[0]->getWidth(), mpBloomUAV5_[0]->getHeight(), 1);
+    }
+    // up blur
+    {
+        do_bloom_up_blur(pContext, mpBloomUAV4_[1], mpBloomUAV4_[0], mpBloomUAV5_[1]);
+        do_bloom_up_blur(pContext, mpBloomUAV3_[1], mpBloomUAV3_[0], mpBloomUAV4_[1]);
+        do_bloom_up_blur(pContext, mpBloomUAV2_[1], mpBloomUAV2_[0], mpBloomUAV3_[1]);
+        do_bloom_up_blur(pContext, mpBloomUAV1_[1], mpBloomUAV1_[0], mpBloomUAV2_[1]);
+    }
+
     curIndx_ = (curIndx_ + 1) % 2;
+}
+
+void post_effects::do_bloom_up_blur(RenderContext* pContext, const Texture::SharedPtr& target, const Texture::SharedPtr& highSource, const Texture::SharedPtr& lowSource) {
+    mpUpBlur_->getVars()["g_higherResBuf"] = highSource;
+    mpUpBlur_->getVars()["g_lowerResBuf"] = lowSource;
+    mpUpBlur_->getVars()["g_upBlurResult"] = target;
+    mpUpBlur_->getVars()["g_linearBorder"] = mpUpBlurSample_;
+    mpUpBlur_->getVars()["CB"]["g_inverseOutputSize"] = float2(1.0f / target->getWidth(), 1.0f / target->getHeight());
+    mpUpBlur_->getVars()["CB"]["g_upsampleBlendFactor"] = upSampleBlendFactor_;
+    mpUpBlur_->execute(pContext, { target->getWidth(), target->getHeight(), 1 });
 }
 
 post_effects::~post_effects() {
@@ -81,6 +113,9 @@ post_effects::~post_effects() {
         mpLumaResult_ = nullptr;
         mpExtractAndDownsample_ = nullptr;
         mpDownSample_ = nullptr;
+        mpBlur_ = nullptr;
+        mpUpBlur_ = nullptr;
+        mpUpBlurSample_ = nullptr;
     }
     mpPingpongBuffer_[0] = nullptr;
     mpPingpongBuffer_[1] = nullptr;
@@ -110,6 +145,7 @@ post_effects::SharedPtr post_effects::create(const Program::DefineList& programD
 void post_effects::on_gui_render(Gui::Group& group) {
     group.var("Exposure", exposure_, -8.0f, 8.0f, 0.25f);
     group.var("Threshold", bloomThreshold_, 0.0f, 8.0f, 0.25f);
+    group.var("UpSampleBlendFactor", upSampleBlendFactor_, 0.0f, 1.0f, 0.05f);
 }
 
 void post_effects::on_execute(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& texSampler) {

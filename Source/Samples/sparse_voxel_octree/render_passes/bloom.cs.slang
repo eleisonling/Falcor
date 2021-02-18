@@ -10,6 +10,7 @@ RWTexture2D<uint32_t> g_lumaResult;
 cbuffer CB {
     float2 g_inverseOutputSize;
     float g_bloomThreshold;
+    float g_upsampleBlendFactor;
 }
 
 [numthreads(8, 8, 1)]
@@ -154,7 +155,7 @@ void blur_horizontally( uint32_t outIndex, uint32_t leftMostIndex )
     store_pixel(outIndex+1, blur_pixels(s1, s2, s3, s4, s5, s6, s7, s8, s9));
 }
 
-void blur_vertically( uint2 pixelCoord, uint32_t topMostIndex )
+void blur_vertically( uint2 pixelCoord, uint32_t topMostIndex, RWTexture2D<float3> blurResult)
 {
     float3 s0, s1, s2, s3, s4, s5, s6, s7, s8;
     load_pixel( topMostIndex   , s0 );
@@ -167,7 +168,7 @@ void blur_vertically( uint2 pixelCoord, uint32_t topMostIndex )
     load_pixel( topMostIndex+56, s7 );
     load_pixel( topMostIndex+64, s8 );
 
-    g_blurResult[pixelCoord] = blur_pixels(s0, s1, s2, s3, s4, s5, s6, s7, s8);
+    blurResult[pixelCoord] = blur_pixels(s0, s1, s2, s3, s4, s5, s6, s7, s8);
 }
 
 [numthreads(8, 8, 1)]
@@ -184,5 +185,38 @@ void blur(uint3 Gid : SV_GroupID, uint32_t3 GTid : SV_GroupThreadID, uint32_t3 D
     blur_horizontally(row + (GTid.x << 1), row + GTid.x + (GTid.x & 4));
     GroupMemoryBarrierWithGroupSync();
 
-    blur_vertically(DTid.xy, (GTid.y << 3) + GTid.x);
+    blur_vertically(DTid.xy, (GTid.y << 3) + GTid.x, g_blurResult);
+}
+
+Texture2D<float3> g_higherResBuf;
+Texture2D<float3> g_lowerResBuf;
+SamplerState g_linearBorder;
+RWTexture2D<float3> g_upBlurResult;
+
+[numthreads(8, 8, 1)]
+void up_blur(uint3 Gid : SV_GroupID, uint32_t3 GTid : SV_GroupThreadID, uint32_t3 DTid : SV_DispatchThreadID){
+
+    int2 groupUL = (Gid.xy << 3) - 4;
+    int2 threadUL = (GTid.xy << 1) + groupUL;       
+
+    float2 uvUL = (float2(threadUL) + 0.5) * g_inverseOutputSize;
+    float2 uvLR = uvUL + g_inverseOutputSize;
+    float2 uvUR = float2(uvLR.x, uvUL.y);
+    float2 uvLL = float2(uvUL.x, uvLR.y);
+    int destIdx = GTid.x + (GTid.y << 4);
+
+    float3 pixel1a = lerp(g_higherResBuf[threadUL + uint2(0, 0)], g_lowerResBuf.SampleLevel(g_linearBorder, uvUL, 0.0f), g_upsampleBlendFactor);
+    float3 pixel1b = lerp(g_higherResBuf[threadUL + uint2(1, 0)], g_lowerResBuf.SampleLevel(g_linearBorder, uvUR, 0.0f), g_upsampleBlendFactor);
+    store_2_pixels(destIdx+0, pixel1a, pixel1b);
+
+    float3 pixel2a = lerp(g_higherResBuf[threadUL + uint2(0, 1)], g_lowerResBuf.SampleLevel(g_linearBorder, uvLL, 0.0f), g_upsampleBlendFactor);
+    float3 pixel2b = lerp(g_higherResBuf[threadUL + uint2(1, 1)], g_lowerResBuf.SampleLevel(g_linearBorder, uvLR, 0.0f), g_upsampleBlendFactor);
+    store_2_pixels(destIdx+8, pixel2a, pixel2b);
+    GroupMemoryBarrierWithGroupSync();
+
+    uint row = GTid.y << 4;
+    blur_horizontally(row + (GTid.x << 1), row + GTid.x + (GTid.x & 4));
+    GroupMemoryBarrierWithGroupSync();
+
+    blur_vertically(DTid.xy, (GTid.y << 3) + GTid.x, g_upBlurResult);
 }

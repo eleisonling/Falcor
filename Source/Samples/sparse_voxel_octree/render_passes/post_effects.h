@@ -13,6 +13,7 @@ class post_effects : public std::enable_shared_from_this<post_effects> {
     const float initialMinLog_ = -12.0f;
     const float initialMaxLog_ = 4.0f;
     float bloomThreshold_ = 4.0f;
+    float upSampleBlendFactor_ = 0.65f;
     Texture::SharedPtr mpBloomUAV1_[2] = {};
     Texture::SharedPtr mpBloomUAV2_[2] = {};
     Texture::SharedPtr mpBloomUAV3_[2] = {};
@@ -22,11 +23,15 @@ class post_effects : public std::enable_shared_from_this<post_effects> {
     Buffer::SharedPtr mpExposure_ = nullptr;
     ComputePass::SharedPtr mpExtractAndDownsample_ = nullptr;
     ComputePass::SharedPtr mpDownSample_ = nullptr;
+    ComputePass::SharedPtr mpBlur_ = nullptr;
+    ComputePass::SharedPtr mpUpBlur_ = nullptr;
+    Sampler::SharedPtr mpUpBlurSample_ = nullptr;
 
     void create_bloom_resource(const Program::DefineList& programDefines);
     void rebuild_bloom_buffers(uint32_t width, uint32_t height);
 
     void do_bloom(RenderContext* pContext, const Sampler::SharedPtr& texSampler);
+    void do_bloom_up_blur(RenderContext* pContext, const Texture::SharedPtr& target, const Texture::SharedPtr& highSource, const Texture::SharedPtr& lowSource);
     void do_tone_mapping();
     void update_exporsure();
     void do_present();
