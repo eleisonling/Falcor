@@ -21,18 +21,5 @@ float4 main(float2 texC : TEXCOORD, float4 posS : SV_POSITION) : SV_TARGET {
 
     tracing_result hitInfo = trace_sparse_voxel_ray(ray, gPixelPacked, gSvoNodeBuffer, gSvoMeta.TotalLevel);
 
-    // debuging
-    if(launchIndex.x == 960 && launchIndex.y == 540){
-    
-        float3 viewDir = mul(ray.Direction, float3x3(gScene.camera.data.viewMat));
-
-        gDebugTracingData.Store(0, asuint(ray.Origin.x)); 
-        gDebugTracingData.Store(4, asuint(ray.Origin.y)); 
-        gDebugTracingData.Store(8, asuint(ray.Origin.z)); 
-        gDebugTracingData.Store(12, asuint(viewDir.x)); 
-        gDebugTracingData.Store(16, asuint(viewDir.y)); 
-        gDebugTracingData.Store(20, asuint(viewDir.z)); 
-    }
-
     return hitInfo.Color;
 }
