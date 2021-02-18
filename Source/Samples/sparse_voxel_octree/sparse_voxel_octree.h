@@ -54,5 +54,5 @@ private:
     volumetric_pass::SharedPtr mpVolumetric_ = nullptr;
     pcf_shadow_pass::SharedPtr mpShadow_ = nullptr;
     uint32_t finalOutputType_ = 0;
-    Fbo::SharedPtr mpSceneFbo_ = nullptr;
+    Fbo::SharedPtr mpGBufferFbo_ = nullptr;
 };

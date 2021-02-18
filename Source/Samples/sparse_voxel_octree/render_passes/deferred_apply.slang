@@ -16,8 +16,7 @@ Texture2D g_sceneDepth;
 SamplerComparisonState g_pcfSampler;
 SamplerState g_texSampler;
 
-float4 load_position(float2 uv)
-{
+float4 load_position(float2 uv) {
     float depth = g_sceneDepth.SampleLevel(g_texSampler, uv, 0).r;
     float2 ndc = 2 * uv - 1;
 #ifdef FALCOR_D3D
@@ -33,10 +32,8 @@ float fixed_size_pcf(float2 texC, float depthRef) {
     float res = 0;
 
     int2 halfKernelSize = g_pcf_kernel_size / 2;
-    for(int i = -halfKernelSize.x; i <= halfKernelSize.x; i++)
-    {
-        for(int j = -halfKernelSize.y; j <= halfKernelSize.y; j++)
-        {
+    for(int i = -halfKernelSize.x; i <= halfKernelSize.x; i++) {
+        for(int j = -halfKernelSize.y; j <= halfKernelSize.y; j++) {
             float2 sampleCrd = texC + float2(i, j) * pixelSize;
             res += g_shadowMap.SampleCmpLevelZero(g_pcfSampler, sampleCrd, depthRef).r;
         }
