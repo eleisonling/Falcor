@@ -96,3 +96,93 @@ void down_sample(uint32_t groupId : SV_GroupIndex, uint3 g_threadId : SV_Dispatc
     }
 }
 
+
+Texture2D<float3> g_blurInput;
+RWTexture2D<float3> g_blurResult;
+
+
+groupshared uint32_t g_cacheR[128];
+groupshared uint32_t g_cacheG[128];
+groupshared uint32_t g_cacheB[128];
+
+
+static const float g_weights[5] = { 70.0f / 256.0f, 56.0f / 256.0f, 28.0f / 256.0f, 8.0f / 256.0f, 1.0f / 256.0f };
+
+float3 blur_pixels( float3 a, float3 b, float3 c, float3 d, float3 e, float3 f, float3 g, float3 h, float3 i )
+{
+    return g_weights[0]*e + g_weights[1]*(d+f) + g_weights[2]*(c+g) + g_weights[3]*(b+h) + g_weights[4]*(a+i);
+}
+
+void store_2_pixels(uint32_t index, float3 pixel1, float3 pixel2) {
+    g_cacheR[index] = f32tof16(pixel1.r) | f32tof16(pixel2.r) << 16;
+    g_cacheG[index] = f32tof16(pixel1.g) | f32tof16(pixel2.g) << 16;
+    g_cacheB[index] = f32tof16(pixel1.b) | f32tof16(pixel2.b) << 16;
+}
+
+void load_2_pixels( uint32_t index, out float3 pixel1, out float3 pixel2 )
+{
+    uint32_t rr = g_cacheR[index];
+    uint32_t gg = g_cacheG[index];
+    uint32_t bb = g_cacheB[index];
+    pixel1 = float3( f16tof32(rr      ), f16tof32(gg      ), f16tof32(bb      ) );
+    pixel2 = float3( f16tof32(rr >> 16), f16tof32(gg >> 16), f16tof32(bb >> 16) );
+}
+
+void store_pixel( uint32_t index, float3 pixel )
+{
+    g_cacheR[index] = asuint(pixel.r);
+    g_cacheG[index] = asuint(pixel.g);
+    g_cacheB[index] = asuint(pixel.b);
+}
+
+void load_pixel( uint32_t index, out float3 pixel )
+{
+    pixel = asfloat( uint3(g_cacheR[index], g_cacheG[index], g_cacheB[index]) );
+}
+
+
+void blur_horizontally( uint32_t outIndex, uint32_t leftMostIndex )
+{
+    float3 s0, s1, s2, s3, s4, s5, s6, s7, s8, s9;
+    load_2_pixels( leftMostIndex + 0, s0, s1 );
+    load_2_pixels( leftMostIndex + 1, s2, s3 );
+    load_2_pixels( leftMostIndex + 2, s4, s5 );
+    load_2_pixels( leftMostIndex + 3, s6, s7 );
+    load_2_pixels( leftMostIndex + 4, s8, s9 );
+    
+    store_pixel(outIndex  , blur_pixels(s0, s1, s2, s3, s4, s5, s6, s7, s8));
+    store_pixel(outIndex+1, blur_pixels(s1, s2, s3, s4, s5, s6, s7, s8, s9));
+}
+
+void blur_vertically( uint2 pixelCoord, uint32_t topMostIndex )
+{
+    float3 s0, s1, s2, s3, s4, s5, s6, s7, s8;
+    load_pixel( topMostIndex   , s0 );
+    load_pixel( topMostIndex+ 8, s1 );
+    load_pixel( topMostIndex+16, s2 );
+    load_pixel( topMostIndex+24, s3 );
+    load_pixel( topMostIndex+32, s4 );
+    load_pixel( topMostIndex+40, s5 );
+    load_pixel( topMostIndex+48, s6 );
+    load_pixel( topMostIndex+56, s7 );
+    load_pixel( topMostIndex+64, s8 );
+
+    g_blurResult[pixelCoord] = blur_pixels(s0, s1, s2, s3, s4, s5, s6, s7, s8);
+}
+
+[numthreads(8, 8, 1)]
+void blur(uint3 Gid : SV_GroupID, uint32_t3 GTid : SV_GroupThreadID, uint32_t3 DTid : SV_DispatchThreadID){
+    int2 groupUL = (Gid.xy << 3) - 4;
+    int2 threadUL = (GTid.xy << 1) + groupUL;
+
+    int32_t destIdx = GTid.x + (GTid.y << 4);
+    store_2_pixels(destIdx + 0, g_blurInput[threadUL + uint2(0, 0)], g_blurInput[threadUL + uint2(1, 0)]);
+    store_2_pixels(destIdx + 8, g_blurInput[threadUL + uint2(2, 1)], g_blurInput[threadUL + uint2(1, 1)]);
+    GroupMemoryBarrierWithGroupSync();
+
+    uint32_t row = GTid.y << 4;
+    blur_horizontally(row + (GTid.x << 1), row + GTid.x + (GTid.x & 4));
+    GroupMemoryBarrierWithGroupSync();
+
+    blur_vertically(DTid.xy, (GTid.y << 3) + GTid.x);
+}
