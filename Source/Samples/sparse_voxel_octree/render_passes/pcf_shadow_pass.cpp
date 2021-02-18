@@ -15,9 +15,6 @@ pcf_shadow_pass::pcf_shadow_pass(const Scene::SharedPtr& pScene, const Program::
     mpApplyPass_ = FullScreenPass::create(kDeferredApplyProg, programDefines);
 
     Sampler::Desc desc = {};
-    desc.setFilterMode(Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Filter::Point).setAddressingMode(Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp);
-    mpTextureSampler_ = Sampler::create(desc);
-
     desc.setFilterMode(Sampler::Filter::Point, Sampler::Filter::Point, Sampler::Filter::Point).setAddressingMode(Sampler::AddressMode::Border, Sampler::AddressMode::Border, Sampler::AddressMode::Border).setBorderColor(float4(1.0f));
     desc.setLodParams(0.f, 0.f, 0.f);
     desc.setComparisonMode(Sampler::ComparisonMode::LessEqual);
@@ -65,7 +62,6 @@ pcf_shadow_pass::~pcf_shadow_pass() {
     mpShadowMap_ = nullptr;
     mpApplyPass_ = nullptr;
     mpPCFSampler_ = nullptr;
-    mpTextureSampler_ = nullptr;
 }
 
 pcf_shadow_pass::SharedPtr pcf_shadow_pass::create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines /*= Program::DefineList()*/) {
@@ -96,7 +92,7 @@ void pcf_shadow_pass::generate_shadowmap(RenderContext* pContext) {
     mpScene_->rasterize(pContext, mpState.get(), mpVars.get(), Scene::RenderFlags::UserRasterizerState);
 }
 
-void pcf_shadow_pass::deferred_apply(RenderContext* pContext,const Fbo::SharedPtr& pSceneFbo, const Fbo::SharedPtr& pDstFbo) {
+void pcf_shadow_pass::deferred_apply(RenderContext* pContext,const Fbo::SharedPtr& pSceneFbo, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr mpTexSampler) {
     PROFILE("apply shadow map");
 
     auto& var = mpApplyPass_->getVars();
@@ -104,7 +100,7 @@ void pcf_shadow_pass::deferred_apply(RenderContext* pContext,const Fbo::SharedPt
     var["g_shadowMap"] = mpShadowMap_->getDepthStencilTexture();
     var["g_sceneColor"] = pSceneFbo->getColorTexture(0);
     var["g_sceneDepth"] = pSceneFbo->getDepthStencilTexture();
-    var["g_texSampler"] = mpTextureSampler_;
+    var["g_texSampler"] = mpTexSampler;
     var["g_pcfSampler"] = mpPCFSampler_;
     var["CB"]["g_pcf_kernel_size"] = pcf_kernel_size_;
     var["CB"]["g_shadow_matrix"] = shadowMatrix_;

@@ -1,0 +1,19 @@
+#pragma once
+
+#include "Utils/HostDeviceShared.slangh"
+
+struct exposure_meta {
+    float Exposure;
+    float InvExposure;
+    float t1;
+    float t2;
+    float MinLog;
+    float MaxLog;
+    float DeltaLog;
+    float InvDeltaLog;
+};
+
+
+float rgb_to_luminance(float3 x) {
+    return dot(x, float3(0.212671, 0.715160, 0.072169));
+}

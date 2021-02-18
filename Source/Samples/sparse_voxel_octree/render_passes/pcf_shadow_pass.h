@@ -4,7 +4,7 @@
 using namespace Falcor;
 
 class pcf_shadow_pass : public BaseGraphicsPass, public std::enable_shared_from_this<pcf_shadow_pass> {
-public:
+private:
     pcf_shadow_pass(const Scene::SharedPtr& pScene, const Program::Desc& genMapProgDesc, Program::DefineList& programDefines);
     void rebuild_shadowmap_buffers();
     void rebuild_shadow_matrix(float3 lightDir, const AABB& bounds);
@@ -20,8 +20,7 @@ public:
     float4x4 shadowMatrix_ = {};
 
     Sampler::SharedPtr mpPCFSampler_ = nullptr;
-    Sampler::SharedPtr mpTextureSampler_ = nullptr;
-
+    
 public:
     using SharedPtr = std::shared_ptr<pcf_shadow_pass>;
     virtual ~pcf_shadow_pass() override;
@@ -30,7 +29,7 @@ public:
     void on_gui_render(Gui::Group& group);
 
     void generate_shadowmap(RenderContext* pContext);
-    void deferred_apply(RenderContext* pContext, const Fbo::SharedPtr& pSceneFbo, const Fbo::SharedPtr& pDstFbo);
+    void deferred_apply(RenderContext* pContext, const Fbo::SharedPtr& pSceneFbo, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr mpTexSampler);
 
     bool refresh_rebuild();
 };

@@ -72,6 +72,11 @@ void sparse_voxel_octree::onGuiRender(Gui* pGui) {
         mpVolumetric_->on_gui_render(volumetricGroup);
     }
 
+    auto postEffects = Gui::Group(pGui, "Post Effects");
+    if (postEffects.open()) {
+        mpPostEffects_->on_gui_render(postEffects);
+    }
+
     // final output
     auto finalOutputGroup = Gui::Group(pGui, "Final Output");
     if (finalOutputGroup.open()) {
@@ -100,6 +105,12 @@ void sparse_voxel_octree::onLoad(RenderContext* pRenderContext) {
     mpDeubgProjection_ = projection_debug_pass::create(mpScene_);
     mpVolumetric_ = volumetric_pass::create(mpScene_);
     mpShadow_ = pcf_shadow_pass::create(mpScene_);
+    mpPostEffects_ = post_effects::create();
+
+    Sampler::Desc desc = {};
+    desc.setFilterMode(Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Filter::Point).setAddressingMode(Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp);
+    mpTextureSampler_ = Sampler::create(desc);
+
 }
 
 void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
@@ -129,7 +140,8 @@ void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo
             }
 
             mpRasterPass_->renderScene(pRenderContext, mpGBufferFbo_);
-            mpShadow_->deferred_apply(pRenderContext, mpGBufferFbo_, pTargetFbo);
+            mpShadow_->deferred_apply(pRenderContext, mpGBufferFbo_, mpPostEffects_->get_fbo(), mpTextureSampler_);
+            mpPostEffects_->on_execute(pRenderContext, pTargetFbo, mpTextureSampler_);
             break;
         }
     }
@@ -141,6 +153,8 @@ void sparse_voxel_octree::onShutdown() {
     mpVolumetric_ = nullptr;
     mpScene_ = nullptr;
     mpGBufferFbo_ = nullptr;
+    mpPostEffects_ = nullptr;
+    mpTextureSampler_ = nullptr;
 }
 
 bool sparse_voxel_octree::onKeyEvent(const KeyboardEvent& keyEvent) {
@@ -165,6 +179,7 @@ void sparse_voxel_octree::onResizeSwapChain(uint32_t width, uint32_t height) {
     Fbo::Desc desc = bkFbo->getDesc();
     desc.setColorTarget(0, ResourceFormat::R11G11B10Float, true);
     mpGBufferFbo_ = Fbo::create2D(width, height, desc);
+    mpPostEffects_->on_swapchain_resize(width, height);
 }
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd) {

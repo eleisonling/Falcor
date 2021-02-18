@@ -30,6 +30,7 @@
 #include "render_passes/projection_debug_pass.h"
 #include "render_passes/volumetric_pass.h"
 #include "render_passes/pcf_shadow_pass.h"
+#include "render_passes/post_effects.h"
 
 using namespace Falcor;
 
@@ -55,4 +56,6 @@ private:
     pcf_shadow_pass::SharedPtr mpShadow_ = nullptr;
     uint32_t finalOutputType_ = 0;
     Fbo::SharedPtr mpGBufferFbo_ = nullptr;
+    post_effects::SharedPtr mpPostEffects_ = nullptr;
+    Sampler::SharedPtr mpTextureSampler_ = nullptr;
 };
