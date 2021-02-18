@@ -13,6 +13,7 @@ post_effects::post_effects(const Program::DefineList& programDefines) {
 
 void post_effects::create_bloom_resource(const Program::DefineList& programDefines) {
     mpExtractAndDownsample_ = ComputePass::create(kBloomProg, "extract_and_downsample", programDefines);
+    mpDownSample_ = ComputePass::create(kBloomProg, "down_sample", programDefines);
     mpExposure_ = Buffer::createStructured(sizeof(exposure_meta), 1);
 }
 
@@ -47,7 +48,18 @@ void post_effects::do_bloom(RenderContext* pContext, const Sampler::SharedPtr& t
         mpExtractAndDownsample_->getVars()["CB"]["g_bloomThreshold"] = bloomThreshold_;
         mpExtractAndDownsample_->getVars()["CB"]["g_inverseOutputSize"] = float2(1.0f / mpLumaResult_->getWidth(), 1.0f / mpLumaResult_->getHeight());
 
-        mpExtractAndDownsample_->execute(pContext, uint3{ mpBloomUAV1_[0]->getWidth(), mpBloomUAV1_[0]->getHeight(), 1 } / mpExtractAndDownsample_->getThreadGroupSize());
+        mpExtractAndDownsample_->execute(pContext, uint3{ mpBloomUAV1_[0]->getWidth(), mpBloomUAV1_[0]->getHeight(), 1 });
+    }
+    // down sample
+    {
+        mpDownSample_->getVars()["g_texSampler"] = texSampler;
+        mpDownSample_->getVars()["g_bloomBuf"] = mpBloomUAV1_[0];
+        mpDownSample_->getVars()["g_result1"] = mpBloomUAV2_[0];
+        mpDownSample_->getVars()["g_result2"] = mpBloomUAV3_[0];
+        mpDownSample_->getVars()["g_result3"] = mpBloomUAV4_[0];
+        mpDownSample_->getVars()["g_result4"] = mpBloomUAV5_[0];
+        mpDownSample_->getVars()["CB"]["g_inverseOutputSize"] = float2(1.0f / mpLumaResult_->getWidth(), 1.0f / mpLumaResult_->getHeight());
+        mpDownSample_->execute(pContext, uint3{ mpBloomUAV1_[0]->getWidth() / 2, mpBloomUAV1_[0]->getHeight() / 2, 1 });
     }
 
     curIndx_ = (curIndx_ + 1) % 2;
@@ -68,6 +80,7 @@ post_effects::~post_effects() {
         mpBloomUAV5_[1] = nullptr;
         mpLumaResult_ = nullptr;
         mpExtractAndDownsample_ = nullptr;
+        mpDownSample_ = nullptr;
     }
     mpPingpongBuffer_[0] = nullptr;
     mpPingpongBuffer_[1] = nullptr;

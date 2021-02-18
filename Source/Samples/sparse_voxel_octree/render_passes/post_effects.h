@@ -21,6 +21,7 @@ class post_effects : public std::enable_shared_from_this<post_effects> {
     Texture::SharedPtr mpLumaResult_ = nullptr;
     Buffer::SharedPtr mpExposure_ = nullptr;
     ComputePass::SharedPtr mpExtractAndDownsample_ = nullptr;
+    ComputePass::SharedPtr mpDownSample_ = nullptr;
 
     void create_bloom_resource(const Program::DefineList& programDefines);
     void rebuild_bloom_buffers(uint32_t width, uint32_t height);

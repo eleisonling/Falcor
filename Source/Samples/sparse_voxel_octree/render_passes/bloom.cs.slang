@@ -32,9 +32,9 @@ void extract_and_downsample(uint3 g_threadId : SV_DispatchThreadID){
     float scaledThreshold = g_bloomThreshold * g_exposure[0].InvExposure;
 
     color1 *= max(kSmallEpsilon, luma1 - scaledThreshold) / (luma1 + kSmallEpsilon);
-    color2 *= max(kSmallEpsilon, luma2 - scaledThreshold) / (luma1 + kSmallEpsilon);
-    color3 *= max(kSmallEpsilon, luma3 - scaledThreshold) / (luma1 + kSmallEpsilon);
-    color4 *= max(kSmallEpsilon, luma4 - scaledThreshold) / (luma1 + kSmallEpsilon);
+    color2 *= max(kSmallEpsilon, luma2 - scaledThreshold) / (luma2 + kSmallEpsilon);
+    color3 *= max(kSmallEpsilon, luma3 - scaledThreshold) / (luma3 + kSmallEpsilon);
+    color4 *= max(kSmallEpsilon, luma4 - scaledThreshold) / (luma4 + kSmallEpsilon);
 
     const float kShimmerFilterInverseStrength = 1.0f;
     float weight1 = 1.0f / (luma1 + kShimmerFilterInverseStrength);
@@ -53,6 +53,46 @@ void extract_and_downsample(uint3 g_threadId : SV_DispatchThreadID){
         const float recpLogRange = g_exposure[0].InvDeltaLog;
         float logLuma = saturate((log2(luma) - minLog) * recpLogRange);
         g_lumaResult[g_threadId.xy] = logLuma * 254.0f + 1.0f;
+    }
+}
+
+
+Texture2D<float3> g_bloomBuf;
+RWTexture2D<float3> g_result1;
+RWTexture2D<float3> g_result2;
+RWTexture2D<float3> g_result3;
+RWTexture2D<float3> g_result4;
+
+groupshared float3 g_tile[64]; //8x8
+
+[numthreads(8, 8, 1)]
+void down_sample(uint32_t groupId : SV_GroupIndex, uint3 g_threadId : SV_DispatchThreadID){
+    uint32_t parity = g_threadId.x | g_threadId.y;
+
+    float2 centerUV = (float2(g_threadId.xy) * 2.0f + 1.0f) * g_inverseOutputSize;
+    float3 avgPixel = g_bloomBuf.SampleLevel(g_texSampler, centerUV, 0.0f);
+    g_tile[groupId] = avgPixel;
+    g_result1[g_threadId.xy] = avgPixel;
+
+    GroupMemoryBarrierWithGroupSync();
+
+    if((parity & 1) == 0) {
+        avgPixel = 0.25f * (avgPixel + g_tile[groupId + 1] + g_tile[groupId + 8] + g_tile[groupId + 9]);
+        g_tile[groupId] = avgPixel;
+        g_result2[g_threadId.xy >> 1] = avgPixel;
+    }
+    GroupMemoryBarrierWithGroupSync();
+
+    if((parity & 3) == 0) {
+         avgPixel = 0.25f * (avgPixel + g_tile[groupId + 2] + g_tile[groupId + 16] + g_tile[groupId + 18]);
+        g_tile[groupId] = avgPixel;
+        g_result3[g_threadId.xy >> 2] = avgPixel;
+    }
+    GroupMemoryBarrierWithGroupSync();
+
+    if((parity & 7) == 0) {
+         avgPixel = 0.25f * (avgPixel + g_tile[groupId + 4] + g_tile[groupId + 32] + g_tile[groupId + 36]);
+        g_result4[g_threadId.xy >> 3] = avgPixel;
     }
 }
 
