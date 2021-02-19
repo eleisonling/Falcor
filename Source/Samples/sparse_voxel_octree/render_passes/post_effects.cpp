@@ -121,6 +121,10 @@ void post_effects::do_tone_map(RenderContext* pContext, const Sampler::SharedPtr
     mpToneMap_->execute(pContext, uint3{ bufferSize.x, bufferSize.y, 1 });
 }
 
+void post_effects::update_exposure(RenderContext* pContext) {
+
+}
+
 void post_effects::do_present(RenderContext* pContext, const Sampler::SharedPtr& texSampler, const Fbo::SharedPtr& pDestFbo) {
     mpPresent_->getVars()["g_colorTex"] =  mpPingpongBuffer_[curIndx_]->getColorTexture(0);
     mpPresent_->getVars()["g_texSampler"] = texSampler;
@@ -184,6 +188,11 @@ post_effects::SharedPtr post_effects::create(const Program::DefineList& programD
 }
 
 void post_effects::on_gui_render(Gui::Group& group) {
+
+    exposure_meta* gpuExposure = (exposure_meta*)mpExposure_->map(Buffer::MapType::Read);
+    exposure_ = gpuExposure->Exposure;
+    mpExposure_->unmap();
+
     if (group.var("Exposure", exposure_, -8.0f, 8.0f, 0.01f)) {
         g_exposure = { exposure_, 1.0f / exposure_, exposure_, 0.0f,
             initialMinLog_, initialMaxLog_, initialMaxLog_ - initialMinLog_, 1.0f / (initialMaxLog_ - initialMinLog_) };
@@ -199,8 +208,8 @@ void post_effects::on_execute(RenderContext* pContext, const Fbo::SharedPtr& pDs
 
     do_bloom(pContext, texSampler);
     do_tone_map(pContext, texSampler);
+    update_exposure(pContext);
     do_present(pContext, texSampler, pDstFbo);
-
     curIndx_ = (curIndx_ + 1) % 2;
 }
 

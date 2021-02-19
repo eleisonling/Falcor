@@ -43,7 +43,7 @@ class post_effects : public std::enable_shared_from_this<post_effects> {
     void do_bloom(RenderContext* pContext, const Sampler::SharedPtr& texSampler);
     void do_bloom_up_blur(RenderContext* pContext, const Texture::SharedPtr& target, const Texture::SharedPtr& highSource, const Texture::SharedPtr& lowSource);
     void do_tone_map(RenderContext* pContext, const Sampler::SharedPtr& texSampler);
-    void update_exporsure();
+    void update_exposure(RenderContext* pContext);
     void do_present(RenderContext* pContext, const Sampler::SharedPtr& texSampler, const Fbo::SharedPtr& pDestFbo);
 
 public:
