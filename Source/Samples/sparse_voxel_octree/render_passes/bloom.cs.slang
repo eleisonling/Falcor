@@ -125,8 +125,8 @@ void load_2_pixels( uint32_t index, out float3 pixel1, out float3 pixel2 )
     uint32_t rr = g_cacheR[index];
     uint32_t gg = g_cacheG[index];
     uint32_t bb = g_cacheB[index];
-    pixel1 = float3( f16tof32(asfloat16(uint16_t(rr))      ), f16tof32(asfloat16(uint16_t(gg))      ), f16tof32(asfloat16(uint16_t(bb))      ) );
-    pixel2 = float3( f16tof32(asfloat16(uint16_t(rr >> 16))), f16tof32(asfloat16(uint16_t(gg >> 16))), f16tof32(asfloat16(uint16_t(bb >> 16))) );
+    pixel1 = float3( f16tof32(rr      ), f16tof32(gg      ), f16tof32(bb      ) );
+    pixel2 = float3( f16tof32(rr >> 16), f16tof32(gg >> 16), f16tof32(bb >> 16) );
 }
 
 void store_pixel( uint32_t index, float3 pixel )
