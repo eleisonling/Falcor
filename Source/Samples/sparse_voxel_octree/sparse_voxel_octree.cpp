@@ -117,6 +117,7 @@ void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo
     const float4 clearColor(0.f, 0.f, 0.f, 1);
     pRenderContext->clearFbo(pTargetFbo.get(), clearColor, 1.0f, 0, FboAttachmentType::All);
     pRenderContext->clearFbo(mpGBufferFbo_.get(), clearColor, 1.0f, 0, FboAttachmentType::All);
+    mpPostEffects_->do_clear(pRenderContext);
 
     if (mpScene_) {
         mpScene_->update(pRenderContext, gpFramework->getGlobalClock().getTime());

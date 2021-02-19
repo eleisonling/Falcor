@@ -38,9 +38,11 @@
     <ShaderSource Include="render_passes\deferred_apply.slang" />
     <ShaderSource Include="render_passes\gen_shadowmap.slang" />
     <ShaderSource Include="render_passes\pixel_avg.cs.slang" />
+    <ShaderSource Include="render_passes\present.ps.slang" />
     <ShaderSource Include="render_passes\projection_debug.slang" />
     <ShaderSource Include="render_passes\lighting.ps.slang" />
     <ShaderSource Include="render_passes\svo_tracing.slangh" />
+    <ShaderSource Include="render_passes\tonemap.cs.slang" />
     <ShaderSource Include="render_passes\volumetric.slang" />
     <ShaderSource Include="render_passes\voxel_meta.slangh" />
   </ItemGroup>
