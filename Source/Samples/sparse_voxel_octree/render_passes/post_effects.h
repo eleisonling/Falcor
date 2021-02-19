@@ -9,12 +9,14 @@ class post_effects : public std::enable_shared_from_this<post_effects> {
     uint32_t curIndx_ = 0;
 
     // bloom
-    float exposure_ = 2.0f;
+    float expExposure_ = -1.5f;
     const float initialMinLog_ = -12.0f;
     const float initialMaxLog_ = 4.0f;
-    float bloomThreshold_ = 4.0f;
-    float upSampleBlendFactor_ = 0.65f;
-    float bloomStrength_ = 0.1f;
+    float bloomThreshold_ = 0.03f;
+    float upSampleBlendFactor_ = 0.4f;
+    float bloomStrength_ = 0.25f;
+    float expMinExposure_ = -8.0f;
+    float expMaxExposure_ = 8.0f;
     Texture::SharedPtr mpBloomUAV1_[2] = {};
     Texture::SharedPtr mpBloomUAV2_[2] = {};
     Texture::SharedPtr mpBloomUAV3_[2] = {};
@@ -43,7 +45,6 @@ class post_effects : public std::enable_shared_from_this<post_effects> {
     void do_bloom(RenderContext* pContext, const Sampler::SharedPtr& texSampler);
     void do_bloom_up_blur(RenderContext* pContext, const Texture::SharedPtr& target, const Texture::SharedPtr& highSource, const Texture::SharedPtr& lowSource);
     void do_tone_map(RenderContext* pContext, const Sampler::SharedPtr& texSampler);
-    void update_exposure(RenderContext* pContext);
     void do_present(RenderContext* pContext, const Sampler::SharedPtr& texSampler, const Fbo::SharedPtr& pDestFbo);
 
 public:

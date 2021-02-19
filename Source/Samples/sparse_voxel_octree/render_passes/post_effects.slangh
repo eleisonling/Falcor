@@ -5,8 +5,6 @@
 struct exposure_meta {
     float Exposure;
     float InvExposure;
-    float t1;
-    float t2;
     float MinLog;
     float MaxLog;
     float DeltaLog;

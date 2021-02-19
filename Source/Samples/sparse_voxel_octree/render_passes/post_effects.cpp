@@ -10,8 +10,8 @@ namespace {
 
 post_effects::post_effects(const Program::DefineList& programDefines) {
     mpExposure_ = Buffer::createStructured(sizeof(exposure_meta), 1);
-    g_exposure = { exposure_, 1.0f / exposure_, exposure_, 0.0f,
-        initialMinLog_, initialMaxLog_, initialMaxLog_ - initialMinLog_, 1.0f / (initialMaxLog_ - initialMinLog_) };
+    float exp = glm::pow(2.0f, expExposure_);
+    g_exposure = { exp, 1.0f / exp, initialMinLog_, initialMaxLog_, initialMaxLog_ - initialMinLog_, 1.0f / (initialMaxLog_ - initialMinLog_) };
     mpExposure_->setBlob(&g_exposure, 0, sizeof(g_exposure));
 
     create_bloom_resource(programDefines);
@@ -121,11 +121,9 @@ void post_effects::do_tone_map(RenderContext* pContext, const Sampler::SharedPtr
     mpToneMap_->execute(pContext, uint3{ bufferSize.x, bufferSize.y, 1 });
 }
 
-void post_effects::update_exposure(RenderContext* pContext) {
-
-}
-
 void post_effects::do_present(RenderContext* pContext, const Sampler::SharedPtr& texSampler, const Fbo::SharedPtr& pDestFbo) {
+    PROFILE("present");
+
     mpPresent_->getVars()["g_colorTex"] =  mpPingpongBuffer_[curIndx_]->getColorTexture(0);
     mpPresent_->getVars()["g_texSampler"] = texSampler;
     mpPresent_->execute(pContext, pDestFbo);
@@ -190,17 +188,19 @@ post_effects::SharedPtr post_effects::create(const Program::DefineList& programD
 void post_effects::on_gui_render(Gui::Group& group) {
 
     exposure_meta* gpuExposure = (exposure_meta*)mpExposure_->map(Buffer::MapType::Read);
-    exposure_ = gpuExposure->Exposure;
+    expExposure_ = glm::log2(gpuExposure->Exposure);
     mpExposure_->unmap();
 
-    if (group.var("Exposure", exposure_, -8.0f, 8.0f, 0.01f)) {
-        g_exposure = { exposure_, 1.0f / exposure_, exposure_, 0.0f,
-            initialMinLog_, initialMaxLog_, initialMaxLog_ - initialMinLog_, 1.0f / (initialMaxLog_ - initialMinLog_) };
+    if (group.var("expExposure", expExposure_, expMinExposure_, expMaxExposure_, 0.25f)) {
+        float exp = glm::pow(2.0f, expExposure_);
+        g_exposure = { exp, 1.0f / exp, initialMinLog_, initialMaxLog_, initialMaxLog_ - initialMinLog_, 1.0f / (initialMaxLog_ - initialMinLog_) };
         mpExposure_->setBlob(&g_exposure, 0, sizeof(g_exposure));
     }
+    group.var("expMin Exposure", expMinExposure_, -8.0f, 0.0f, 0.25f);
+    group.var("expMax Exposure", expMaxExposure_, 0.0f, 8.0f, 0.25f);
     group.var("Threshold", bloomThreshold_, 0.0f, 8.0f, 0.01f);
-    group.var("UpSampleBlendFactor", upSampleBlendFactor_, 0.0f, 1.0f, 0.01f);
-    group.var("BloomStrength", bloomStrength_, 0.0f, 2.0f, 0.01f);
+    group.var("UpSampleBlendFactor", upSampleBlendFactor_, 0.0f, 1.0f, 0.1f);
+    group.var("BloomStrength", bloomStrength_, 0.0f, 2.0f, 0.05f);
 }
 
 void post_effects::on_execute(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& texSampler) {
@@ -208,7 +208,6 @@ void post_effects::on_execute(RenderContext* pContext, const Fbo::SharedPtr& pDs
 
     do_bloom(pContext, texSampler);
     do_tone_map(pContext, texSampler);
-    update_exposure(pContext);
     do_present(pContext, texSampler, pDstFbo);
     curIndx_ = (curIndx_ + 1) % 2;
 }
