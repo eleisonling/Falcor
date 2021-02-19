@@ -186,11 +186,6 @@ post_effects::SharedPtr post_effects::create(const Program::DefineList& programD
 }
 
 void post_effects::on_gui_render(Gui::Group& group) {
-
-    exposure_meta* gpuExposure = (exposure_meta*)mpExposure_->map(Buffer::MapType::Read);
-    expExposure_ = glm::log2(gpuExposure->Exposure);
-    mpExposure_->unmap();
-
     if (group.var("expExposure", expExposure_, expMinExposure_, expMaxExposure_, 0.25f)) {
         float exp = glm::pow(2.0f, expExposure_);
         g_exposure = { exp, 1.0f / exp, initialMinLog_, initialMaxLog_, initialMaxLog_ - initialMinLog_, 1.0f / (initialMaxLog_ - initialMinLog_) };

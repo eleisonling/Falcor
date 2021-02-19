@@ -115,9 +115,9 @@ float3 blur_pixels( float3 a, float3 b, float3 c, float3 d, float3 e, float3 f, 
 }
 
 void store_2_pixels(uint32_t index, float3 pixel1, float3 pixel2) {
-    g_cacheR[index] = f32tof16(pixel1.r) | f32tof16(pixel2.r) << 16;
-    g_cacheG[index] = f32tof16(pixel1.g) | f32tof16(pixel2.g) << 16;
-    g_cacheB[index] = f32tof16(pixel1.b) | f32tof16(pixel2.b) << 16;
+    g_cacheR[index] = asuint(f32tof16(pixel1.r)) | asuint(f32tof16(pixel2.r)) << 16;
+    g_cacheG[index] = asuint(f32tof16(pixel1.g)) | asuint(f32tof16(pixel2.g)) << 16;
+    g_cacheB[index] = asuint(f32tof16(pixel1.b)) | asuint(f32tof16(pixel2.b)) << 16;
 }
 
 void load_2_pixels( uint32_t index, out float3 pixel1, out float3 pixel2 )
@@ -125,8 +125,8 @@ void load_2_pixels( uint32_t index, out float3 pixel1, out float3 pixel2 )
     uint32_t rr = g_cacheR[index];
     uint32_t gg = g_cacheG[index];
     uint32_t bb = g_cacheB[index];
-    pixel1 = float3( f16tof32(rr      ), f16tof32(gg      ), f16tof32(bb      ) );
-    pixel2 = float3( f16tof32(rr >> 16), f16tof32(gg >> 16), f16tof32(bb >> 16) );
+    pixel1 = float3( f16tof32(asfloat16(uint16_t(rr))      ), f16tof32(asfloat16(uint16_t(gg))      ), f16tof32(asfloat16(uint16_t(bb))      ) );
+    pixel2 = float3( f16tof32(asfloat16(uint16_t(rr >> 16))), f16tof32(asfloat16(uint16_t(gg >> 16))), f16tof32(asfloat16(uint16_t(bb >> 16))) );
 }
 
 void store_pixel( uint32_t index, float3 pixel )
@@ -178,7 +178,7 @@ void blur(uint3 Gid : SV_GroupID, uint32_t3 GTid : SV_GroupThreadID, uint32_t3 D
 
     int32_t destIdx = GTid.x + (GTid.y << 4);
     store_2_pixels(destIdx + 0, g_blurInput[threadUL + uint2(0, 0)], g_blurInput[threadUL + uint2(1, 0)]);
-    store_2_pixels(destIdx + 8, g_blurInput[threadUL + uint2(2, 1)], g_blurInput[threadUL + uint2(1, 1)]);
+    store_2_pixels(destIdx + 8, g_blurInput[threadUL + uint2(0, 1)], g_blurInput[threadUL + uint2(1, 1)]);
     GroupMemoryBarrierWithGroupSync();
 
     uint32_t row = GTid.y << 4;
