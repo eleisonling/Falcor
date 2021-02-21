@@ -115,9 +115,17 @@ float3 blur_pixels( float3 a, float3 b, float3 c, float3 d, float3 e, float3 f, 
 }
 
 void store_2_pixels(uint32_t index, float3 pixel1, float3 pixel2) {
-    g_cacheR[index] = f32tof16(pixel1.r) | f32tof16(pixel2.r) << 16;
-    g_cacheG[index] = f32tof16(pixel1.g) | f32tof16(pixel2.g) << 16;
-    g_cacheB[index] = f32tof16(pixel1.b) | f32tof16(pixel2.b) << 16;
+
+    half hp1r = f32tof16(pixel1.r);
+    half hp2r = f32tof16(pixel2.r);
+    half hp1g = f32tof16(pixel1.g);
+    half hp2g = f32tof16(pixel2.g);
+    half hp1b = f32tof16(pixel1.b);
+    half hp2b = f32tof16(pixel2.b);
+
+    g_cacheR[index] = uint32_t(asuint16(hp1r)) | (uint32_t(asuint16(hp2r)) << 16);
+    g_cacheG[index] = uint32_t(asuint16(hp1g)) | (uint32_t(asuint16(hp2g)) << 16);
+    g_cacheB[index] = uint32_t(asuint16(hp1b)) | (uint32_t(asuint16(hp2b)) << 16);
 }
 
 void load_2_pixels( uint32_t index, out float3 pixel1, out float3 pixel2 )
@@ -125,8 +133,16 @@ void load_2_pixels( uint32_t index, out float3 pixel1, out float3 pixel2 )
     uint32_t rr = g_cacheR[index];
     uint32_t gg = g_cacheG[index];
     uint32_t bb = g_cacheB[index];
-    pixel1 = float3( f16tof32(rr      ), f16tof32(gg      ), f16tof32(bb      ) );
-    pixel2 = float3( f16tof32(rr >> 16), f16tof32(gg >> 16), f16tof32(bb >> 16) );
+
+    half hp1r = asfloat16(uint16_t(rr & 0xFFFF));
+    half hp2r = asfloat16(uint16_t((rr >> 16) & 0xFFFF));
+    half hp1g = asfloat16(uint16_t(gg & 0xFFFF));
+    half hp2g = asfloat16(uint16_t((gg >> 16) & 0xFFFF));
+    half hp1b = asfloat16(uint16_t(bb & 0xFFFF));
+    half hp2b = asfloat16(uint16_t((bb >> 16) & 0xFFFF));
+
+    pixel1 = float3(f16tof32(hp1r), f16tof32(hp1g), f16tof32(hp1b));
+    pixel2 = float3(f16tof32(hp2r), f16tof32(hp2g), f16tof32(hp2b));
 }
 
 void store_pixel( uint32_t index, float3 pixel )
