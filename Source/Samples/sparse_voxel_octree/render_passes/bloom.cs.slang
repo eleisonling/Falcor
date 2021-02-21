@@ -100,7 +100,7 @@ void down_sample(uint32_t groupId : SV_GroupIndex, uint3 g_threadId : SV_Dispatc
 
 Texture2D<float3> g_blurInput;
 RWTexture2D<float3> g_blurResult;
-
+SamplerState g_linearBorder;
 
 groupshared uint32_t g_cacheR[128];
 groupshared uint32_t g_cacheG[128];
@@ -115,9 +115,9 @@ float3 blur_pixels( float3 a, float3 b, float3 c, float3 d, float3 e, float3 f, 
 }
 
 void store_2_pixels(uint32_t index, float3 pixel1, float3 pixel2) {
-    g_cacheR[index] = asuint(f32tof16(pixel1.r)) | asuint(f32tof16(pixel2.r)) << 16;
-    g_cacheG[index] = asuint(f32tof16(pixel1.g)) | asuint(f32tof16(pixel2.g)) << 16;
-    g_cacheB[index] = asuint(f32tof16(pixel1.b)) | asuint(f32tof16(pixel2.b)) << 16;
+    g_cacheR[index] = f32tof16(pixel1.r) | f32tof16(pixel2.r) << 16;
+    g_cacheG[index] = f32tof16(pixel1.g) | f32tof16(pixel2.g) << 16;
+    g_cacheB[index] = f32tof16(pixel1.b) | f32tof16(pixel2.b) << 16;
 }
 
 void load_2_pixels( uint32_t index, out float3 pixel1, out float3 pixel2 )
@@ -177,8 +177,14 @@ void blur(uint3 Gid : SV_GroupID, uint32_t3 GTid : SV_GroupThreadID, uint32_t3 D
     int2 threadUL = (GTid.xy << 1) + groupUL;
 
     int32_t destIdx = GTid.x + (GTid.y << 4);
-    store_2_pixels(destIdx + 0, g_blurInput[threadUL + uint2(0, 0)], g_blurInput[threadUL + uint2(1, 0)]);
-    store_2_pixels(destIdx + 8, g_blurInput[threadUL + uint2(0, 1)], g_blurInput[threadUL + uint2(1, 1)]);
+
+    float2 uvUL = (float2(threadUL) + 0.5) * g_inverseOutputSize;
+    float2 uvLR = uvUL + g_inverseOutputSize;
+    float2 uvUR = float2(uvLR.x, uvUL.y);
+    float2 uvLL = float2(uvUL.x, uvLR.y);
+
+    store_2_pixels(destIdx + 0, g_blurInput.SampleLevel(g_linearBorder, uvUL, 0.0f), g_blurInput.SampleLevel(g_linearBorder, uvUR, 0.0f));
+    store_2_pixels(destIdx + 8, g_blurInput.SampleLevel(g_linearBorder, uvLL, 0.0f), g_blurInput.SampleLevel(g_linearBorder, uvLR, 0.0f));
     GroupMemoryBarrierWithGroupSync();
 
     uint32_t row = GTid.y << 4;
@@ -190,7 +196,6 @@ void blur(uint3 Gid : SV_GroupID, uint32_t3 GTid : SV_GroupThreadID, uint32_t3 D
 
 Texture2D<float3> g_higherResBuf;
 Texture2D<float3> g_lowerResBuf;
-SamplerState g_linearBorder;
 RWTexture2D<float3> g_upBlurResult;
 
 [numthreads(8, 8, 1)]

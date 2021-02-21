@@ -85,6 +85,8 @@ void post_effects::do_bloom(RenderContext* pContext, const Sampler::SharedPtr& t
     {
         mpBlur_->getVars()["g_blurInput"] = mpBloomUAV5_[0];
         mpBlur_->getVars()["g_blurResult"] = mpBloomUAV5_[1];
+        mpBlur_->getVars()["g_linearBorder"] = mpUpBlurSample_;
+        mpBlur_->getVars()["CB"]["g_inverseOutputSize"] = float2(1.0f / mpBloomUAV5_[0]->getWidth(), 1.0f / mpBloomUAV5_[0]->getHeight());
         mpBlur_->execute(pContext, mpBloomUAV5_[0]->getWidth(), mpBloomUAV5_[0]->getHeight(), 1);
     }
     // up blur
