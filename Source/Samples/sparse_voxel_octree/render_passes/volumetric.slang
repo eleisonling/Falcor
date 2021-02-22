@@ -177,7 +177,7 @@ float3 get_normal_map<L:ITextureSampler>(MaterialData md, MaterialResources mr, 
 
 void image_atomic_avg_RGBA8(RWTexture3D<uint32_t> img, uint3 coords, float4 newVal) {
 
-    newVal *= 255.0f;
+    newVal.xyz *= 255.0f;
     uint32_t packedNewVal = RGBA8_255_to_uint32(newVal);
     uint32_t lastPackedVal = 0;
     uint32_t curPackedVal = 0;

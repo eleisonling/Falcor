@@ -56,7 +56,7 @@ void volumetric_pass::volumetric_scene(RenderContext* pContext, const Fbo::Share
     PROFILE("do volumetric");
 
     // do clear
-    pContext->clearUAV(mpPackedAlbedo_->getUAV().get(), float4(0, 0, 0 ,0));
+    pContext->clearTexture(mpPackedAlbedo_.get(), float4(0, 0, 0 ,0));
     mpState->setFbo(pDstFbo);
     mpScene_->rasterize(pContext, mpState.get(), mpVars.get(), Scene::RenderFlags::UserRasterizerState);
     
@@ -168,12 +168,17 @@ volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::
     rebuild_svo_buffers();
 }
 
+static uint32_t fixture(uint32_t in) {
+    uint32_t totalLevel = (uint32_t)std::ceil(std::log2f((float)in));
+    return (uint32_t)std::pow(2, totalLevel);
+}
+
 void volumetric_pass::rebuild_pixel_data_buffers() {
 
     rebuildBuffer_ = false;
     auto& bound = mpScene_->getSceneBounds();
     glm::uvec3 cellDim = glm::ceil((bound.extent() + cellSize_) / cellSize_ );
-
+    cellDim = { fixture(cellDim.x), fixture(cellDim.y), fixture(cellDim.z) };
     {
         size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(uint32_t);
         if (!mpPackedAlbedo_ || mpPackedAlbedo_->getSize() != bufferSize) {
