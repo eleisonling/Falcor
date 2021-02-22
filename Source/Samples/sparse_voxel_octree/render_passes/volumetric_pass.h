@@ -10,7 +10,7 @@ public:
 
     static SharedPtr create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines = Program::DefineList());
     void volumetric_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
-    void debug_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
+    void debug_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& pTexSampler);
     void on_gui_render(Gui::Group& group);
     bool need_refresh() const { return needRefresh_; }
 
@@ -56,6 +56,7 @@ private:
     // debug tracing svo
     FullScreenPass::SharedPtr mpTracingSvo_ = nullptr;
     bool debugSVOTracing_ = false;
+    uint32_t mipLevel_ = 0;
 
     // volumetric debug
     GraphicsVars::SharedPtr mpDebugVars_ = nullptr;

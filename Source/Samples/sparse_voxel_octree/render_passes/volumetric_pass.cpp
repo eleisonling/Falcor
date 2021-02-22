@@ -58,8 +58,14 @@ void volumetric_pass::volumetric_scene(RenderContext* pContext, const Fbo::Share
     PROFILE("do volumetric");
 
     // do clear
-    pContext->clearUAV(mpPackedAlbedo_->getUAV().get(), uint4(0, 0, 0 ,0));
-    pContext->clearUAV(mpPackedNormal_->getUAV().get(), uint4(0, 0, 0 ,0));
+    for (uint32_t mip = 0; mip < mpPackedAlbedo_->getMipCount(); mip++) {
+        pContext->clearUAV(mpPackedAlbedo_->getUAV(mip).get(), uint4(0, 0, 0 ,0));
+    }
+
+    for (uint32_t mip = 0; mip < mpPackedNormal_->getMipCount(); mip++) {
+        pContext->clearUAV(mpPackedNormal_->getUAV(mip).get(), uint4(0, 0, 0 ,0));
+    }
+
     mpState->setFbo(pDstFbo);
     mpScene_->rasterize(pContext, mpState.get(), mpVars.get(), Scene::RenderFlags::UserRasterizerState);
     gen_mipmaps(pContext);
@@ -124,13 +130,15 @@ void volumetric_pass::gen_mipmaps(RenderContext* pContext) {
     }
 }
 
-void volumetric_pass::debug_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
+void volumetric_pass::debug_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& pTexSampler) {
     PROFILE("debug volumetric");
 
     if (debugSVOTracing_) {
         // do clear
         mpTracingSvo_->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
+        mpTracingSvo_->getVars()["g_texSampler"] = pTexSampler;
         mpTracingSvo_->getVars()["CB"]["ViewportDims"] = float2{ pDstFbo->getWidth(), pDstFbo->getHeight() };
+        mpTracingSvo_->getVars()["CB"]["MipLevel"] = mipLevel_;;
         mpTracingSvo_->execute(pContext, pDstFbo);
     } else {
         uint32_t instanceCount = kVoxelMeta.CellDim.x * kVoxelMeta.CellDim.y * kVoxelMeta.CellDim.z;
@@ -153,6 +161,7 @@ void volumetric_pass::on_gui_render(Gui::Group& group) {
     }
 
     group.checkbox("Use Tracing Method", debugSVOTracing_);
+    group.slider("Mip Level", mipLevel_, 0u, kSvoMeta.TotalLevel - 1);
 }
 
 volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc, const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines)

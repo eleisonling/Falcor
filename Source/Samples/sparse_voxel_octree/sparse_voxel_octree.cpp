@@ -108,7 +108,7 @@ void sparse_voxel_octree::onLoad(RenderContext* pRenderContext) {
     mpPostEffects_ = post_effects::create();
 
     Sampler::Desc desc = {};
-    desc.setFilterMode(Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Filter::Point).setAddressingMode(Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp);
+    desc.setFilterMode(Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Filter::Linear).setAddressingMode(Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp);
     mpTextureSampler_ = Sampler::create(desc);
 
 }
@@ -132,7 +132,7 @@ void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo
             mpDeubgProjection_->debug_scene(pRenderContext, pTargetFbo);
             break;
         case final_output_type::debug_volumetric:
-            mpVolumetric_->debug_scene(pRenderContext, pTargetFbo);
+            mpVolumetric_->debug_scene(pRenderContext, pTargetFbo, mpTextureSampler_);
             break;
         case final_output_type::defulat_type:
         default:

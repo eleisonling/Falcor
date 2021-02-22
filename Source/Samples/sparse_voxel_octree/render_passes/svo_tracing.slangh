@@ -38,19 +38,22 @@ uint32_t get_child_index(uint32_t nodeData) {
 }
 
 
-inline float4 get_data(uint32_t nodeData,  Texture3D<uint32_t> packedData, uint3 dim, out uint32_t pixelCount) {
+inline float4 get_data(uint32_t nodeData,  Texture3D<uint32_t> packedData, uint32_t mip, SamplerState texSampler, uint3 dim, out uint32_t pixelCount) {
     uint32_t linearAddress = get_child_index(nodeData);
     uint3 cellIndex = extract_index_form_linear(linearAddress, dim);
+    float3 texCoord = { (float)cellIndex.x / (float)dim.x, (float)cellIndex.y / (float)dim.y, (float)cellIndex.z / (float)dim.z };
 
     // load and uncompress
-    uint32_t data = packedData[cellIndex];
+    uint32_t data = packedData.SampleLevel(texSampler, texCoord, mip);
     pixelCount = (data & 0xFF000000) >> 24U;
     float4 finalData = float4(uint32_to_RGBA8_255(data).xyz, 1.0f);
     if(pixelCount != 0) finalData.xyz /= g_packRGBFactor;
     return finalData;
 }
 
-tracing_result trace_sparse_voxel_ray(inout RayDesc ray, Texture3D<uint32_t> packedData, RWByteAddressBuffer svoNode, uint32_t leafLevel, uint3 cellDim) {
+tracing_result trace_sparse_voxel_ray(inout RayDesc ray, Texture3D<uint32_t> packedData, RWByteAddressBuffer svoNode, uint32_t leafLevel,
+    uint3 cellDim, uint32_t mip, SamplerState texSampler) {
+
     const float epsilon = exp2(-g_maxLevel);
 	tracing_result hitInfo = {};
 	int2 stack[g_maxLevel + 1] = {};
@@ -117,7 +120,7 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, Texture3D<uint32_t> pac
 		
         if (is_leaf_node(childNodeInParent, scale, leafLevel)) {
             uint32_t pixelCount = 0;
-	        float4 color = get_data(childNodeInParent, packedData, cellDim, pixelCount);
+	        float4 color = get_data(childNodeInParent, packedData, mip, texSampler, cellDim, pixelCount);
             if(pixelCount != 0) {
                 hitInfo.Color = color;
                 hitInfo.IsMissing = false;
