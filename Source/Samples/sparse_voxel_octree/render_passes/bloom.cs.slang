@@ -109,8 +109,7 @@ groupshared uint32_t g_cacheB[128];
 
 static const float g_weights[5] = { 70.0f / 256.0f, 56.0f / 256.0f, 28.0f / 256.0f, 8.0f / 256.0f, 1.0f / 256.0f };
 
-float3 blur_pixels( float3 a, float3 b, float3 c, float3 d, float3 e, float3 f, float3 g, float3 h, float3 i )
-{
+float3 blur_pixels(float3 a, float3 b, float3 c, float3 d, float3 e, float3 f, float3 g, float3 h, float3 i) {
     return g_weights[0]*e + g_weights[1]*(d+f) + g_weights[2]*(c+g) + g_weights[3]*(b+h) + g_weights[4]*(a+i);
 }
 
@@ -128,8 +127,7 @@ void store_2_pixels(uint32_t index, float3 pixel1, float3 pixel2) {
     g_cacheB[index] = uint32_t(asuint16(hp1b)) | (uint32_t(asuint16(hp2b)) << 16);
 }
 
-void load_2_pixels( uint32_t index, out float3 pixel1, out float3 pixel2 )
-{
+void load_2_pixels(uint32_t index, out float3 pixel1, out float3 pixel2) {
     uint32_t rr = g_cacheR[index];
     uint32_t gg = g_cacheG[index];
     uint32_t bb = g_cacheB[index];
@@ -145,21 +143,18 @@ void load_2_pixels( uint32_t index, out float3 pixel1, out float3 pixel2 )
     pixel2 = float3(f16tof32(hp2r), f16tof32(hp2g), f16tof32(hp2b));
 }
 
-void store_pixel( uint32_t index, float3 pixel )
-{
+void store_pixel(uint32_t index, float3 pixel) {
     g_cacheR[index] = asuint(pixel.r);
     g_cacheG[index] = asuint(pixel.g);
     g_cacheB[index] = asuint(pixel.b);
 }
 
-void load_pixel( uint32_t index, out float3 pixel )
-{
+void load_pixel(uint32_t index, out float3 pixel) {
     pixel = asfloat( uint3(g_cacheR[index], g_cacheG[index], g_cacheB[index]) );
 }
 
 
-void blur_horizontally( uint32_t outIndex, uint32_t leftMostIndex )
-{
+void blur_horizontally(uint32_t outIndex, uint32_t leftMostIndex) {
     float3 s0, s1, s2, s3, s4, s5, s6, s7, s8, s9;
     load_2_pixels( leftMostIndex + 0, s0, s1 );
     load_2_pixels( leftMostIndex + 1, s2, s3 );
@@ -171,8 +166,7 @@ void blur_horizontally( uint32_t outIndex, uint32_t leftMostIndex )
     store_pixel(outIndex+1, blur_pixels(s1, s2, s3, s4, s5, s6, s7, s8, s9));
 }
 
-void blur_vertically( uint2 pixelCoord, uint32_t topMostIndex, RWTexture2D<float3> blurResult)
-{
+void blur_vertically( uint2 pixelCoord, uint32_t topMostIndex, RWTexture2D<float3> blurResult) {
     float3 s0, s1, s2, s3, s4, s5, s6, s7, s8;
     load_pixel( topMostIndex   , s0 );
     load_pixel( topMostIndex+ 8, s1 );
