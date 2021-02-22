@@ -4,7 +4,8 @@
 cbuffer CB {
     svo_meta gSvoMeta;
 }
-RWByteAddressBuffer gPixelPacked;
+
+Texture3D<uint32_t> gPackedAlbedo;
 RWByteAddressBuffer gSvoNodeBuffer;
 
 // 0, 4, 8 dispath group
@@ -38,11 +39,12 @@ bool is_valid_node(uint32_t nodeData) {
 void tag_node(uint3 g_threadId : SV_DispatchThreadID){
 
     if(g_threadId.x >= gSvoMeta.CellDim.x || g_threadId.y >= gSvoMeta.CellDim.y || g_threadId.z >= gSvoMeta.CellDim.z) return;
-    uint32_t linearIndex = g_threadId.z * gSvoMeta.CellDim.y * gSvoMeta.CellDim.x + g_threadId.y * gSvoMeta.CellDim.x + g_threadId.x;
-
     uint3 cellIndex =  g_threadId;
-    uint32_t address = linearIndex * 20 + 16;
-    if(gPixelPacked.Load(address) == 0) return;
+
+    uint32_t packedColor = gPackedAlbedo[cellIndex];
+    pixelCount = (packedColor & 0xFF000000) >> 24U;
+
+    if(pixelCount == 0) return;
 
     uint32_t childID = 0;
     uint32_t curID = 0;

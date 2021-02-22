@@ -6,7 +6,7 @@ cbuffer CB {
     voxel_meta gVoxelMeta;
 }
 
-RWByteAddressBuffer gPixelPacked;
+Texture3D<uint32_t> gPackedAlbedo;
 
 struct vs_in {
     float3 pos                      : POSITION;
@@ -46,15 +46,11 @@ float4 ps_main(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
         && cellIndex.y >= 0 && cellIndex.y < gVoxelMeta.CellDim.y
         && cellIndex.z >= 0 && cellIndex.z < gVoxelMeta.CellDim.z) {
 
-        // get linear index
-        uint32_t linearIndex = cellIndex.z * gVoxelMeta.CellDim.y * gVoxelMeta.CellDim.x + cellIndex.y * gVoxelMeta.CellDim.x + cellIndex.x;
-        // jump to first address
-        uint32_t packedAddress = linearIndex * 20;
-
         // load and uncompress
-        uint4 packedColor = gPixelPacked.Load4(packedAddress);
-        pixelCount = gPixelPacked.Load(packedAddress + 16);
-        finalColor = { asfloat(packedColor.x), asfloat(packedColor.y), asfloat(packedColor.z), asfloat(packedColor.w) };
+        uint32_t packedColor = gPackedAlbedo.[cellIndex];
+        pixelCount = (packedColor & 0xFF000000) >> 24U;
+        finalColor = uint32_to_RGBA8_255(packedColor);
+        finalColor /= finalColor.a;
     }
 
     if(pixelCount == 0) discard;

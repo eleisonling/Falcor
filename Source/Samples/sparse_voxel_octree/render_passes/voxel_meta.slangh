@@ -33,7 +33,18 @@ uint3 extract_index_form_linear(uint32_t linearIndex, uint3 dim) {
     return { x, y, z };
 }
 
+float4 uint32_to_RGBA8_255(uint32_t val) {
+    return float4(float((val & 0x000000FF)), float((val & 0x0000FF00) >> 8U), float((val & 0x00FF0000) >> 16U),  float((val & 0xFF000000) >> 24U));
+}
 
+uint32_t RGBA8_255_to_uint32(float4 val) {
+    return (uint32_t(val.w) & 0x000000FF)   << 24U
+            |(uint32_t(val.z) & 0x000000FF) << 16U
+            |(uint32_t(val.y) & 0x000000FF) << 8U 
+            |(uint32_t(val.x) & 0x000000FF);
+}
+
+#define g_maxAvgIterations 100
 #define g_internalFlag 0x80000000
 #define g_32SignBit 0x80000000
 #define g_maxLevel 23

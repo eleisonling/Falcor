@@ -9,7 +9,7 @@ cbuffer CB {
     float2 ViewportDims;   
 }
 
-RWByteAddressBuffer gPixelPacked;
+Texture3D<uint32_t> gPackedAlbedo;
 RWByteAddressBuffer gSvoNodeBuffer;
 RWByteAddressBuffer gDebugTracingData;
 
@@ -19,7 +19,7 @@ float4 main(float2 texC : TEXCOORD, float4 posS : SV_POSITION) : SV_TARGET {
     RayDesc ray = gScene.camera.computeRayPinhole(launchIndex.xy, ViewportDims).toRayDesc();
     ray.Origin = convert_world_to_svo_space(ray.Origin, gSvoMeta.CellSize, gSvoMeta.SvoDim, gSvoMeta.Min);
 
-    tracing_result hitInfo = trace_sparse_voxel_ray(ray, gPixelPacked, gSvoNodeBuffer, gSvoMeta.TotalLevel);
+    tracing_result hitInfo = trace_sparse_voxel_ray(ray, gPackedAlbedo, gSvoNodeBuffer, gSvoMeta.TotalLevel, gSvoMeta.CellDim);
 
     return hitInfo.Color;
 }

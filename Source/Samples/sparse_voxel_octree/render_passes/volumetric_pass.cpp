@@ -13,9 +13,8 @@ namespace {
 
 volumetric_pass::~volumetric_pass() {
     mpScene_ = nullptr;
-    mpPackedPixelBuffer_ = nullptr;
-    mpPixelAvgState_ = nullptr;
-    mpPixelAvgVars_ = nullptr;
+    mpPackedAlbedo_ = nullptr;
+    mpPackedNormal_ = nullptr;
 
     mpSVONodeBuffer_ = nullptr;
     mpIndirectArgBuffer_ = nullptr;
@@ -57,15 +56,10 @@ void volumetric_pass::volumetric_scene(RenderContext* pContext, const Fbo::Share
     PROFILE("do volumetric");
 
     // do clear
-    pContext->clearUAV(mpPackedPixelBuffer_->getUAV().get(), float4(0, 0, 0 ,0));
+    pContext->clearUAV(mpPackedAlbedo_->getUAV().get(), float4(0, 0, 0 ,0));
     mpState->setFbo(pDstFbo);
     mpScene_->rasterize(pContext, mpState.get(), mpVars.get(), Scene::RenderFlags::UserRasterizerState);
-
-    // avg result
-    uint3 group = { (kVoxelMeta.CellDim.x + g_avgThreads - 1) / g_avgThreads, (kVoxelMeta.CellDim.y + g_avgThreads - 1) / g_avgThreads,
-        (kVoxelMeta.CellDim.z + g_avgThreads - 1) / g_avgThreads };
-    pContext->dispatch(mpPixelAvgState_.get(), mpPixelAvgVars_.get(), group);
-
+    
     build_svo(pContext);
     needRefresh_ = false;
 }
@@ -164,13 +158,6 @@ volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::
         blendDesc.setRenderTargetWriteMask(0, false, false, false, false);
         BlendState::SharedPtr blendState = BlendState::create(blendDesc);
         mpState->setBlendState(blendState);
-
-        Program::Desc d_pixelAvg;
-        d_pixelAvg.addShaderLibrary(kPixelAvgProg).csEntry("cs_avg");
-        auto pAvgProg = ComputeProgram::create(d_pixelAvg, programDefines);
-        mpPixelAvgState_ = ComputeState::create();
-        mpPixelAvgState_->setProgram(pAvgProg);
-        mpPixelAvgVars_ = ComputeVars::create(pAvgProg.get());
     }
 
     create_svo_shaders(programDefines);
@@ -188,9 +175,14 @@ void volumetric_pass::rebuild_pixel_data_buffers() {
     glm::uvec3 cellDim = glm::ceil((bound.extent() + cellSize_) / cellSize_ );
 
     {
-        size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(uint32_t) * 5;
-        if (mpPackedPixelBuffer_ && mpPackedPixelBuffer_->getSize() == bufferSize) return;
-        mpPackedPixelBuffer_ = Buffer::create(bufferSize);
+        size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(uint32_t);
+        if (!mpPackedAlbedo_ || mpPackedAlbedo_->getSize() != bufferSize) {
+            mpPackedAlbedo_ = Texture::create3D(cellDim.x, cellDim.y, cellDim.z, ResourceFormat::R32Uint, 1, nullptr, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess);
+        }
+
+        if (!mpPackedNormal_ || mpPackedNormal_->getSize() != bufferSize) {
+            mpPackedNormal_ = Texture::create3D(cellDim.x, cellDim.y, cellDim.z, ResourceFormat::R32Uint, 1, nullptr, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess);
+        }
     }
 
     kVoxelMeta.CellDim = cellDim;
@@ -198,16 +190,14 @@ void volumetric_pass::rebuild_pixel_data_buffers() {
     kVoxelMeta.Min = bound.minPoint;
     kVoxelMeta.Max = bound.maxPoint;
 
-    mpVars["gPixelPacked"] = mpPackedPixelBuffer_;
+    mpVars["gPackedAlbedo"] = mpPackedAlbedo_;
+    mpVars["gPackedNormal"] = mpPackedNormal_;
     mpVars["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
-
-    mpPixelAvgVars_["gPixelPacked"] = mpPackedPixelBuffer_;
-    mpPixelAvgVars_["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
 
     mpDebugMesh_ = TriangleMesh::createCube(cellSize_);
     mpDebugVao_->getVertexBuffer(0)->setBlob(mpDebugMesh_->getVertices().data(), 0, sizeof(TriangleMesh::Vertex) * mpDebugMesh_->getVertices().size());
     mpDebugVao_->getIndexBuffer()->setBlob(mpDebugMesh_->getIndices().data(), 0, sizeof(uint32_t) * mpDebugMesh_->getIndices().size());
-    mpDebugVars_["gPixelPacked"] = mpPackedPixelBuffer_;
+    mpDebugVars_["gPackedAlbedo"] = mpPackedAlbedo_;
     mpDebugVars_["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
 }
 
@@ -268,7 +258,7 @@ void volumetric_pass::rebuild_svo_buffers() {
 
     // bound resource to shader
     mpTagNodeVars_["CB"]["gSvoMeta"].setBlob(kSvoMeta);
-    mpTagNodeVars_["gPixelPacked"] = mpPackedPixelBuffer_;
+    mpTagNodeVars_["gPackedAlbedo"] = mpPackedAlbedo_;
     mpTagNodeVars_["gSvoNodeBuffer"] = mpSVONodeBuffer_;
 
     mpCaculateIndirectArgVars_["gDivideIndirectArg"] = mpIndirectArgBuffer_;
@@ -277,7 +267,7 @@ void volumetric_pass::rebuild_svo_buffers() {
     mpDivideSubNodeVars_["gSvoNodeBuffer"] = mpSVONodeBuffer_;
 
     mpTracingSvo_->getVars()["CB"]["gSvoMeta"].setBlob(kSvoMeta);
-    mpTracingSvo_->getVars()["gPixelPacked"] = mpPackedPixelBuffer_;
+    mpTracingSvo_->getVars()["gPackedAlbedo"] = mpPackedAlbedo_;
     mpTracingSvo_->getVars()["gSvoNodeBuffer"] = mpSVONodeBuffer_;
 
     mpSvoDebugTracingData_ = Buffer::create(sizeof(float) * 6);

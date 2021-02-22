@@ -1,5 +1,7 @@
 #pragma once
 import Scene.Raytracing;
+#include "Samples/sparse_voxel_octree/render_passes/voxel_meta.slangh"
+
 
 inline float3 convert_world_to_svo_space(float3 worldPos, float cellSize, float3 cellDim, float3 cellMin) {
     float3 boundSize = cellSize * cellDim;  
@@ -36,18 +38,19 @@ uint32_t get_child_index(uint32_t nodeData) {
 }
 
 
-inline float4 get_color(uint32_t nodeData, RWByteAddressBuffer packedPixel, out uint32_t pixelCount) {
-    uint32_t pixelAddress = get_child_index(nodeData);
-    uint32_t packedAddress = pixelAddress * 20;
+inline float4 get_data(uint32_t nodeData,  Texture3D<uint32_t> packedData, uint3 dim, out uint32_t pixelCount) {
+    uint32_t linearAddress = get_child_index(nodeData);
+    uint3 cellIndex = extract_index_form_linear(linearAddress, dim);
 
     // load and uncompress
-    uint4 packedColor = gPixelPacked.Load4(packedAddress);
-    pixelCount = gPixelPacked.Load(packedAddress + 16);
-    float4 finalColor = { asfloat(packedColor.x), asfloat(packedColor.y), asfloat(packedColor.z), asfloat(packedColor.w) };
-    return finalColor;
+    uint32_t packedData = packedData[cellIndex];
+    pixelCount = (packedData & 0xFF000000) >> 24U;
+    float4 finalData = uint32_to_RGBA8_255(packedData);
+    finalData /= finalData.a;
+    return finalData;
 }
 
-tracing_result trace_sparse_voxel_ray(inout RayDesc ray, RWByteAddressBuffer pixelPacked, RWByteAddressBuffer svoNode, uint32_t leafLevel) {
+tracing_result trace_sparse_voxel_ray(inout RayDesc ray, RWTexture3D<uint32_t> packedData, RWByteAddressBuffer svoNode, uint32_t leafLevel, uint3 cellDim) {
     const float epsilon = exp2(-g_maxLevel);
 	tracing_result hitInfo = {};
 	int2 stack[g_maxLevel + 1] = {};
@@ -114,7 +117,7 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, RWByteAddressBuffer pix
 		
         if (is_leaf_node(childNodeInParent, scale, leafLevel)) {
             uint32_t pixelCount = 0;
-	        float4 color = get_color(childNodeInParent, pixelPacked, pixelCount);
+	        float4 color = get_data(childNodeInParent, pixelPacked, cellDim, pixelCount);
             if(pixelCount != 0) {
                 hitInfo.Color = color;
                 hitInfo.IsMissing = false;

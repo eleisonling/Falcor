@@ -28,9 +28,8 @@ private:
 
     // pixel volumetric
     Scene::SharedPtr mpScene_ = nullptr;
-    Buffer::SharedPtr mpPackedPixelBuffer_ = nullptr;
-    ComputeState::SharedPtr mpPixelAvgState_ = nullptr;
-    ComputeVars::SharedPtr mpPixelAvgVars_ = nullptr;
+    Texture::SharedPtr mpPackedAlbedo_ = nullptr;
+    Texture::SharedPtr mpPackedNormal_ = nullptr;
 
     // pixel volumetric vars
     bool needRefresh_ = true;

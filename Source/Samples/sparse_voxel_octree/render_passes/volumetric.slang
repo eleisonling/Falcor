@@ -130,11 +130,79 @@ void gs_main(triangle VSOut input[3], uint InstanceID : SV_GSInstanceID, inout T
 import Scene.TextureSampler;
 import Scene.Material.MaterialData;
 #include "Scene/Material/MaterialDefines.slangh"
-#define NV_SHADER_EXTN_SLOT u63
-#define NV_SHADER_EXTN_REGISTER_SPACE space0
-#include "NVAPI/nvHLSLExtns.h"
 
-RWByteAddressBuffer gPixelPacked;
+RWTexture3D<uint32_t> gPackedAlbedo;
+RWTexture3D<uint32_t> gPackedNormal;
+
+float3 get_normal_map<L:ITextureSampler>(MaterialData md, MaterialResources mr, float2 uv, float3 normalW, float4 tangentW, L lod)
+{
+    uint mapType = EXTRACT_NORMAL_MAP_TYPE(md.flags);
+    if (mapType == NormalMapUnused) return normalW;
+
+    float3 mapN = lod.sampleTexture(mr.normalMap, mr.samplerState, uv).xyz;
+    switch(mapType)
+    {
+    case NormalMapRGB:
+        mapN = RgbToNormal(mapN);
+        break;
+    case NormalMapRG:
+        mapN = RgToNormal(mapN.rg);
+        break;
+    default:
+        return normalW;
+    }
+
+    float NdotT = dot(tangentW.xyz, normalW);
+    bool nonParallel = abs(NdotT) < 0.9999f;
+    bool nonZero = dot(tangentW.xyz, tangentW.xyz) > 0.f;
+
+    float3 T,B;
+
+    bool valid = tangentW.w != 0.f && nonZero && nonParallel;
+    if (valid)
+    {
+        T = normalize(tangentW.xyz - normalW * NdotT);
+        B = cross(normalW, T) * tangentW.w;
+    }
+    else
+    {
+        T = perp_stark(normalN);
+        B = cross(sd.N, T);
+    }
+
+    return normalize(T * mapN.x + B * mapN.y + normalW * mapN.z);
+}
+
+
+void image_atomic_avg_RGBA8(RWTexture3D<uint32_t> img, uint3 coords, float4 newVal) {
+
+    newVal *= 255.0f;
+    uint32_t packedNewVal = RGBA8_255_to_uint32(newVal);
+    uint32_t lastPackedVal = 0;
+    uint32_t currPackedVal = 0;
+    float4 currVal = {};
+    uint32_t numIterations = 0;
+
+    [allow_uav_condition] while(true) {
+
+        InterlockedCompareExchange(img[coords], lastPackedVal, packedNewVal, currPackedVal);
+        if(currPackedVal == lastPackedVal || numIterations >= g_maxAvgIterations) break;
+
+        lastPackedVal = curPackedVal;
+        currVal = uint32_to_RGBA8_255(curPackedVal);
+        currVal.xyz *= currVal.a;
+        currVal += newVal;
+        currVal.xyz /= currVal.a;
+        packedNewVal = RGBA8_255_to_uint32(currVal);
+        ++numIterations;
+    }
+
+    newVal = uint32_to_RGBA8_255(packedNewVal);
+    newVal.a = 255.0;
+    packedNewVal = RGBA8_255_to_uint32(newVal);
+    img[coords] = packedNewVal;
+}
+
 
 float4 ps_main(VSOut vOut) : SV_TARGET {
 
@@ -145,22 +213,20 @@ float4 ps_main(VSOut vOut) : SV_TARGET {
         && cellIndex.y >= 0 && cellIndex.y < gVoxelMeta.CellDim.y
         && cellIndex.z >= 0 && cellIndex.z < gVoxelMeta.CellDim.z) {
 
-        // get linear index
-        uint32_t linearIndex = cellIndex.z * gVoxelMeta.CellDim.y * gVoxelMeta.CellDim.x + cellIndex.y * gVoxelMeta.CellDim.x + cellIndex.x;
-        // jump to first address
-        uint32_t packedAddress = linearIndex * 20;
-
         ImplicitLodTextureSampler lod = { };
         MaterialData md = gScene.materials[vOut.materialID];
         MaterialResources mr = gScene.materialResources[vOut.materialID];
-        float4 baseColor = sampleTexture(mr.baseColor, mr.samplerState, vOut.texC, md.baseColor, EXTRACT_DIFFUSE_TYPE(md.flags), lod);
 
-        // atomic float max
-        NvInterlockedAddFp32(gPixelPacked, packedAddress + 0, baseColor.x);
-        NvInterlockedAddFp32(gPixelPacked, packedAddress + 4, baseColor.y);
-        NvInterlockedAddFp32(gPixelPacked, packedAddress + 8, baseColor.z);
-        NvInterlockedAddFp32(gPixelPacked, packedAddress + 12, baseColor.w);
-        gPixelPacked.InterlockedAdd(packedAddress + 16, 1);
+        float4 baseColor = sampleTexture(mr.baseColor, mr.samplerState, vOut.texC, md.baseColor, EXTRACT_DIFFUSE_TYPE(md.flags), lod);
+        baseColor.a = 1.0f;
+
+        float4 normalW = {};
+        normalW.xyz = get_normal_map(md, mr, uv, vOut.normalW, vOut.tangentW, lod);
+        normalW.xyz = normalW.xyz * 0.5f + 0.5f;
+        normalW.w = 1.0f;
+
+        image_atomic_avg_RGBA8(gPackedAlbedo, cellIndex, baseColor);
+        image_atomic_avg_RGBA8(gPackedNormal, cellIndex, normalW);
     }
 
     return float4(0,0,0,0);
