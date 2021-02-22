@@ -37,6 +37,7 @@
     <ShaderSource Include="render_passes\debug_volumetric.slang" />
     <ShaderSource Include="render_passes\deferred_apply.slang" />
     <ShaderSource Include="render_passes\exposure_adaption.cs.slang" />
+    <ShaderSource Include="render_passes\gen_mipmap.cs.slang" />
     <ShaderSource Include="render_passes\gen_shadowmap.slang" />
     <ShaderSource Include="render_passes\pixel_avg.cs.slang" />
     <ShaderSource Include="render_passes\present.ps.slang" />

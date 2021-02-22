@@ -11,8 +11,6 @@ cbuffer CB {
 
 Texture3D<uint32_t> gPackedAlbedo;
 RWByteAddressBuffer gSvoNodeBuffer;
-RWByteAddressBuffer gDebugTracingData;
-
 
 float4 main(float2 texC : TEXCOORD, float4 posS : SV_POSITION) : SV_TARGET {
     uint2 launchIndex = uint2(texC.xy * ViewportDims);
