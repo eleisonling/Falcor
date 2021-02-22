@@ -129,6 +129,7 @@ void gs_main(triangle VSOut input[3], uint InstanceID : SV_GSInstanceID, inout T
 
 import Scene.TextureSampler;
 import Scene.Material.MaterialData;
+import Utils.Math.MathHelpers;
 #include "Scene/Material/MaterialDefines.slangh"
 
 RWTexture3D<uint32_t> gPackedAlbedo;
@@ -166,8 +167,8 @@ float3 get_normal_map<L:ITextureSampler>(MaterialData md, MaterialResources mr, 
     }
     else
     {
-        T = perp_stark(normalN);
-        B = cross(sd.N, T);
+        T = perp_stark(normalW);
+        B = cross(normalW, T);
     }
 
     return normalize(T * mapN.x + B * mapN.y + normalW * mapN.z);
@@ -179,21 +180,21 @@ void image_atomic_avg_RGBA8(RWTexture3D<uint32_t> img, uint3 coords, float4 newV
     newVal *= 255.0f;
     uint32_t packedNewVal = RGBA8_255_to_uint32(newVal);
     uint32_t lastPackedVal = 0;
-    uint32_t currPackedVal = 0;
-    float4 currVal = {};
+    uint32_t curPackedVal = 0;
+    float4 curVal = {};
     uint32_t numIterations = 0;
 
     [allow_uav_condition] while(true) {
 
-        InterlockedCompareExchange(img[coords], lastPackedVal, packedNewVal, currPackedVal);
-        if(currPackedVal == lastPackedVal || numIterations >= g_maxAvgIterations) break;
+        InterlockedCompareExchange(img[coords], lastPackedVal, packedNewVal, curPackedVal);
+        if(curPackedVal == lastPackedVal || numIterations >= g_maxAvgIterations) break;
 
         lastPackedVal = curPackedVal;
-        currVal = uint32_to_RGBA8_255(curPackedVal);
-        currVal.xyz *= currVal.a;
-        currVal += newVal;
-        currVal.xyz /= currVal.a;
-        packedNewVal = RGBA8_255_to_uint32(currVal);
+        curVal = uint32_to_RGBA8_255(curPackedVal);
+        curVal.xyz *= curVal.a;
+        curVal += newVal;
+        curVal.xyz /= curVal.a;
+        packedNewVal = RGBA8_255_to_uint32(curVal);
         ++numIterations;
     }
 
@@ -221,7 +222,7 @@ float4 ps_main(VSOut vOut) : SV_TARGET {
         baseColor.a = 1.0f;
 
         float4 normalW = {};
-        normalW.xyz = get_normal_map(md, mr, uv, vOut.normalW, vOut.tangentW, lod);
+        normalW.xyz = get_normal_map(md, mr, vOut.texC, vOut.normalW, vOut.tangentW, lod);
         normalW.xyz = normalW.xyz * 0.5f + 0.5f;
         normalW.w = 1.0f;
 

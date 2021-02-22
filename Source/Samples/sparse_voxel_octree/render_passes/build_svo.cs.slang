@@ -40,9 +40,10 @@ void tag_node(uint3 g_threadId : SV_DispatchThreadID){
 
     if(g_threadId.x >= gSvoMeta.CellDim.x || g_threadId.y >= gSvoMeta.CellDim.y || g_threadId.z >= gSvoMeta.CellDim.z) return;
     uint3 cellIndex =  g_threadId;
+    uint32_t linearIndex = g_threadId.z * gSvoMeta.CellDim.y * gSvoMeta.CellDim.x + g_threadId.y * gSvoMeta.CellDim.x + g_threadId.x;
 
     uint32_t packedColor = gPackedAlbedo[cellIndex];
-    pixelCount = (packedColor & 0xFF000000) >> 24U;
+    uint32_t pixelCount = (packedColor & 0xFF000000) >> 24U;
 
     if(pixelCount == 0) return;
 

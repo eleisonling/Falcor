@@ -47,10 +47,10 @@ float4 ps_main(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
         && cellIndex.z >= 0 && cellIndex.z < gVoxelMeta.CellDim.z) {
 
         // load and uncompress
-        uint32_t packedColor = gPackedAlbedo.[cellIndex];
+        uint32_t packedColor = gPackedAlbedo[cellIndex];
         pixelCount = (packedColor & 0xFF000000) >> 24U;
         finalColor = uint32_to_RGBA8_255(packedColor);
-        finalColor /= finalColor.a;
+        if(pixelCount != 0) finalColor /= finalColor.a;
     }
 
     if(pixelCount == 0) discard;
