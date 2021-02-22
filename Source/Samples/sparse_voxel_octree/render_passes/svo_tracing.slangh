@@ -45,8 +45,8 @@ inline float4 get_data(uint32_t nodeData,  Texture3D<uint32_t> packedData, uint3
     // load and uncompress
     uint32_t data = packedData[cellIndex];
     pixelCount = (data & 0xFF000000) >> 24U;
-    float4 finalData = uint32_to_RGBA8_255(data);
-    if(pixelCount != 0) finalData /= finalData.a;
+    float4 finalData = float4(uint32_to_RGBA8_255(data).xyz, 1.0f);
+    if(pixelCount != 0) finalData.xyz /= g_packRGBFactor;
     return finalData;
 }
 
