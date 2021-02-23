@@ -115,12 +115,13 @@ void volumetric_pass::gen_mipmaps(RenderContext* pContext) {
     PROFILE("gen_mipmap");
 
     for (int32_t level = kSvoMeta.TotalLevel - 1; level > 0; level--) {
-        mpGenMipmapVar_["gPackedSrcData"].setSrv(mpPackedAlbedo_->getSRV(kSvoMeta.TotalLevel - level - 1));
-        mpGenMipmapVar_["gPackedDstData"].setUav(mpPackedAlbedo_->getUAV(kSvoMeta.TotalLevel - level));
+        uint32_t mip = kSvoMeta.TotalLevel - level;
+        mpGenMipmapVar_["gPackedSrcData"].setSrv(mpPackedAlbedo_->getSRV(mip - 1));
+        mpGenMipmapVar_["gPackedDstData"].setUav(mpPackedAlbedo_->getUAV(mip));
 
-        uint3 dim = kSvoMeta.CellDim >> (kSvoMeta.TotalLevel - level);
+        uint3 dim = kSvoMeta.CellDim >> mip;
         mpGenMipmapVar_["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
-        mpGenMipmapVar_["CB"]["gMip"].setBlob(kSvoMeta.TotalLevel - level);
+        mpGenMipmapVar_["CB"]["gMip"] = mip;
 
         uint3 mipGroup = { (dim.x + g_tagThreads - 1) / g_tagThreads, (dim.y + g_tagThreads - 1) / g_tagThreads,
             (dim.z + g_tagThreads - 1) / g_tagThreads };

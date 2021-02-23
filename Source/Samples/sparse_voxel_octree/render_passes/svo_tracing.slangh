@@ -51,7 +51,7 @@ inline float4 get_data(uint32_t nodeData,  Texture3D<float4> packedData, float m
 }
 
 tracing_result trace_sparse_voxel_ray(inout RayDesc ray, Texture3D<float4> packedData, RWByteAddressBuffer svoNode, uint32_t leafLevel,
-    uint3 cellDim, uint32_t mip, SamplerState texSampler) {
+    uint3 cellDim, float mip, SamplerState texSampler) {
 
     const float epsilon = exp2(-g_maxLevel);
 	tracing_result hitInfo = {};
