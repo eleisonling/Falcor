@@ -9,7 +9,7 @@ private:
     void rebuild_shadowmap_buffers();
     void rebuild_shadow_matrix(float3 lightDir, const AABB& bounds);
     uint2 mpSize_ = uint2(4096, 4096);
-    int2 pcf_kernel_size_ = { 2, 2 };
+    int2 pcf_kernel_size_ = { 4, 4 };
     Scene::SharedPtr mpScene_ = nullptr;
     Fbo::SharedPtr mpShadowMap_ = nullptr;
     bool smChanged_ = false;
