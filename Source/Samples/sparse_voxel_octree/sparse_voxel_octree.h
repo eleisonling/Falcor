@@ -58,4 +58,5 @@ private:
     Fbo::SharedPtr mpGBufferFbo_ = nullptr;
     post_effects::SharedPtr mpPostEffects_ = nullptr;
     Sampler::SharedPtr mpTextureSampler_ = nullptr;
+    Sampler::SharedPtr mpVoxelSampler_ = nullptr;
 };
