@@ -4,9 +4,11 @@ import Scene.Raster;
 
 cbuffer CB {
     voxel_meta gVoxelMeta;
+    uint32_t gMip;
 }
 
-Texture3D<uint32_t> gPackedAlbedo;
+Texture3D<float4> gPackedAlbedo;
+SamplerState g_texSampler;
 
 struct vs_in {
     float3 pos                      : POSITION;
@@ -41,16 +43,17 @@ float4 ps_main(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
     uint32_t pixelCount = 0;
     float3 posW = vOut.posW;
     uint3 cellIndex = floor((posW - gVoxelMeta.Min) / gVoxelMeta.CellSize);
+    float3 texCoord = { (float)cellIndex.x / (float)gVoxelMeta.CellDim.x, (float)cellIndex.y / (float)gVoxelMeta.CellDim.y, (float)cellIndex.z / (float)gVoxelMeta.CellDim.z };
+
 
     if(cellIndex.x >= 0 && cellIndex.x < gVoxelMeta.CellDim.x
         && cellIndex.y >= 0 && cellIndex.y < gVoxelMeta.CellDim.y
         && cellIndex.z >= 0 && cellIndex.z < gVoxelMeta.CellDim.z) {
 
         // load and uncompress
-        uint32_t packedColor = gPackedAlbedo[cellIndex];
-        pixelCount = (packedColor & 0xFF000000) >> 24U;
-        finalColor = float4(uint32_to_RGBA8_255(packedColor).xyz, 1.0f);
-        if(pixelCount != 0) finalColor.xyz /= g_packRGBFactor;
+        float4 packedColor = gPackedAlbedo.SampleLevel(g_texSampler, texCoord, gMip);
+        pixelCount = packedColor.a * g_packRGBFactor;
+        finalColor = float4(packedColor.xyz, 1.0f);
     }
 
     if(pixelCount == 0) discard;

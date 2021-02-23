@@ -114,15 +114,13 @@ void volumetric_pass::fixture_cell_size() {
 void volumetric_pass::gen_mipmaps(RenderContext* pContext) {
     PROFILE("gen_mipmap");
 
-    voxel_meta mipMeta = kVoxelMeta;
-
     for (int32_t level = kSvoMeta.TotalLevel - 1; level > 0; level--) {
         mpGenMipmapVar_["gPackedSrcData"].setSrv(mpPackedAlbedo_->getSRV(kSvoMeta.TotalLevel - level - 1));
         mpGenMipmapVar_["gPackedDstData"].setUav(mpPackedAlbedo_->getUAV(kSvoMeta.TotalLevel - level));
 
         uint3 dim = kSvoMeta.CellDim >> (kSvoMeta.TotalLevel - level);
-        mipMeta.CellDim = dim;
-        mpGenMipmapVar_["CB"]["gVoxelMeta"].setBlob(mipMeta);
+        mpGenMipmapVar_["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
+        mpGenMipmapVar_["CB"]["gMip"].setBlob(kSvoMeta.TotalLevel - level);
 
         uint3 mipGroup = { (dim.x + g_tagThreads - 1) / g_tagThreads, (dim.y + g_tagThreads - 1) / g_tagThreads,
             (dim.z + g_tagThreads - 1) / g_tagThreads };
@@ -145,6 +143,8 @@ void volumetric_pass::debug_scene(RenderContext* pContext, const Fbo::SharedPtr&
         mpDebugState_->setFbo(pDstFbo);
         mpDebugState_->setVao(mpDebugVao_);
         mpDebugVars_->setParameterBlock("gScene", mpScene_->getParameterBlock());
+        mpDebugVars_["g_texSampler"] = pTexSampler;
+        mpDebugVars_["CB"]["gMip"] = mipLevel_;
         pContext->drawIndexedInstanced(mpDebugState_.get(), mpDebugVars_.get(), (uint32_t)mpDebugMesh_->getIndices().size(), instanceCount, 0, 0, 0);
     }
 }
@@ -210,11 +210,11 @@ void volumetric_pass::rebuild_pixel_data_buffers() {
     {
         size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(uint32_t);
         if (!mpPackedAlbedo_ || mpPackedAlbedo_->getWidth() != cellDim.x ||  mpPackedAlbedo_->getHeight() != cellDim.y || mpPackedAlbedo_->getDepth() != cellDim.z) {
-            mpPackedAlbedo_ = Texture::create3D(cellDim.x, cellDim.y, cellDim.z, ResourceFormat::R32Uint, mip, nullptr, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess);
+            mpPackedAlbedo_ = Texture::create3D(cellDim.x, cellDim.y, cellDim.z, ResourceFormat::RGBA8Unorm, mip, nullptr, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess);
         }
 
         if (!mpPackedNormal_ || mpPackedNormal_->getWidth() != cellDim.x ||  mpPackedNormal_->getHeight() != cellDim.y || mpPackedNormal_->getDepth() != cellDim.z) {
-            mpPackedNormal_ = Texture::create3D(cellDim.x, cellDim.y, cellDim.z, ResourceFormat::R32Uint, mip, nullptr, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess);
+            mpPackedNormal_ = Texture::create3D(cellDim.x, cellDim.y, cellDim.z, ResourceFormat::RGBA8Unorm, mip, nullptr, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess);
         }
     }
 
