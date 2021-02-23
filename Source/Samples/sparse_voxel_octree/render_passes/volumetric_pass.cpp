@@ -136,7 +136,7 @@ void volumetric_pass::debug_scene(RenderContext* pContext, const Fbo::SharedPtr&
         mpTracingSvo_->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
         mpTracingSvo_->getVars()["g_texSampler"] = pTexSampler;
         mpTracingSvo_->getVars()["CB"]["ViewportDims"] = float2{ pDstFbo->getWidth(), pDstFbo->getHeight() };
-        mpTracingSvo_->getVars()["CB"]["MipLevel"] = mipLevel_;;
+        mpTracingSvo_->getVars()["CB"]["gMip"] = mipLevel_;;
         mpTracingSvo_->execute(pContext, pDstFbo);
     } else {
         uint32_t instanceCount = kVoxelMeta.CellDim.x * kVoxelMeta.CellDim.y * kVoxelMeta.CellDim.z;

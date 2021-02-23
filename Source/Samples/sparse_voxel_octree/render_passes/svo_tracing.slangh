@@ -38,20 +38,19 @@ uint32_t get_child_index(uint32_t nodeData) {
 }
 
 
-inline float4 get_data(uint32_t nodeData,  Texture3D<uint32_t> packedData, uint32_t mip, SamplerState texSampler, uint3 dim, out uint32_t pixelCount) {
+inline float4 get_data(uint32_t nodeData,  Texture3D<float4> packedData, float mip, SamplerState texSampler, uint3 dim, out uint32_t pixelCount) {
     uint32_t linearAddress = get_child_index(nodeData);
     uint3 cellIndex = extract_index_form_linear(linearAddress, dim);
     float3 texCoord = { (float)cellIndex.x / (float)dim.x, (float)cellIndex.y / (float)dim.y, (float)cellIndex.z / (float)dim.z };
 
     // load and uncompress
-    uint32_t data = packedData.SampleLevel(texSampler, texCoord, mip);
-    pixelCount = (data & 0xFF000000) >> 24U;
-    float4 finalData = float4(uint32_to_RGBA8_255(data).xyz, 1.0f);
-    if(pixelCount != 0) finalData.xyz /= g_packRGBFactor;
+    float4 finalData = packedData.SampleLevel(texSampler, texCoord, mip);
+    pixelCount = finalData.w * g_packRGBFactor;
+    finalData = float4(finalData.xyz, 1.0f);
     return finalData;
 }
 
-tracing_result trace_sparse_voxel_ray(inout RayDesc ray, Texture3D<uint32_t> packedData, RWByteAddressBuffer svoNode, uint32_t leafLevel,
+tracing_result trace_sparse_voxel_ray(inout RayDesc ray, Texture3D<float4> packedData, RWByteAddressBuffer svoNode, uint32_t leafLevel,
     uint3 cellDim, uint32_t mip, SamplerState texSampler) {
 
     const float epsilon = exp2(-g_maxLevel);

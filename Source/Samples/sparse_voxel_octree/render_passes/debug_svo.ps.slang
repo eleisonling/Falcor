@@ -7,10 +7,10 @@ import Scene.Raytracing;
 cbuffer CB {
     svo_meta gSvoMeta;
     float2 ViewportDims;   
-    uint32_t MipLevel;
+    float gMip;
 }
 
-Texture3D<uint32_t> gPackedAlbedo;
+Texture3D<float4> gPackedAlbedo;
 SamplerState g_texSampler;
 RWByteAddressBuffer gSvoNodeBuffer;
 
@@ -19,7 +19,7 @@ float4 main(float2 texC : TEXCOORD, float4 posS : SV_POSITION) : SV_TARGET {
     RayDesc ray = gScene.camera.computeRayPinhole(launchIndex.xy, ViewportDims).toRayDesc();
     ray.Origin = convert_world_to_svo_space(ray.Origin, gSvoMeta.CellSize, gSvoMeta.SvoDim, gSvoMeta.Min);
 
-    tracing_result hitInfo = trace_sparse_voxel_ray(ray, gPackedAlbedo, gSvoNodeBuffer, gSvoMeta.TotalLevel, gSvoMeta.CellDim, MipLevel, g_texSampler);
+    tracing_result hitInfo = trace_sparse_voxel_ray(ray, gPackedAlbedo, gSvoNodeBuffer, gSvoMeta.TotalLevel, gSvoMeta.CellDim, gMip, g_texSampler);
 
     return hitInfo.Color;
 }
