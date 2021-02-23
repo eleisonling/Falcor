@@ -38,14 +38,14 @@ uint32_t get_child_index(uint32_t nodeData) {
 }
 
 
-inline float4 get_data(uint32_t nodeData,  Texture3D<float4> packedData, float mip, SamplerState texSampler, uint3 dim, out uint32_t pixelCount) {
+inline float4 get_data(uint32_t nodeData,  Texture3D<float4> packedData, float mip, SamplerState texSampler, uint3 dim, out bool hitted) {
     uint32_t linearAddress = get_child_index(nodeData);
     uint3 cellIndex = extract_index_form_linear(linearAddress, dim);
     float3 texCoord = { (float)cellIndex.x / (float)dim.x, (float)cellIndex.y / (float)dim.y, (float)cellIndex.z / (float)dim.z };
 
     // load and uncompress
     float4 finalData = packedData.SampleLevel(texSampler, texCoord, mip);
-    pixelCount = finalData.w * g_packRGBFactor;
+    hitted = finalData.w > 0.f;
     finalData = float4(finalData.xyz, 1.0f);
     return finalData;
 }
@@ -118,9 +118,9 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, Texture3D<float4> packe
 		float tc_max = min(min(t_corner.x, t_corner.y), t_corner.z);
 		
         if (is_leaf_node(childNodeInParent, scale, leafLevel)) {
-            uint32_t pixelCount = 0;
-	        float4 color = get_data(childNodeInParent, packedData, mip, texSampler, cellDim, pixelCount);
-            if(pixelCount != 0) {
+            bool hitted = 0;
+	        float4 color = get_data(childNodeInParent, packedData, mip, texSampler, cellDim, hitted);
+            if(hitted) {
                 hitInfo.Color = color;
                 hitInfo.IsMissing = false;
                 ray.TMin = t_min;

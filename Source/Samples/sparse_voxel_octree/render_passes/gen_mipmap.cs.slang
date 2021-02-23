@@ -24,11 +24,20 @@ static const uint3 OFFSETS[] =
 float4 get_avg(uint3 pos)
 {
     float4 result = {};
+    uint32_t num = 0;
 
 	for(int i = 0; i < 8; i++)
 	{
-		result += gPackedSrcData[pos + OFFSETS[i]];
+		float4 data = gPackedSrcData[pos + OFFSETS[i]];
+        result.xyz += data.xyz;
+        if(data.a > 0.f) num++;
 	}
+
+    if(num != 0) {
+        result /= num;
+        result.a = 1.0f;
+    }
+
     return result;
 }
 
