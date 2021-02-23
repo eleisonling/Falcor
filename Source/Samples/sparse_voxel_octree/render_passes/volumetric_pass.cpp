@@ -161,7 +161,7 @@ void volumetric_pass::on_gui_render(Gui::Group& group) {
     }
 
     group.checkbox("Use Tracing Method", debugSVOTracing_);
-    group.slider("Mip Level", mipLevel_, 0u, kSvoMeta.TotalLevel - 1);
+    group.var("Mip Level", mipLevel_, 0.0f, float(kSvoMeta.TotalLevel - 1), 0.1f);
 }
 
 volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc, const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines)

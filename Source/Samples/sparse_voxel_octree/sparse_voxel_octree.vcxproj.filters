@@ -63,8 +63,6 @@
     <ShaderSource Include="render_passes\svo_tracing.slangh">
       <Filter>render_passes</Filter>
     </ShaderSource>
-    <ShaderSource Include="render_passes\deferred_apply.slang" />
-    <ShaderSource Include="render_passes\gen_shadowmap.slang" />
     <ShaderSource Include="render_passes\lighting.ps.slang">
       <Filter>render_passes</Filter>
     </ShaderSource>
@@ -81,6 +79,12 @@
       <Filter>render_passes</Filter>
     </ShaderSource>
     <ShaderSource Include="render_passes\gen_mipmap.cs.slang">
+      <Filter>render_passes</Filter>
+    </ShaderSource>
+    <ShaderSource Include="render_passes\gen_shadowmap.slang">
+      <Filter>render_passes</Filter>
+    </ShaderSource>
+    <ShaderSource Include="render_passes\deferred_apply.slang">
       <Filter>render_passes</Filter>
     </ShaderSource>
   </ItemGroup>

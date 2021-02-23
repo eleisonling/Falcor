@@ -56,7 +56,7 @@ private:
     // debug tracing svo
     FullScreenPass::SharedPtr mpTracingSvo_ = nullptr;
     bool debugSVOTracing_ = false;
-    uint32_t mipLevel_ = 0;
+    float mipLevel_ = 0.f;
 
     // volumetric debug
     GraphicsVars::SharedPtr mpDebugVars_ = nullptr;

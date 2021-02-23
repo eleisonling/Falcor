@@ -29,7 +29,6 @@ float4 get_avg(uint3 pos)
 	{
 		result += gPackedSrcData[pos + OFFSETS[i]];
 	}
-    result /= 8.0f;
     return result;
 }
 

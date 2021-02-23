@@ -4,7 +4,7 @@ import Scene.Raster;
 
 cbuffer CB {
     voxel_meta gVoxelMeta;
-    uint32_t gMip;
+    float gMip;
 }
 
 Texture3D<float4> gPackedAlbedo;
