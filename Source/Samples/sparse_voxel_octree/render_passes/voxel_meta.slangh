@@ -44,6 +44,15 @@ uint32_t RGBA8_255_to_uint32(float4 val) {
             |(uint32_t(val.x) & 0x000000FF);
 }
 
+float3 pack_normal(float3 v) {
+    return v * 0.5f + 0.5f;
+}
+
+float3 unpack_normal(float3 v) {
+    return v * 2.0f - 1.0f;
+}
+
+
 #define g_maxAvgIterations 100
 #define g_packRGBFactor 255.0f
 #define g_internalFlag 0x80000000

@@ -199,43 +199,6 @@ void image_atomic_avg_RGBA8(RWTexture3D<uint32_t> img, uint3 coords, float4 newV
     }
 }
 
-float3 pack_normal(float3 v) {
-    return v * 0.5f + 0.5f;
-}
-
-float3 unpack_normal(float3 v) {
-    return v * 2.0f - 1.0f;
-}
-
-void image_atomic_avg_normal(RWTexture3D<uint32_t> img, uint3 coords, float4 newVal) {
-
-    newVal.xyz *= g_packRGBFactor;
-    uint32_t packedNewVal = RGBA8_255_to_uint32(newVal);
-    uint32_t lastPackedVal = 0;
-    uint32_t curPackedVal = 0;
-    float4 curVal = {};
-    uint32_t numIterations = 0;
-
-    [allow_uav_condition] while(true) {
-
-        InterlockedCompareExchange(img[coords], lastPackedVal, packedNewVal, curPackedVal);
-        if(curPackedVal == lastPackedVal || numIterations >= g_maxAvgIterations) break;
-
-        lastPackedVal = curPackedVal;
-        curVal = uint32_to_RGBA8_255(curPackedVal);
-        // unpack
-        curVal.xyz = unpack_normal(curVal.xyz);
-        curVal.xyz += unpack_normal(newVal.xyz);
-        // normalize & repack
-        curVal.xyz = pack_normal(normalize(curVal.xyz));
-
-        curVal.w = 255.0f;
-        packedNewVal = RGBA8_255_to_uint32(curVal);
-        ++numIterations;
-    }
-}
-
-
 float4 ps_main(VSOut vOut) : SV_TARGET {
 
     float3 posW = vOut.posW;
@@ -255,10 +218,10 @@ float4 ps_main(VSOut vOut) : SV_TARGET {
         float4 normalW = {};
         normalW.xyz = get_normal_map(md, mr, vOut.texC, vOut.normalW, vOut.tangentW, lod);
         normalW.xyz = pack_normal(normalW.xyz);
-        normalW.w = 255.0f;
+        normalW.w = 1.0f;
 
         image_atomic_avg_RGBA8(gPackedAlbedo, cellIndex, baseColor);
-        image_atomic_avg_normal(gPackedNormal, cellIndex, normalW);
+        image_atomic_avg_RGBA8(gPackedNormal, cellIndex, normalW);
     }
 
     return float4(0,0,0,0);
