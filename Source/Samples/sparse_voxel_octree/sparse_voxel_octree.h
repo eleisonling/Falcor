@@ -30,6 +30,7 @@
 #include "render_passes/projection_debug_pass.h"
 #include "render_passes/volumetric_pass.h"
 #include "render_passes/voxel_visualizer.h"
+#include "render_passes/light_injection.h"
 #include "render_passes/pcf_shadow_pass.h"
 #include "render_passes/post_effects.h"
 
@@ -55,6 +56,7 @@ private:
     projection_debug_pass::SharedPtr mpDeubgProjection_ = nullptr;
     volumetric_pass::SharedPtr mpVolumetric_ = nullptr;
     voxel_visualizer::SharedPtr mpVoxelVisualizer_ = nullptr;
+    light_injection::SharedPtr mpLightInjection_ = nullptr;
     pcf_shadow_pass::SharedPtr mpShadow_ = nullptr;
     uint32_t finalOutputType_ = 0;
     Fbo::SharedPtr mpGBufferFbo_ = nullptr;

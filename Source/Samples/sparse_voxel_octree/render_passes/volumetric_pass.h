@@ -18,7 +18,8 @@ public:
     const voxel_meta& get_voxel_meta() const;
     const svo_meta& get_svo_meta() const;
     Buffer::SharedPtr get_svo_node_buffer() const { return mpSVONodeBuffer_; }
-    Texture::SharedPtr get_albedo_voxel_buffer() const { return mpPackedAlbedo_; }
+    Texture::SharedPtr get_albedo_voxel_texture() const { return mpPackedAlbedo_; }
+    Texture::SharedPtr get_normal_voxel_texture() const { return mpPackedNormal_; }
 
 private:
     volumetric_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc,Program::DefineList& programDefines);

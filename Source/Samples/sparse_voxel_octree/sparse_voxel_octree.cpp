@@ -110,6 +110,7 @@ void sparse_voxel_octree::onLoad(RenderContext* pRenderContext) {
     mpDeubgProjection_ = projection_debug_pass::create(mpScene_);
     mpVolumetric_ = volumetric_pass::create(mpScene_);
     mpVoxelVisualizer_ = voxel_visualizer::create(mpScene_);
+    mpLightInjection_ = light_injection::create(mpScene_);
     mpShadow_ = pcf_shadow_pass::create(mpScene_);
     mpPostEffects_ = post_effects::create();
 
@@ -137,6 +138,8 @@ void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo
 
         if (mpShadow_->refresh_rebuild()) {
             mpShadow_->generate_shadowmap(pRenderContext);
+            mpLightInjection_->on_inject_light(pRenderContext, mpShadow_->get_shadowmap(), mpShadow_->get_shadow_matrix(),
+                mpVolumetric_->get_albedo_voxel_texture(), mpVolumetric_->get_normal_voxel_texture(), mpVolumetric_->get_svo_meta());
         }
 
         switch ((final_output_type)finalOutputType_)
@@ -147,7 +150,7 @@ void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo
         case final_output_type::debug_volumetric:
             mpVoxelVisualizer_->set_svo_meta(mpVolumetric_->get_svo_meta());
             mpVoxelVisualizer_->set_voxel_meta(mpVolumetric_->get_voxel_meta());
-            mpVoxelVisualizer_->set_visual_texture(mpVolumetric_->get_albedo_voxel_buffer());
+            mpVoxelVisualizer_->set_visual_texture(mpVolumetric_->get_albedo_voxel_texture());
             mpVoxelVisualizer_->set_svo_node_buffer(mpVolumetric_->get_svo_node_buffer());
             mpVoxelVisualizer_->on_execute(pRenderContext, pTargetFbo, mpVoxelSampler_);
             break;
@@ -166,6 +169,7 @@ void sparse_voxel_octree::onShutdown() {
     mpDeubgProjection_ = nullptr;
     mpVolumetric_ = nullptr;
     mpVoxelVisualizer_ = nullptr;
+    mpLightInjection_ = nullptr;
     mpScene_ = nullptr;
     mpGBufferFbo_ = nullptr;
     mpPostEffects_ = nullptr;

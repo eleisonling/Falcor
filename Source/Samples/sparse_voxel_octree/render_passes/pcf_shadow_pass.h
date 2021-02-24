@@ -32,4 +32,6 @@ public:
     void deferred_apply(RenderContext* pContext, const Fbo::SharedPtr& pSceneFbo, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr mpTexSampler);
 
     bool refresh_rebuild();
+    Texture::SharedPtr get_shadowmap() const { return mpShadowMap_->getDepthStencilTexture(); }
+    const float4x4& get_shadow_matrix() const { return shadowMatrix_; }
 };

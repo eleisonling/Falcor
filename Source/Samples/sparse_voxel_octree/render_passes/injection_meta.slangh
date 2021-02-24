@@ -1,0 +1,9 @@
+#pragma once
+#include "Utils/HostDeviceShared.slangh"
+
+#define VOXEL_RESOLUTION        128
+#define BORDER_SIZE             2
+#define RESOLUTION_WITH_BORDER  130
+#define INJECTION_THREAD_SIZE   10
+#define FACE_COUNT              6
+#define MIP_COUNT               6
