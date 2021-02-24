@@ -3,7 +3,6 @@
 
 namespace {
     static std::string kVolumetricProg = "Samples/sparse_voxel_octree/render_passes/volumetric.slang";
-    static std::string kGenMipProg = "Samples/sparse_voxel_octree/render_passes/gen_mipmap.cs.slang";
     static std::string kBuildSVOProg = "Samples/sparse_voxel_octree/render_passes/build_svo.cs.slang";
     static std::string kDebugVolProg = "Samples/sparse_voxel_octree/render_passes/debug_volumetric.slang";
     static std::string kDebugSvoProg = "Samples/sparse_voxel_octree/render_passes/debug_svo.ps.slang";
@@ -15,9 +14,6 @@ volumetric_pass::~volumetric_pass() {
     mpScene_ = nullptr;
     mpPackedAlbedo_ = nullptr;
     mpPackedNormal_ = nullptr;
-
-    mpGenMipmap_ = nullptr;
-    mpGenMipmapVar_ = nullptr;
 
     mpSVONodeBuffer_ = nullptr;
     mpIndirectArgBuffer_ = nullptr;
@@ -68,7 +64,6 @@ void volumetric_pass::volumetric_scene(RenderContext* pContext, const Fbo::Share
 
     mpState->setFbo(pDstFbo);
     mpScene_->rasterize(pContext, mpState.get(), mpVars.get(), Scene::RenderFlags::UserRasterizerState);
-    gen_mipmaps(pContext);
     build_svo(pContext);
     needRefresh_ = false;
 }
@@ -111,23 +106,6 @@ void volumetric_pass::fixture_cell_size() {
     cellSize_ = maxSceneDim / maxDim;
 }
 
-void volumetric_pass::gen_mipmaps(RenderContext* pContext) {
-    PROFILE("gen_mipmap");
-
-    for (int32_t level = kSvoMeta.TotalLevel - 1; level > 0; level--) {
-        uint32_t mip = kSvoMeta.TotalLevel - level;
-        mpGenMipmapVar_["gPackedSrcData"].setSrv(mpPackedAlbedo_->getSRV(mip - 1));
-        mpGenMipmapVar_["gPackedDstData"].setUav(mpPackedAlbedo_->getUAV(mip));
-
-        uint3 dim = kSvoMeta.CellDim >> mip;
-        mpGenMipmapVar_["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
-        mpGenMipmapVar_["CB"]["gMip"] = mip;
-
-        uint3 mipGroup = { (dim.x + g_tagThreads - 1) / g_tagThreads, (dim.y + g_tagThreads - 1) / g_tagThreads,
-            (dim.z + g_tagThreads - 1) / g_tagThreads };
-        pContext->dispatch(mpGenMipmap_.get(), mpGenMipmapVar_.get(), mipGroup);
-    }
-}
 
 void volumetric_pass::debug_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& pTexSampler) {
     PROFILE("debug volumetric");
@@ -190,7 +168,6 @@ volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::
         mpState->setBlendState(blendState);
     }
 
-    crate_gen_mipmap_shaders(programDefines);
     create_svo_shaders(programDefines);
 
     rebuild_debug_vol_resources(debugVolProgDesc, programDefines);
@@ -199,23 +176,24 @@ volumetric_pass::volumetric_pass(const Scene::SharedPtr& pScene, const Program::
     rebuild_svo_buffers();
 }
 
+float3 next_pow_2(float3 v) {
+    return { std::pow(2, std::ceil(std::log2(v.x))), std::pow(2, std::ceil(std::log2(v.y))), std::pow(2, std::ceil(std::log2(v.z))) };
+}
+
 void volumetric_pass::rebuild_pixel_data_buffers() {
 
     rebuildBuffer_ = false;
     auto& bound = mpScene_->getSceneBounds();
     glm::uvec3 cellDim = glm::ceil((bound.extent() + cellSize_) / cellSize_ );
-    uint32_t maxDim = std::max(std::max(cellDim.x, cellDim.y), cellDim.z);
-    uint32_t mip = (uint32_t)std::ceil(std::log2f((float)maxDim));
-
-    cellDim = { maxDim, maxDim, maxDim };
+    cellDim = uint3(next_pow_2(cellDim));
     {
         size_t bufferSize = size_t(cellDim.x) * cellDim.y * cellDim.z * sizeof(uint32_t);
         if (!mpPackedAlbedo_ || mpPackedAlbedo_->getWidth() != cellDim.x ||  mpPackedAlbedo_->getHeight() != cellDim.y || mpPackedAlbedo_->getDepth() != cellDim.z) {
-            mpPackedAlbedo_ = Texture::create3D(cellDim.x, cellDim.y, cellDim.z, ResourceFormat::RGBA8Unorm, mip, nullptr, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess);
+            mpPackedAlbedo_ = Texture::create3D(cellDim.x, cellDim.y, cellDim.z, ResourceFormat::RGBA8Unorm, 1, nullptr, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess);
         }
 
         if (!mpPackedNormal_ || mpPackedNormal_->getWidth() != cellDim.x ||  mpPackedNormal_->getHeight() != cellDim.y || mpPackedNormal_->getDepth() != cellDim.z) {
-            mpPackedNormal_ = Texture::create3D(cellDim.x, cellDim.y, cellDim.z, ResourceFormat::RGBA8Unorm, mip, nullptr, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess);
+            mpPackedNormal_ = Texture::create3D(cellDim.x, cellDim.y, cellDim.z, ResourceFormat::RGBA8Unorm, 1, nullptr, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess);
         }
     }
 
@@ -235,14 +213,6 @@ void volumetric_pass::rebuild_pixel_data_buffers() {
     mpDebugVars_["CB"]["gVoxelMeta"].setBlob(kVoxelMeta);
 }
 
-void volumetric_pass::crate_gen_mipmap_shaders(Program::DefineList& programDefines) {
-    Program::Desc desc;
-    desc.addShaderLibrary(kGenMipProg).csEntry("gen_packed_mip");
-    auto pProg = ComputeProgram::create(desc, programDefines);
-    mpGenMipmap_ = ComputeState::create();
-    mpGenMipmap_->setProgram(pProg);
-    mpGenMipmapVar_ = ComputeVars::create(pProg.get());
-}
 
 void volumetric_pass::create_svo_shaders(Program::DefineList& programDefines) {
 

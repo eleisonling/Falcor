@@ -17,7 +17,6 @@ public:
 private:
     volumetric_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc, const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines);
     void rebuild_pixel_data_buffers();
-    void crate_gen_mipmap_shaders(Program::DefineList& programDefines);
     void create_svo_shaders(Program::DefineList& programDefines);
     void rebuild_svo_buffers();
     void rebuild_debug_vol_resources(const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines);
@@ -26,7 +25,6 @@ private:
     /// because svo need pow(2,n) size, for the full usage, we must modify the cellSize
     /// </summary>
     void fixture_cell_size();
-    void gen_mipmaps(RenderContext* pContext);
 
     // pixel volumetric
     Scene::SharedPtr mpScene_ = nullptr;
@@ -37,10 +35,6 @@ private:
     bool needRefresh_ = true;
     bool rebuildBuffer_ = false;
     float cellSize_ = 10.0f;
-
-    // gen mipmap
-    ComputeState::SharedPtr mpGenMipmap_ = nullptr;
-    ComputeVars::SharedPtr mpGenMipmapVar_ = nullptr;
 
     // sparse Oct-tree builder
     Buffer::SharedPtr mpSVONodeBuffer_ = nullptr;
