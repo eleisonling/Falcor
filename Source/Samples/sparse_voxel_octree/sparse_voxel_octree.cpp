@@ -135,6 +135,10 @@ void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo
             mpVolumetric_->volumetric_scene(pRenderContext, mpGBufferFbo_);
         }
 
+        if (mpShadow_->refresh_rebuild()) {
+            mpShadow_->generate_shadowmap(pRenderContext);
+        }
+
         switch ((final_output_type)finalOutputType_)
         {
         case final_output_type::debug_projection:
@@ -149,10 +153,6 @@ void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo
             break;
         case final_output_type::defulat_type:
         default:
-            if (mpShadow_->refresh_rebuild()) {
-                mpShadow_->generate_shadowmap(pRenderContext);
-            }
-
             mpRasterPass_->renderScene(pRenderContext, mpGBufferFbo_);
             mpShadow_->deferred_apply(pRenderContext, mpGBufferFbo_, mpPostEffects_->get_fbo(), mpTextureSampler_);
             mpPostEffects_->on_execute(pRenderContext, pTargetFbo, mpTextureSampler_);

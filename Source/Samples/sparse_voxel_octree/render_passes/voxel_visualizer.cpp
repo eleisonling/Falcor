@@ -56,6 +56,8 @@ void voxel_visualizer::create_visualize_resources() {
 
 voxel_visualizer::~voxel_visualizer() {
     mpScene_ = nullptr;
+    mpVisualTexture_ = nullptr;
+    mpSVONodeBuffer_ = nullptr;
     mpVisualTracing_ = nullptr;
     mpVisualRasterVars_ = nullptr;
     mpVisualRaster_ = nullptr;

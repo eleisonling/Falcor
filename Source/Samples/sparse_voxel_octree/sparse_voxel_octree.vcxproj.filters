@@ -17,6 +17,9 @@
     <ClCompile Include="render_passes\voxel_visualizer.cpp">
       <Filter>render_passes</Filter>
     </ClCompile>
+    <ClCompile Include="render_passes\light_injection.cpp">
+      <Filter>render_passes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sparse_voxel_octree.h" />
@@ -36,6 +39,9 @@
       <Filter>render_passes</Filter>
     </ClInclude>
     <ClInclude Include="render_passes\voxel_visualizer.h">
+      <Filter>render_passes</Filter>
+    </ClInclude>
+    <ClInclude Include="render_passes\light_injection.h">
       <Filter>render_passes</Filter>
     </ClInclude>
   </ItemGroup>
