@@ -83,11 +83,16 @@ cbuffer CB {
     voxel_meta gVoxelMeta;
 }
 
+struct GSOut{
+    VSOut vsData;
+    uint triangleIndex : SV_PrimitiveID;
+};
+
 
 [maxvertexcount(3)]
-void gs_main(triangle VSOut input[3], uint InstanceID : SV_GSInstanceID, inout TriangleStream<VSOut> outStream) {
+void gs_main(triangle VSOut input[3], uint InstanceID : SV_GSInstanceID, uint triangleIndex : SV_PrimitiveID, inout TriangleStream<GSOut> outStream) {
 
-    VSOut outputData = (VSOut)0;
+    GSOut outputData = (GSOut)0;
 
     float3 posW0 = input[0].posW;
     float3 posW1 = input[1].posW;
@@ -112,16 +117,19 @@ void gs_main(triangle VSOut input[3], uint InstanceID : SV_GSInstanceID, inout T
     float4x4 viewProjMat = calculate_orth_view_proj(bound, dim);
 
     // reprojection & output
-    outputData = input[0];
-    outputData.posH = mul(float4(posW0, 1.0f), viewProjMat);
+    outputData.vsData = input[0];
+    outputData.vsData.posH = mul(float4(posW0, 1.0f), viewProjMat);
+    outputData.triangleIndex = triangleIndex;
     outStream.Append(outputData);
 
-    outputData = input[1];
-    outputData.posH = mul(float4(posW1, 1.0f), viewProjMat);
+    outputData.vsData = input[1];
+    outputData.vsData.posH = mul(float4(posW1, 1.0f), viewProjMat);
+    outputData.triangleIndex = triangleIndex;
     outStream.Append(outputData);
 
-    outputData = input[2];
-    outputData.posH = mul(float4(posW2, 1.0f), viewProjMat);
+    outputData.vsData = input[2];
+    outputData.vsData.posH = mul(float4(posW2, 1.0f), viewProjMat);
+    outputData.triangleIndex = triangleIndex;
     outStream.Append(outputData);
 
     outStream.RestartStrip();
@@ -134,46 +142,6 @@ import Utils.Math.MathHelpers;
 
 RWTexture3D<uint32_t> gPackedAlbedo;
 RWTexture3D<uint32_t> gPackedNormal;
-
-float3 get_normal_map<L:ITextureSampler>(MaterialData md, MaterialResources mr, float2 uv, float3 normalW, float4 tangentW, L lod)
-{
-    uint mapType = EXTRACT_NORMAL_MAP_TYPE(md.flags);
-    if (mapType == NormalMapUnused) return normalW;
-
-    float3 mapN = lod.sampleTexture(mr.normalMap, mr.samplerState, uv).xyz;
-    switch(mapType)
-    {
-    case NormalMapRGB:
-        mapN = RgbToNormal(mapN);
-        break;
-    case NormalMapRG:
-        mapN = RgToNormal(mapN.rg);
-        break;
-    default:
-        return normalW;
-    }
-
-    float NdotT = dot(tangentW.xyz, normalW);
-    bool nonParallel = abs(NdotT) < 0.9999f;
-    bool nonZero = dot(tangentW.xyz, tangentW.xyz) > 0.f;
-
-    float3 T,B;
-
-    bool valid = tangentW.w != 0.f && nonZero && nonParallel;
-    if (valid)
-    {
-        T = normalize(tangentW.xyz - normalW * NdotT);
-        B = cross(normalW, T) * tangentW.w;
-    }
-    else
-    {
-        T = perp_stark(normalW);
-        B = cross(normalW, T);
-    }
-
-    return normalize(T * mapN.x + B * mapN.y + normalW * mapN.z);
-}
-
 
 void image_atomic_avg_RGBA8(RWTexture3D<uint32_t> img, uint3 coords, float4 newVal) {
 
@@ -199,26 +167,20 @@ void image_atomic_avg_RGBA8(RWTexture3D<uint32_t> img, uint3 coords, float4 newV
     }
 }
 
-float4 ps_main(VSOut vOut) : SV_TARGET {
+float4 ps_main(GSOut gOut) : SV_TARGET {
 
-    float3 posW = vOut.posW;
+    float3 posW = gOut.vsData.posW;
     uint3 cellIndex = floor((posW - gVoxelMeta.Min) / gVoxelMeta.CellSize);
 
     if(cellIndex.x >= 0 && cellIndex.x < gVoxelMeta.CellDim.x
         && cellIndex.y >= 0 && cellIndex.y < gVoxelMeta.CellDim.y
         && cellIndex.z >= 0 && cellIndex.z < gVoxelMeta.CellDim.z) {
 
-        ImplicitLodTextureSampler lod = { };
-        MaterialData md = gScene.materials[vOut.materialID];
-        MaterialResources mr = gScene.materialResources[vOut.materialID];
+        float3 viewDir = normalize(gScene.camera.getPosition() - gOut.vsData.posW);
+        ShadingData sd = prepareShadingData(gOut.vsData, gOut.triangleIndex, viewDir);
 
-        float4 baseColor = sampleTexture(mr.baseColor, mr.samplerState, vOut.texC, md.baseColor, EXTRACT_DIFFUSE_TYPE(md.flags), lod);
-        baseColor.a = 1.0f;
-
-        float4 normalW = {};
-        normalW.xyz = get_normal_map(md, mr, vOut.texC, vOut.normalW, vOut.tangentW, lod);
-        normalW.xyz = pack_normal(normalW.xyz);
-        normalW.w = 1.0f;
+        float4 baseColor = float4(sd.diffuse, 1.0f);
+        float4 normalW = float4(sd.N, 1.0f);
 
         image_atomic_avg_RGBA8(gPackedAlbedo, cellIndex, baseColor);
         image_atomic_avg_RGBA8(gPackedNormal, cellIndex, normalW);
