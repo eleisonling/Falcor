@@ -29,6 +29,7 @@ vs_out vs_main(vs_in vIn)
 
     // from instance id to input position
     uint3 cellIndex = extract_index_form_linear(vIn.instanceID, gVoxelMeta.CellDim);
+    vIn.pos *= gVoxelMeta.CellSize;
     float3 instancePos = vIn.pos + gVoxelMeta.Min +
         float3(cellIndex.x + 0.5f, cellIndex.y + 0.5f, cellIndex.z + 0.5f) * float3(gVoxelMeta.CellSize, gVoxelMeta.CellSize, gVoxelMeta.CellSize);
     vOut.posW = instancePos;

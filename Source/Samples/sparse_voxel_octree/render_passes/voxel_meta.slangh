@@ -24,7 +24,7 @@ struct voxel_meta {
  };
 
 
-uint3 extract_index_form_linear(uint32_t linearIndex, uint3 dim) {
+inline uint3 extract_index_form_linear(uint32_t linearIndex, uint3 dim) {
     uint32_t z = linearIndex / (dim.x * dim.y);
     linearIndex -= (z * dim.x * dim.y);
     uint32_t y = linearIndex / dim.x;
@@ -33,22 +33,22 @@ uint3 extract_index_form_linear(uint32_t linearIndex, uint3 dim) {
     return { x, y, z };
 }
 
-float4 uint32_to_RGBA8_255(uint32_t val) {
+inline float4 uint32_to_RGBA8_255(uint32_t val) {
     return float4(float((val & 0x000000FF)), float((val & 0x0000FF00) >> 8U), float((val & 0x00FF0000) >> 16U),  float((val & 0xFF000000) >> 24U));
 }
 
-uint32_t RGBA8_255_to_uint32(float4 val) {
+inline uint32_t RGBA8_255_to_uint32(float4 val) {
     return (uint32_t(val.w) & 0x000000FF)   << 24U
             |(uint32_t(val.z) & 0x000000FF) << 16U
             |(uint32_t(val.y) & 0x000000FF) << 8U 
             |(uint32_t(val.x) & 0x000000FF);
 }
 
-float3 pack_normal(float3 v) {
+inline float3 pack_normal(float3 v) {
     return v * 0.5f + 0.5f;
 }
 
-float3 unpack_normal(float3 v) {
+inline float3 unpack_normal(float3 v) {
     return v * 2.0f - 1.0f;
 }
 

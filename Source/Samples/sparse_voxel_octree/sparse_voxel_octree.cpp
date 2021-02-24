@@ -72,6 +72,11 @@ void sparse_voxel_octree::onGuiRender(Gui* pGui) {
         mpVolumetric_->on_gui_render(volumetricGroup);
     }
 
+    auto voxelVisualGroup = Gui::Group(pGui, "Voxel Visual");
+    if (voxelVisualGroup.open()) {
+        mpVoxelVisualizer_->on_gui_render(voxelVisualGroup);
+    }
+
     auto postEffects = Gui::Group(pGui, "Post Effects");
     if (postEffects.open()) {
         mpPostEffects_->on_gui_render(postEffects);
@@ -104,6 +109,7 @@ void sparse_voxel_octree::onLoad(RenderContext* pRenderContext) {
     mpRasterPass_ = RasterScenePass::create(mpScene_, kRasterProg, "", "main");
     mpDeubgProjection_ = projection_debug_pass::create(mpScene_);
     mpVolumetric_ = volumetric_pass::create(mpScene_);
+    mpVoxelVisualizer_ = voxel_visualizer::create(mpScene_);
     mpShadow_ = pcf_shadow_pass::create(mpScene_);
     mpPostEffects_ = post_effects::create();
 
@@ -135,7 +141,11 @@ void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo
             mpDeubgProjection_->debug_scene(pRenderContext, pTargetFbo);
             break;
         case final_output_type::debug_volumetric:
-            mpVolumetric_->debug_scene(pRenderContext, pTargetFbo, mpVoxelSampler_);
+            mpVoxelVisualizer_->set_svo_meta(mpVolumetric_->get_svo_meta());
+            mpVoxelVisualizer_->set_voxel_meta(mpVolumetric_->get_voxel_meta());
+            mpVoxelVisualizer_->set_visual_texture(mpVolumetric_->get_albedo_voxel_buffer());
+            mpVoxelVisualizer_->set_svo_node_buffer(mpVolumetric_->get_svo_node_buffer());
+            mpVoxelVisualizer_->on_execute(pRenderContext, pTargetFbo, mpVoxelSampler_);
             break;
         case final_output_type::defulat_type:
         default:
@@ -155,6 +165,7 @@ void sparse_voxel_octree::onShutdown() {
     mpRasterPass_ = nullptr;
     mpDeubgProjection_ = nullptr;
     mpVolumetric_ = nullptr;
+    mpVoxelVisualizer_ = nullptr;
     mpScene_ = nullptr;
     mpGBufferFbo_ = nullptr;
     mpPostEffects_ = nullptr;

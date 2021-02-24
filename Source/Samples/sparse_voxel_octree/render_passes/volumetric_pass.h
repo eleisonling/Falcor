@@ -1,7 +1,9 @@
 #pragma once
 #include "Falcor.h"
-
 using namespace Falcor;
+
+#include "voxel_meta.slangh"
+
 
 class volumetric_pass : public BaseGraphicsPass, public std::enable_shared_from_this<volumetric_pass> {
 public:
@@ -10,16 +12,19 @@ public:
 
     static SharedPtr create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines = Program::DefineList());
     void volumetric_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
-    void debug_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& pTexSampler);
     void on_gui_render(Gui::Group& group);
     bool need_refresh() const { return needRefresh_; }
 
+    const voxel_meta& get_voxel_meta() const;
+    const svo_meta& get_svo_meta() const;
+    Buffer::SharedPtr get_svo_node_buffer() const { return mpSVONodeBuffer_; }
+    Texture::SharedPtr get_albedo_voxel_buffer() const { return mpPackedAlbedo_; }
+
 private:
-    volumetric_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc, const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines);
+    volumetric_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc,Program::DefineList& programDefines);
     void rebuild_pixel_data_buffers();
     void create_svo_shaders(Program::DefineList& programDefines);
     void rebuild_svo_buffers();
-    void rebuild_debug_vol_resources(const Program::Desc& debugVolProgDesc, Program::DefineList& programDefines);
     void build_svo(RenderContext* pContext);
     /// <summary>
     /// because svo need pow(2,n) size, for the full usage, we must modify the cellSize
@@ -46,15 +51,4 @@ private:
     ComputeVars::SharedPtr mpCaculateIndirectArgVars_ = nullptr;
     ComputeState::SharedPtr mpDivideSubNode_ = nullptr;
     ComputeVars::SharedPtr mpDivideSubNodeVars_ = nullptr;
-
-    // debug tracing svo
-    FullScreenPass::SharedPtr mpTracingSvo_ = nullptr;
-    bool debugSVOTracing_ = false;
-    float mipLevel_ = 0.f;
-
-    // volumetric debug
-    GraphicsVars::SharedPtr mpDebugVars_ = nullptr;
-    GraphicsState::SharedPtr mpDebugState_ = nullptr;
-    TriangleMesh::SharedPtr mpDebugMesh_ = nullptr;
-    Vao::SharedPtr mpDebugVao_ = nullptr;
 };
