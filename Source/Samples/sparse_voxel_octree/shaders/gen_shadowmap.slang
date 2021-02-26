@@ -18,6 +18,4 @@ vs_out vs_main(VSIn vIn) {
     return out;
 }
 
-float4 ps_main(vs_out vOut) : SV_TARGET {
-    return float4(0,0,0,0);
-}
+void ps_main(vs_out vOut) {}

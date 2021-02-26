@@ -49,6 +49,9 @@
     <Filter Include="render_passes">
       <UniqueIdentifier>{bb29cfcd-175c-46a5-a8d6-6ce904c79840}</UniqueIdentifier>
     </Filter>
+    <Filter Include="shaders">
+      <UniqueIdentifier>{ca4afe78-2854-4f2f-b4af-e52adebd9b75}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ShaderSource Include="render_passes\volumetric.slang">
@@ -75,28 +78,10 @@
     <ShaderSource Include="render_passes\svo_tracing.slangh">
       <Filter>render_passes</Filter>
     </ShaderSource>
-    <ShaderSource Include="render_passes\lighting.ps.slang">
-      <Filter>render_passes</Filter>
-    </ShaderSource>
-    <ShaderSource Include="render_passes\bloom.cs.slang">
-      <Filter>render_passes</Filter>
-    </ShaderSource>
-    <ShaderSource Include="render_passes\tonemap.cs.slang">
-      <Filter>render_passes</Filter>
-    </ShaderSource>
-    <ShaderSource Include="render_passes\present.ps.slang">
-      <Filter>render_passes</Filter>
-    </ShaderSource>
     <ShaderSource Include="render_passes\exposure_adaption.cs.slang">
       <Filter>render_passes</Filter>
     </ShaderSource>
     <ShaderSource Include="render_passes\gen_mipmap.cs.slang">
-      <Filter>render_passes</Filter>
-    </ShaderSource>
-    <ShaderSource Include="render_passes\gen_shadowmap.slang">
-      <Filter>render_passes</Filter>
-    </ShaderSource>
-    <ShaderSource Include="render_passes\deferred_apply.slang">
       <Filter>render_passes</Filter>
     </ShaderSource>
     <ShaderSource Include="render_passes\injection_meta.slangh">
@@ -105,10 +90,26 @@
     <ShaderSource Include="render_passes\light_injection.slang">
       <Filter>render_passes</Filter>
     </ShaderSource>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="render_passes\post_effects.slangh">
-      <Filter>render_passes</Filter>
-    </None>
+    <ShaderSource Include="shaders\deferred_apply.slang">
+      <Filter>shaders</Filter>
+    </ShaderSource>
+    <ShaderSource Include="shaders\gen_shadowmap.slang">
+      <Filter>shaders</Filter>
+    </ShaderSource>
+    <ShaderSource Include="shaders\final_shading.ps.slang">
+      <Filter>shaders</Filter>
+    </ShaderSource>
+    <ShaderSource Include="shaders\bloom.cs.slang">
+      <Filter>shaders</Filter>
+    </ShaderSource>
+    <ShaderSource Include="shaders\post_effects.slangh">
+      <Filter>shaders</Filter>
+    </ShaderSource>
+    <ShaderSource Include="shaders\present.ps.slang">
+      <Filter>shaders</Filter>
+    </ShaderSource>
+    <ShaderSource Include="shaders\tonemap.cs.slang">
+      <Filter>shaders</Filter>
+    </ShaderSource>
   </ItemGroup>
 </Project>

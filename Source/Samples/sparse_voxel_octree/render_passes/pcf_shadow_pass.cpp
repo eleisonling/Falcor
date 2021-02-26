@@ -1,8 +1,7 @@
 #include "pcf_shadow_pass.h"
 
 namespace {
-    static std::string kGenShadowMapProg = "Samples/sparse_voxel_octree/render_passes/gen_shadowmap.slang";
-    static std::string kDeferredApplyProg = "Samples/sparse_voxel_octree/render_passes/deferred_apply.slang";
+    static std::string kGenShadowMapProg = "Samples/sparse_voxel_octree/shaders/gen_shadowmap.slang";
     static std::string kMainLight = "Main Light";
 }
 
@@ -11,8 +10,6 @@ pcf_shadow_pass::pcf_shadow_pass(const Scene::SharedPtr& pScene, const Program::
     , mpScene_(pScene) {
 
     assert(mpScene_);
-
-    mpApplyPass_ = FullScreenPass::create(kDeferredApplyProg, programDefines);
 
     Sampler::Desc desc = {};
     desc.setFilterMode(Sampler::Filter::Point, Sampler::Filter::Point, Sampler::Filter::Point).setAddressingMode(Sampler::AddressMode::Border, Sampler::AddressMode::Border, Sampler::AddressMode::Border).setBorderColor(float4(1.0f));
@@ -32,13 +29,12 @@ pcf_shadow_pass::pcf_shadow_pass(const Scene::SharedPtr& pScene, const Program::
 void pcf_shadow_pass::rebuild_shadowmap_buffers() {
     Fbo::Desc desc = {};
     desc.setDepthStencilTarget(ResourceFormat::D32Float);
-    mpShadowMap_ = Fbo::create2D(mpSize_.x, mpSize_.y, desc);
-    smChanged_ = true;
+    mpShadowMap_ = Fbo::create2D(mDimension_.x, mDimension_.y, desc);
 }
 
 void pcf_shadow_pass::rebuild_shadow_matrix(float3 lightDir, const AABB& bounds) {
-    float3 up = glm::normalize(glm::cross(glm::cross(cachedMainLightDir_, { 0,1,0 }), cachedMainLightDir_));
-    float4x4 lightView = glm::lookAt(bounds.center() - bounds.radius() * cachedMainLightDir_, bounds.center(), up);
+    float3 up = glm::normalize(glm::cross(glm::cross(lightDir, { 0,1,0 }), lightDir));
+    float4x4 lightView = glm::lookAt(bounds.center() - bounds.radius() * lightDir, bounds.center(), up);
     float3 viewMax = lightView * float4(bounds.maxPoint, 1.0f);
     float3 viewMin = lightView * float4(bounds.minPoint, 1.0f);
     float hWidth = glm::abs(viewMax - viewMin).x / 2.0f;
@@ -46,21 +42,19 @@ void pcf_shadow_pass::rebuild_shadow_matrix(float3 lightDir, const AABB& bounds)
 
     float4x4 lightProj = {};
     if (hWidth > hHeight) {
-        float scale = (float)mpSize_.y / (float)mpSize_.x;
+        float scale = (float)mDimension_.y / (float)mDimension_.x;
         lightProj = glm::ortho(-hWidth, hWidth, -hWidth * scale, hWidth * scale, 0.1f, 4.0f * bounds.radius());
     } else {
-        float scale = (float)mpSize_.x / (float)mpSize_.y;
+        float scale = (float)mDimension_.x / (float)mDimension_.y;
         lightProj = glm::ortho(-hHeight * scale, hHeight * scale, -hHeight, hHeight, 0.1f, 4.0f * bounds.radius());
     }
 
-    lightViewProj_ = lightProj * lightView;
-    shadowMatrix_ = lightViewProj_;
+    mShadowMatrix_ = lightProj * lightView;
 }
 
 pcf_shadow_pass::~pcf_shadow_pass() {
     mpScene_ = nullptr;
     mpShadowMap_ = nullptr;
-    mpApplyPass_ = nullptr;
     mpPCFSampler_ = nullptr;
 }
 
@@ -75,65 +69,22 @@ pcf_shadow_pass::SharedPtr pcf_shadow_pass::create(const Scene::SharedPtr& pScen
     return SharedPtr(new pcf_shadow_pass(pScene, d_genMap, dl));
 }
 
-void pcf_shadow_pass::on_gui_render(Gui::Group& group) {
-    if (group.var("ShadowMap Resolution", mpSize_)) rebuild_shadowmap_buffers();
-    group.var("PCF kernel size", pcf_kernel_size_);
+void pcf_shadow_pass::on_gui(Gui::Group& group) {
+    if (group.var("ShadowMap Resolution", mDimension_)) rebuild_shadowmap_buffers();
+    group.var("PCF kernel size", mPcfKernel_);
 }
 
-void pcf_shadow_pass::generate_shadowmap(RenderContext* pContext) {
-    if (!mpScene_) return;
-
+void pcf_shadow_pass::on_render(RenderContext* pContext) {
     PROFILE("generate shadow map");
     
-    mpVars["CB"]["g_light_view_proj"] = lightViewProj_;
+    auto& bounds = mpScene_->getSceneBounds();
+    auto mainLight = std::static_pointer_cast<DirectionalLight, Light>(mpScene_->getLightByName(kMainLight));
+    rebuild_shadow_matrix(mainLight->getWorldDirection(), bounds);
+
+    mpVars["CB"]["g_light_view_proj"] = mShadowMatrix_;
     mpVars->setParameterBlock("gScene", mpScene_->getParameterBlock());
-    pContext->clearFbo(mpShadowMap_.get(), { 0, 0, 0, 0}, 1, 0, FboAttachmentType::All);
+    pContext->clearFbo(mpShadowMap_.get(), { 0, 0, 0, 0}, 1, 0, FboAttachmentType::Depth);
     mpState->setFbo(mpShadowMap_);
     mpScene_->rasterize(pContext, mpState.get(), mpVars.get(), Scene::RenderFlags::UserRasterizerState);
-}
-
-void pcf_shadow_pass::deferred_apply(RenderContext* pContext,const Fbo::SharedPtr& pSceneFbo, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr mpTexSampler) {
-    PROFILE("apply shadow map");
-
-    auto& var = mpApplyPass_->getVars();
-    var->setParameterBlock("gScene", mpScene_->getParameterBlock());
-    var["g_shadowMap"] = mpShadowMap_->getDepthStencilTexture();
-    var["g_sceneColor"] = pSceneFbo->getColorTexture(0);
-    var["g_sceneDepth"] = pSceneFbo->getDepthStencilTexture();
-    var["g_texSampler"] = mpTexSampler;
-    var["g_pcfSampler"] = mpPCFSampler_;
-    var["CB"]["g_pcf_kernel_size"] = pcf_kernel_size_;
-    var["CB"]["g_shadow_matrix"] = shadowMatrix_;
-    var["CB"]["g_screen_dimension"] = float2{ pSceneFbo->getWidth(), pSceneFbo->getHeight() };
-    var["CB"]["g_shadowmap_dimension"] = mpSize_;
-    mpApplyPass_->execute(pContext, pDstFbo);
-}
-
-bool pcf_shadow_pass::refresh_rebuild() {
-
-    bool needRefresh = false;
-    auto& bounds = mpScene_->getSceneBounds();
-    float4x4 lightView = {};
-    float4x4 lightProj = {};
-
-    if (mpScene_) {
-        auto mainLight = std::static_pointer_cast<DirectionalLight, Light>(mpScene_->getLightByName(kMainLight));
-        if (mainLight) {
-            const float3& dir = mainLight->getWorldDirection();
-            if (cachedMainLightDir_ != dir) {
-                needRefresh |= true;
-                cachedMainLightDir_ = dir;
-            }
-        }
-    }
-
-    needRefresh |= smChanged_;
-    smChanged_ = false;
-
-    if (needRefresh) {
-        rebuild_shadow_matrix(cachedMainLightDir_, bounds);
-    }
-
-    return needRefresh;
 }
 

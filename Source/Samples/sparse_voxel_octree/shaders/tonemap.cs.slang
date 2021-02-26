@@ -1,5 +1,5 @@
 #pragma once
-#include "Samples/sparse_voxel_octree/render_passes/post_effects.slangh"
+#include "Samples/sparse_voxel_octree/shaders/post_effects.slangh"
 
 StructuredBuffer<exposure_meta> g_exposure;
 Texture2D<float3> g_bloom;

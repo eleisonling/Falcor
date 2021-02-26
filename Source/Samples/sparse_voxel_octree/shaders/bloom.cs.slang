@@ -1,5 +1,5 @@
 #pragma once
-#include "Samples/sparse_voxel_octree/render_passes/post_effects.slangh"
+#include "Samples/sparse_voxel_octree/shaders/post_effects.slangh"
 
 SamplerState g_texSampler;
 Texture2D g_sourceTex;

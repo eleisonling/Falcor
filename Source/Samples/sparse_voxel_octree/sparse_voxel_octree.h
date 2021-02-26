@@ -50,17 +50,23 @@ public:
 private:
 
     void load_scene(const std::string& filename, const Fbo* pTargetFbo);
+    void normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo);
+
     Scene::SharedPtr mpScene_ = nullptr;
     Camera::SharedPtr mpMainCam_ = nullptr;
-    RasterScenePass::SharedPtr mpRasterPass_ = nullptr;
-    projection_debug_pass::SharedPtr mpDeubgProjection_ = nullptr;
-    volumetric_pass::SharedPtr mpVolumetric_ = nullptr;
-    voxel_visualizer::SharedPtr mpVoxelVisualizer_ = nullptr;
-    light_injection::SharedPtr mpLightInjection_ = nullptr;
-    pcf_shadow_pass::SharedPtr mpShadow_ = nullptr;
-    uint32_t finalOutputType_ = 0;
-    Fbo::SharedPtr mpGBufferFbo_ = nullptr;
+
+    pcf_shadow_pass::SharedPtr mpShadowMap_ = nullptr;
+    RasterScenePass::SharedPtr mpFinalShading_ = nullptr;
     post_effects::SharedPtr mpPostEffects_ = nullptr;
+    Fbo::SharedPtr mpHDRFbo_ = nullptr;
+
+    volumetric_pass::SharedPtr mpVolumetric_ = nullptr;
+    projection_debug_pass::SharedPtr mpDeubgProjection_ = nullptr;
+    voxel_visualizer::SharedPtr mpVoxelVisualizer_ = nullptr;
+
+    light_injection::SharedPtr mpLightInjection_ = nullptr;
+
+    uint32_t mFinalOutputType_ = 0;
     Sampler::SharedPtr mpTextureSampler_ = nullptr;
     Sampler::SharedPtr mpVoxelSampler_ = nullptr;
 };

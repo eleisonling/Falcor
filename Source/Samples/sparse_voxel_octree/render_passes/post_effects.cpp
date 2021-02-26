@@ -1,17 +1,17 @@
 #include "post_effects.h"
-#include "post_effects.slangh"
+#include "../shaders/post_effects.slangh"
 
 namespace {
-    static std::string kBloomProg = "samples/sparse_voxel_octree/render_passes/bloom.cs.slang";
-    static std::string kTonemapProg = "samples/sparse_voxel_octree/render_passes/tonemap.cs.slang";
-    static std::string kPresentProg = "Samples/sparse_voxel_octree/render_passes/present.ps.slang";
+    static std::string kBloomProg = "samples/sparse_voxel_octree/shaders/bloom.cs.slang";
+    static std::string kTonemapProg = "samples/sparse_voxel_octree/shaders/tonemap.cs.slang";
+    static std::string kPresentProg = "Samples/sparse_voxel_octree/shaders/present.ps.slang";
     static exposure_meta g_exposure = {};
 }
 
 post_effects::post_effects(const Program::DefineList& programDefines) {
     mpExposure_ = Buffer::createStructured(sizeof(exposure_meta), 1);
-    float exp = glm::pow(2.0f, expExposure_);
-    g_exposure = { exp, 1.0f / exp, initialMinLog_, initialMaxLog_, initialMaxLog_ - initialMinLog_, 1.0f / (initialMaxLog_ - initialMinLog_) };
+    float exp = glm::pow(2.0f, mExpExposure_);
+    g_exposure = { exp, 1.0f / exp, mInitialMinLog_, mInitialMaxLog_, mInitialMaxLog_ - mInitialMinLog_, 1.0f / (mInitialMaxLog_ - mInitialMinLog_) };
     mpExposure_->setBlob(&g_exposure, 0, sizeof(g_exposure));
 
     create_bloom_resource(programDefines);
@@ -29,7 +29,7 @@ void post_effects::create_bloom_resource(const Program::DefineList& programDefin
     desc.setFilterMode(Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Filter::Point)
         .setAddressingMode(Sampler::AddressMode::Border, Sampler::AddressMode::Border, Sampler::AddressMode::Border)
         .setBorderColor({ 0.0f,0.0f,0.0f,0.0f });
-    mpUpBlurSample_ = Sampler::create(desc);
+    mpUpBlurSampler_ = Sampler::create(desc);
 }
 
 void post_effects::rebuild_bloom_buffers(uint32_t width, uint32_t height) {
@@ -54,24 +54,24 @@ void post_effects::create_present_resource(const Program::DefineList& programDef
     mpPresent_ = FullScreenPass::create(kPresentProg, programDefines);
 }
 
-void post_effects::do_bloom(RenderContext* pContext, const Sampler::SharedPtr& texSampler) {
+void post_effects::do_bloom(RenderContext* pContext) {
     PROFILE("bloom");
 
     // extract_downsample
     {
-        mpExtractAndDownsample_->getVars()["g_texSampler"] = texSampler;
-        mpExtractAndDownsample_->getVars()["g_sourceTex"] = mpPingpongBuffer_[curIndx_]->getColorTexture(0);
+        mpExtractAndDownsample_->getVars()["g_texSampler"] = mpTexSampler_;
+        mpExtractAndDownsample_->getVars()["g_sourceTex"] = mpPingpongBuffer_[mCurIndx_]->getColorTexture(0);
         mpExtractAndDownsample_->getVars()["g_exposure"] = mpExposure_;
         mpExtractAndDownsample_->getVars()["g_bloomResult"] = mpBloomUAV1_[0];
         mpExtractAndDownsample_->getVars()["g_lumaResult"] = mpLumaResult_;
-        mpExtractAndDownsample_->getVars()["CB"]["g_bloomThreshold"] = bloomThreshold_;
+        mpExtractAndDownsample_->getVars()["CB"]["g_bloomThreshold"] = mBloomThreshold_;
         mpExtractAndDownsample_->getVars()["CB"]["g_inverseOutputSize"] = float2(1.0f / mpLumaResult_->getWidth(), 1.0f / mpLumaResult_->getHeight());
 
         mpExtractAndDownsample_->execute(pContext, uint3{ mpBloomUAV1_[0]->getWidth(), mpBloomUAV1_[0]->getHeight(), 1 });
     }
     // down sample
     {
-        mpDownSample_->getVars()["g_texSampler"] = texSampler;
+        mpDownSample_->getVars()["g_texSampler"] = mpTexSampler_;
         mpDownSample_->getVars()["g_bloomBuf"] = mpBloomUAV1_[0];
         mpDownSample_->getVars()["g_result1"] = mpBloomUAV2_[0];
         mpDownSample_->getVars()["g_result2"] = mpBloomUAV3_[0];
@@ -85,7 +85,7 @@ void post_effects::do_bloom(RenderContext* pContext, const Sampler::SharedPtr& t
     {
         mpBlur_->getVars()["g_blurInput"] = mpBloomUAV5_[0];
         mpBlur_->getVars()["g_blurResult"] = mpBloomUAV5_[1];
-        mpBlur_->getVars()["g_linearBorder"] = mpUpBlurSample_;
+        mpBlur_->getVars()["g_linearBorder"] = mpUpBlurSampler_;
         mpBlur_->getVars()["CB"]["g_inverseOutputSize"] = float2(1.0f / mpBloomUAV5_[0]->getWidth(), 1.0f / mpBloomUAV5_[0]->getHeight());
         mpBlur_->execute(pContext, mpBloomUAV5_[0]->getWidth(), mpBloomUAV5_[0]->getHeight(), 1);
     }
@@ -102,32 +102,32 @@ void post_effects::do_bloom_up_blur(RenderContext* pContext, const Texture::Shar
     mpUpBlur_->getVars()["g_higherResBuf"] = highSource;
     mpUpBlur_->getVars()["g_lowerResBuf"] = lowSource;
     mpUpBlur_->getVars()["g_upBlurResult"] = target;
-    mpUpBlur_->getVars()["g_linearBorder"] = mpUpBlurSample_;
+    mpUpBlur_->getVars()["g_linearBorder"] = mpUpBlurSampler_;
     mpUpBlur_->getVars()["CB"]["g_inverseOutputSize"] = float2(1.0f / target->getWidth(), 1.0f / target->getHeight());
-    mpUpBlur_->getVars()["CB"]["g_upsampleBlendFactor"] = upSampleBlendFactor_;
+    mpUpBlur_->getVars()["CB"]["g_upsampleBlendFactor"] = mUpSampleBlendFactor_;
     mpUpBlur_->execute(pContext, { target->getWidth(), target->getHeight(), 1 });
 }
 
-void post_effects::do_tone_map(RenderContext* pContext, const Sampler::SharedPtr& texSampler) {
+void post_effects::do_tone_map(RenderContext* pContext) {
     PROFILE("tonemap");
 
     uint2 bufferSize = { mpPingpongBuffer_[0]->getWidth(), mpPingpongBuffer_[0]->getHeight() };
 
     mpToneMap_->getVars()["g_exposure"] = mpExposure_;
     mpToneMap_->getVars()["g_bloom"] = mpBloomUAV1_[1];
-    mpToneMap_->getVars()["g_colorRW"] = mpPingpongBuffer_[curIndx_]->getColorTexture(0);
-    mpToneMap_->getVars()["g_texSampler"] = texSampler;
+    mpToneMap_->getVars()["g_colorRW"] = mpPingpongBuffer_[mCurIndx_]->getColorTexture(0);
+    mpToneMap_->getVars()["g_texSampler"] = mpTexSampler_;
     mpToneMap_->getVars()["CB"]["g_recpBuferDim"] = float2{ 1.0f / (float)bufferSize.x, 1.0f / (float)bufferSize.y };
-    mpToneMap_->getVars()["CB"]["g_bloomStrength"] = bloomStrength_;
+    mpToneMap_->getVars()["CB"]["g_bloomStrength"] = mBloomStrength_;
 
     mpToneMap_->execute(pContext, uint3{ bufferSize.x, bufferSize.y, 1 });
 }
 
-void post_effects::do_present(RenderContext* pContext, const Sampler::SharedPtr& texSampler, const Fbo::SharedPtr& pDestFbo) {
+void post_effects::do_present(RenderContext* pContext, const Fbo::SharedPtr& pDestFbo) {
     PROFILE("present");
 
-    mpPresent_->getVars()["g_colorTex"] =  mpPingpongBuffer_[curIndx_]->getColorTexture(0);
-    mpPresent_->getVars()["g_texSampler"] = texSampler;
+    mpPresent_->getVars()["g_colorTex"] =  mpPingpongBuffer_[mCurIndx_]->getColorTexture(0);
+    mpPresent_->getVars()["g_texSampler"] = mpTexSampler_;
     mpPresent_->execute(pContext, pDestFbo);
 }
 
@@ -149,7 +149,7 @@ post_effects::~post_effects() {
         mpDownSample_ = nullptr;
         mpBlur_ = nullptr;
         mpUpBlur_ = nullptr;
-        mpUpBlurSample_ = nullptr;
+        mpUpBlurSampler_ = nullptr;
     }
 
     // tone map
@@ -164,9 +164,11 @@ post_effects::~post_effects() {
 
     mpPingpongBuffer_[0] = nullptr;
     mpPingpongBuffer_[1] = nullptr;
+    mpInput_ = nullptr;
+    mpTexSampler_ = nullptr;
 }
 
-void post_effects::on_swapchain_resize(uint32_t width, uint32_t height) {
+void post_effects::on_resize(uint32_t width, uint32_t height) {
     Fbo::Desc desc = {};
     desc.setColorTarget(0, ResourceFormat::R11G11B10Float, true);
     mpPingpongBuffer_[0] = Fbo::create2D(width, height, desc);
@@ -187,26 +189,28 @@ post_effects::SharedPtr post_effects::create(const Program::DefineList& programD
     return SharedPtr(new post_effects(programDefines));
 }
 
-void post_effects::on_gui_render(Gui::Group& group) {
-    if (group.var("expExposure", expExposure_, expMinExposure_, expMaxExposure_, 0.25f)) {
-        float exp = glm::pow(2.0f, expExposure_);
-        g_exposure = { exp, 1.0f / exp, initialMinLog_, initialMaxLog_, initialMaxLog_ - initialMinLog_, 1.0f / (initialMaxLog_ - initialMinLog_) };
+void post_effects::on_gui(Gui::Group& group) {
+    if (group.var("expExposure", mExpExposure_, mExpMinExposure_, mExpMaxExposure_, 0.25f)) {
+        float exp = glm::pow(2.0f, mExpExposure_);
+        g_exposure = { exp, 1.0f / exp, mInitialMinLog_, mInitialMaxLog_, mInitialMaxLog_ - mInitialMinLog_, 1.0f / (mInitialMaxLog_ - mInitialMinLog_) };
         mpExposure_->setBlob(&g_exposure, 0, sizeof(g_exposure));
     }
-    group.var("expMin Exposure", expMinExposure_, -8.0f, 0.0f, 0.25f);
-    group.var("expMax Exposure", expMaxExposure_, 0.0f, 8.0f, 0.25f);
-    group.var("Threshold", bloomThreshold_, 0.0f, 8.0f, 0.01f);
-    group.var("UpSampleBlendFactor", upSampleBlendFactor_, 0.0f, 1.0f, 0.1f);
-    group.var("BloomStrength", bloomStrength_, 0.0f, 2.0f, 0.05f);
+    group.var("expMin Exposure", mExpMinExposure_, -8.0f, 0.0f, 0.25f);
+    group.var("expMax Exposure", mExpMaxExposure_, 0.0f, 8.0f, 0.25f);
+    group.var("Threshold", mBloomThreshold_, 0.0f, 8.0f, 0.01f);
+    group.var("UpSampleBlendFactor", mUpSampleBlendFactor_, 0.0f, 1.0f, 0.1f);
+    group.var("BloomStrength", mBloomStrength_, 0.0f, 2.0f, 0.05f);
 }
 
-void post_effects::on_execute(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& texSampler) {
+void post_effects::on_render(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& texSampler) {
     PROFILE("post effects");
 
-    do_bloom(pContext, texSampler);
-    do_tone_map(pContext, texSampler);
-    do_present(pContext, texSampler, pDstFbo);
-    curIndx_ = (curIndx_ + 1) % 2;
+    do_clear(pContext);
+    pContext->blit(mpInput_, mpPingpongBuffer_[mCurIndx_]->getRenderTargetView(0));
+    do_bloom(pContext);
+    do_tone_map(pContext);
+    do_present(pContext, pDstFbo);
+    mCurIndx_ = (mCurIndx_ + 1) % 2;
 }
 
 void post_effects::do_clear(RenderContext* pRenderContext) {
