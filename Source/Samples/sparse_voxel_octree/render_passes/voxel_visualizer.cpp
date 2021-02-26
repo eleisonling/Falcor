@@ -84,7 +84,7 @@ void voxel_visualizer::on_execute(RenderContext* pContext, const Fbo::SharedPtr&
         mpVisualTracing_->getVars()["CB"]["gSvoMeta"].setBlob(svoMeta_);
         mpVisualTracing_->getVars()["gPackedAlbedo"] = mpVisualTexture_;
         mpVisualTracing_->getVars()["gSvoNodeBuffer"] = mpSVONodeBuffer_;
-        mpVisualTracing_->getVars()["g_texSampler"] = pTexSampler;
+        mpVisualTracing_->getVars()["spTexSampler"] = pTexSampler;
         mpVisualTracing_->getVars()["CB"]["ViewportDims"] = float2{ pDstFbo->getWidth(), pDstFbo->getHeight() };
         mpVisualTracing_->getVars()["CB"]["gMip"] = mipLevel_;;
         mpVisualTracing_->execute(pContext, pDstFbo);
@@ -95,7 +95,7 @@ void voxel_visualizer::on_execute(RenderContext* pContext, const Fbo::SharedPtr&
         mpVisualRasterVars_->setParameterBlock("gScene", mpScene_->getParameterBlock());
         mpVisualRasterVars_["gPackedAlbedo"] = mpVisualTexture_;
         mpVisualRasterVars_["CB"]["gVoxelMeta"].setBlob(voxelMeta_);
-        mpVisualRasterVars_["g_texSampler"] = pTexSampler;
+        mpVisualRasterVars_["spTexSampler"] = pTexSampler;
         mpVisualRasterVars_["CB"]["gMip"] = mipLevel_;
         pContext->drawIndexedInstanced(mpVisualRaster_.get(), mpVisualRasterVars_.get(), (uint32_t)mpRasterMesh_->getIndices().size(), instanceCount, 0, 0, 0);
     }

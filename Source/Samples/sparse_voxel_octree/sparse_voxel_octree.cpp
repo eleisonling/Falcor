@@ -124,7 +124,7 @@ void sparse_voxel_octree::onLoad(RenderContext* pRenderContext) {
     mpVoxelVisualizer_ = voxel_visualizer::create(mpScene_);
     mpLightInjection_ = light_injection::create(mpScene_);
     mpShadowMap_ = pcf_shadow_pass::create(mpScene_);
-    mpPostEffects_ = post_effects::create();
+    mpPostEffects_ = post_effect::create();
 
     Sampler::Desc desc = {};
     desc.setFilterMode(Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Filter::Point).setAddressingMode(Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp);

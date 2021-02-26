@@ -8,7 +8,7 @@ cbuffer CB {
 }
 
 Texture3D<float4> gPackedAlbedo;
-SamplerState g_texSampler;
+SamplerState spTexSampler;
 
 struct vs_in {
     float3 pos                      : POSITION;

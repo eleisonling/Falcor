@@ -32,7 +32,7 @@
 #include "render_passes/voxel_visualizer.h"
 #include "render_passes/light_injection.h"
 #include "render_passes/pcf_shadow_pass.h"
-#include "render_passes/post_effects.h"
+#include "render_passes/post_effect.h"
 
 using namespace Falcor;
 
@@ -57,7 +57,7 @@ private:
 
     pcf_shadow_pass::SharedPtr mpShadowMap_ = nullptr;
     RasterScenePass::SharedPtr mpFinalShading_ = nullptr;
-    post_effects::SharedPtr mpPostEffects_ = nullptr;
+    post_effect::SharedPtr mpPostEffects_ = nullptr;
     Fbo::SharedPtr mpHDRFbo_ = nullptr;
 
     volumetric_pass::SharedPtr mpVolumetric_ = nullptr;

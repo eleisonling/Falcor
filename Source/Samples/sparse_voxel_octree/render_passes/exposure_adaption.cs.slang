@@ -17,7 +17,7 @@ void gen_histogram(uint32_t GI : SV_GroupIndex, uint3 DTid : SV_DispatchThreadID
 
 
 #include "Samples/sparse_voxel_octree/render_passes/post_effects.slangh"
-RWStructuredBuffer<exposure_meta> g_exposure;
+RWStructuredBuffer<exposure_meta> bufExposure;
 
 cbuffer CB {
     float TargetLuminance;
@@ -40,23 +40,23 @@ void adapt_exposure(uint32_t GI : SV_GroupIndex) {
         GroupMemoryBarrierWithGroupSync();
     }
 
-    float minLog = g_exposure[0].MinLog;
-    float maxLog = g_exposure[0].MaxLog;
-    float logRange = g_exposure[0].DeltaLog;
-    float rcpLogRange = g_exposure[0].InvDeltaLog;
+    float minLog = bufExposure[0].MinLog;
+    float maxLog = bufExposure[0].MaxLog;
+    float logRange = bufExposure[0].DeltaLog;
+    float rcpLogRange = bufExposure[0].InvDeltaLog;
 
     float weightedHistAvg = weightedSum / (max(1, PixelCount - g_histogram.Load(0))) - 1.0;
     float logAvgLuminance = exp2(weightedHistAvg / 254.0 * logRange + minLog);
     float targetExposure = TargetLuminance / logAvgLuminance;
 
-    float exposure = g_exposure[0].Exposure;
+    float exposure = bufExposure[0].Exposure;
     exposure = lerp(exposure, targetExposure, AdaptationRate);
     exposure = clamp(exposure, MinExposure, MaxExposure);
 
     if (GI == 0)
     {
-        g_exposure[0].Exposure = exposure;
-        g_exposure[0].InvExposure = 1.0 / exposure;
+        bufExposure[0].Exposure = exposure;
+        bufExposure[0].InvExposure = 1.0 / exposure;
         float biasToCenter = (floor(weightedHistAvg) - 128.0) / 255.0;
         if (abs(biasToCenter) > 0.1)
         {
@@ -65,9 +65,9 @@ void adapt_exposure(uint32_t GI : SV_GroupIndex) {
         }
 
         logRange = maxLog - minLog;
-        g_exposure[0].MinLog = minLog;
-        g_exposure[0].MinLog = maxLog;
-        g_exposure[0].DeltaLog = logRange;
-        g_exposure[0].InvDeltaLog = 1.0 / logRange;
+        bufExposure[0].MinLog = minLog;
+        bufExposure[0].MinLog = maxLog;
+        bufExposure[0].DeltaLog = logRange;
+        bufExposure[0].InvDeltaLog = 1.0 / logRange;
     }
 }
