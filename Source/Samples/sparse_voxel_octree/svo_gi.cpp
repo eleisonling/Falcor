@@ -61,17 +61,17 @@ void svo_gi::onGuiRender(Gui* pGui) {
     auto shadowGroup = Gui::Group(pGui, "ShadowPass");
     mpShadowMap_->on_gui(shadowGroup);
 
-    auto volumetricGroup = Gui::Group(pGui, "Volumetric");
+    auto volumetricGroup = Gui::Group(pGui, "Voxelization");
     if (volumetricGroup.open()) {
         mpVolumetric_->on_gui(volumetricGroup);
     }
 
-    auto voxelVisualGroup = Gui::Group(pGui, "Voxel Visual");
+    auto voxelVisualGroup = Gui::Group(pGui, "Voxelization Visual");
     if (voxelVisualGroup.open()) {
         mpVoxelVisualizer_->on_gui_render(voxelVisualGroup);
     }
 
-    auto postEffects = Gui::Group(pGui, "Post Effects");
+    auto postEffects = Gui::Group(pGui, "Post Effect");
     if (postEffects.open()) {
         mpPostEffects_->on_gui(postEffects);
     }
@@ -147,7 +147,7 @@ void svo_gi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& 
     switch ((final_output_type)mFinalOutputType_) {
     case final_output_type::debug_volumetric:
         mpVoxelVisualizer_->set_voxelization_meta(mpVolumetric_->get_voxelization_meta());
-        mpVoxelVisualizer_->set_visual_texture(mpVolumetric_->get_albedo_voxel_texture());
+        mpVoxelVisualizer_->set_voxel_texture(mpVolumetric_->get_albedo_voxel_texture());
         mpVoxelVisualizer_->set_svo_node_buffer(mpVolumetric_->get_svo_node_buffer());
         mpVoxelVisualizer_->on_execute(pRenderContext, pTargetFbo, mpVoxelSampler_);
         break;
@@ -198,7 +198,7 @@ void svo_gi::onResizeSwapChain(uint32_t width, uint32_t height) {
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd) {
     svo_gi::UniquePtr pRenderer = std::make_unique<svo_gi>();
     SampleConfig config;
-    config.windowDesc.title = "sparse voxel octree";
+    config.windowDesc.title = "svo_gi";
     config.windowDesc.resizableWindow = true;
     Sample::run(config, pRenderer);
     return 0;

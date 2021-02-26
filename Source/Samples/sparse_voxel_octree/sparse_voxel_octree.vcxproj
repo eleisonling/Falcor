@@ -32,11 +32,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ShaderSource Include="render_passes\injection_meta.slangh" />
-    <ShaderSource Include="render_passes\light_injection.slang" />
     <ShaderSource Include="shaders\bloom.cs.slang" />
     <ShaderSource Include="shaders\final_shading.ps.slang" />
     <ShaderSource Include="shaders\gen_shadowmap.slang" />
+    <ShaderSource Include="shaders\light_injection_meta.slangh" />
+    <ShaderSource Include="shaders\light_injection.slang" />
     <ShaderSource Include="shaders\post_effects.slangh" />
     <ShaderSource Include="shaders\present.ps.slang" />
     <ShaderSource Include="shaders\tonemap.cs.slang" />

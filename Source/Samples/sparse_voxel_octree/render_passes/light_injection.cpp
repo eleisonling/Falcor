@@ -1,8 +1,8 @@
 #include "light_injection.h"
-#include "injection_meta.slangh"
+#include "../shaders/light_injection_meta.slangh"
 
 namespace {
-    static std::string kInjectLightProg = "Samples/sparse_voxel_octree/render_passes/light_injection.slang";
+    static std::string kInjectLightProg = "Samples/sparse_voxel_octree/shaders/light_injection.slang";
 }
 
 light_injection::light_injection(const Scene::SharedPtr& pScene, Program::DefineList& programDefines)
@@ -41,12 +41,12 @@ void light_injection::on_gui_render(Gui::Group& group) {
 
 void light_injection::on_inject_light(RenderContext* pContext, const Texture::SharedPtr& pShadowmap, const float4x4& shadowMatrix, const Texture::SharedPtr& pAlbedoTexture, const Texture::SharedPtr& pNormalTexture, const voxelization_meta& meta) {
     pContext->clearTexture(mpRadius_.get());
-    mpInjection_->getVars()["CB"]["g_svoMeta"].setBlob(meta);
-    mpInjection_->getVars()["CB"]["g_shadow_matrix"] = shadowMatrix;
-    mpInjection_->getVars()["g_albedo"] = pAlbedoTexture;
-    mpInjection_->getVars()["g_normal"] = pNormalTexture;
-    mpInjection_->getVars()["g_normal"] = pShadowmap;
-    mpInjection_->getVars()["g_radius"] = mpRadius_;
+    mpInjection_->getVars()["CB"]["bufVoxelizationMeta"].setBlob(meta);
+    mpInjection_->getVars()["CB"]["matShadowMatrix"] = shadowMatrix;
+    mpInjection_->getVars()["texAlbedo"] = pAlbedoTexture;
+    mpInjection_->getVars()["texNormal"] = pNormalTexture;
+    mpInjection_->getVars()["texShadowMap"] = pShadowmap;
+    mpInjection_->getVars()["texRadius"] = mpRadius_;
     mpInjection_->execute(pContext, meta.CellDim);
 }
 

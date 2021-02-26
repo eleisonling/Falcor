@@ -23,14 +23,16 @@ public:
 private:
     voxlization_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc,Program::DefineList& programDefines);
 
-    void do_rebuild_pixel_data_buffers();
     void do_create_svo_shaders(Program::DefineList& programDefines);
+    void do_create_vps();
+    void do_rebuild_pixel_data_buffers();
     void do_rebuild_svo_buffers();
     void do_build_svo(RenderContext* pContext);
     void do_fixture_cell_size();
 
     // pixel volumetric
     Scene::SharedPtr mpScene_ = nullptr;
+    Buffer::SharedPtr mpViewProjections_ = nullptr;
     Texture::SharedPtr mpPackedAlbedo_ = nullptr;
     Texture::SharedPtr mpPackedNormal_ = nullptr;
 

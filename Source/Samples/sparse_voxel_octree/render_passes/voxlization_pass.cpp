@@ -8,6 +8,7 @@ namespace {
 
 voxlization_pass::~voxlization_pass() {
     mpScene_ = nullptr;
+    mpViewProjections_ = nullptr;
     mpPackedAlbedo_ = nullptr;
     mpPackedNormal_ = nullptr;
 
@@ -47,6 +48,7 @@ void voxlization_pass::on_voxelization(RenderContext* pContext, const Fbo::Share
     mpState->setFbo(pDstFbo);
     mpVars["texPackedAlbedo"] = mpPackedAlbedo_;
     mpVars["texPackedNormal"] = mpPackedNormal_;
+    mpVars["CB"]["matViewProjections"] = mpViewProjections_;
     mpVars["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
     mpScene_->rasterize(pContext, mpState.get(), mpVars.get(), Scene::RenderFlags::UserRasterizerState);
     do_build_svo(pContext);
@@ -140,6 +142,7 @@ voxlization_pass::voxlization_pass(const Scene::SharedPtr& pScene, const Program
         mpState->setBlendState(blendState);
     }
 
+    do_create_vps();
     do_create_svo_shaders(programDefines);
     do_fixture_cell_size();
     do_rebuild_pixel_data_buffers();
@@ -201,6 +204,26 @@ void voxlization_pass::do_create_svo_shaders(Program::DefineList& programDefines
         mpDivideSubNode_ ->setProgram(pProg);
         mpDivideSubNodeVars_ = ComputeVars::create(pProg.get());
     }
+}
+
+void voxlization_pass::do_create_vps() {
+    mpViewProjections_ = Buffer::createStructured(sizeof(float4x4), 3);
+
+    auto& bounds = mpScene_->getSceneBounds();
+    float radius = bounds.radius();
+    float3 center = bounds.center();
+
+    float4x4 proj[3] = {};
+    proj[0] = glm::ortho(-radius, radius, -radius, radius, 0.1f, 4.0f * radius);
+    proj[1] = glm::ortho(-radius, radius, -radius, radius, 0.1f, 4.0f * radius);
+    proj[2] = glm::ortho(-radius, radius, -radius, radius, 0.1f, 4.0f * radius);
+
+    float4x4 viewProj[3] = {};
+    viewProj[0] = proj[0] * glm::lookAt(float3(center.x + radius * 1.5f, center.y, center.z), center, float3(0, 1, 0));
+    viewProj[1] = proj[1] * glm::lookAt(float3(center.x, center.y + radius * 1.5f, center.z), center, float3(1, 0, 0));
+    viewProj[2] = proj[2] * glm::lookAt(float3(center.x, center.y, center.z + radius * 1.5f), center, float3(0, 1, 0));
+
+    mpViewProjections_->setBlob(viewProj, 0, sizeof(float4x4) * 3);
 }
 
 void voxlization_pass::do_rebuild_svo_buffers() {

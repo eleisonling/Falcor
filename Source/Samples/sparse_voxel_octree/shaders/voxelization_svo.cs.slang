@@ -36,11 +36,11 @@ bool is_valid_node(uint32_t nodeData) {
 }
 
 [numthreads(COMMON_THREAD_SIZE, COMMON_THREAD_SIZE, COMMON_THREAD_SIZE)]
-void tag_node(uint3 g_threadId : SV_DispatchThreadID){
+void tag_node(uint3 DTid : SV_DispatchThreadID){
 
-    if(g_threadId.x >= bufVoxelMeta.CellDim.x || g_threadId.y >= bufVoxelMeta.CellDim.y || g_threadId.z >= bufVoxelMeta.CellDim.z) return;
-    uint3 cellIndex =  g_threadId;
-    uint32_t linearIndex = g_threadId.z * bufVoxelMeta.CellDim.y * bufVoxelMeta.CellDim.x + g_threadId.y * bufVoxelMeta.CellDim.x + g_threadId.x;
+    if(DTid.x >= bufVoxelMeta.CellDim.x || DTid.y >= bufVoxelMeta.CellDim.y || DTid.z >= bufVoxelMeta.CellDim.z) return;
+    uint3 cellIndex =  DTid;
+    uint32_t linearIndex = DTid.z * bufVoxelMeta.CellDim.y * bufVoxelMeta.CellDim.x + DTid.y * bufVoxelMeta.CellDim.x + DTid.x;
 
     float4 packedColor = texPackedAlbedo[cellIndex];
     if(packedColor.a == 0.f) return;
@@ -85,9 +85,9 @@ void caculate_divide_indirect_arg() {
 
 
 [numthreads(COMMON_THREAD_SIZE, 1, 1)]
-void sub_divide_node(uint3 g_threadId : SV_DispatchThreadID){
-    if(g_threadId.x >= bufDivideIndirectArg.Load(g_deltaNodeNum)) return;
-    uint32_t index = g_threadId.x + bufDivideIndirectArg.Load(g_nodeOffset);
+void sub_divide_node(uint3 DTid : SV_DispatchThreadID){
+    if(DTid.x >= bufDivideIndirectArg.Load(g_deltaNodeNum)) return;
+    uint32_t index = DTid.x + bufDivideIndirectArg.Load(g_nodeOffset);
 
     uint32_t nodeData = bufSvoNode.Load(index * 4);
 

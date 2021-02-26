@@ -72,27 +72,27 @@ voxel_visualizer::SharedPtr voxel_visualizer::create(const Scene::SharedPtr& pSc
 }
 
 void voxel_visualizer::on_gui_render(Gui::Group& group) {
-    group.checkbox("Use Tracing Method", debugSVOTracing_);
+    group.checkbox("Use Tracing Method", mDebugSVOTracing_);
 }
 
 void voxel_visualizer::on_execute(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& pTexSampler) {
     PROFILE("debug volumetric");
 
-    if (debugSVOTracing_) {
+    if (mDebugSVOTracing_) {
         mpVisualTracing_->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
-        mpVisualTracing_->getVars()["CB"]["bufVoxelMeta"].setBlob(voxelMeta_);
+        mpVisualTracing_->getVars()["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
         mpVisualTracing_->getVars()["texPackedAlbedo"] = mpVisualTexture_;
         mpVisualTracing_->getVars()["bufSvoNode"] = mpSVONodeBuffer_;
         mpVisualTracing_->getVars()["spTexSampler"] = pTexSampler;
-        mpVisualTracing_->getVars()["CB"]["ViewportDims"] = float2{ pDstFbo->getWidth(), pDstFbo->getHeight() };
+        mpVisualTracing_->getVars()["CB"]["fViewportDims"] = float2{ pDstFbo->getWidth(), pDstFbo->getHeight() };
         mpVisualTracing_->execute(pContext, pDstFbo);
     } else {
-        uint32_t instanceCount = voxelMeta_.CellDim.x * voxelMeta_.CellDim.y * voxelMeta_.CellDim.z;
+        uint32_t instanceCount = mVoxelizationMeta_.CellDim.x * mVoxelizationMeta_.CellDim.y * mVoxelizationMeta_.CellDim.z;
         mpVisualRaster_->setFbo(pDstFbo);
         mpVisualRaster_->setVao(mpRasterVao_);
         mpVisualRasterVars_->setParameterBlock("gScene", mpScene_->getParameterBlock());
         mpVisualRasterVars_["texPackedAlbedo"] = mpVisualTexture_;
-        mpVisualRasterVars_["CB"]["bufVoxelMeta"].setBlob(voxelMeta_);
+        mpVisualRasterVars_["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
         mpVisualRasterVars_["spTexSampler"] = pTexSampler;
         pContext->drawIndexedInstanced(mpVisualRaster_.get(), mpVisualRasterVars_.get(), (uint32_t)mpRasterMesh_->getIndices().size(), instanceCount, 0, 0, 0);
     }

@@ -13,8 +13,8 @@ private:
     void create_visualize_resources();
 
     Scene::SharedPtr mpScene_ = nullptr;
-    bool debugSVOTracing_ = true;
-    voxelization_meta voxelMeta_ = {};
+    bool mDebugSVOTracing_ = true;
+    voxelization_meta mVoxelizationMeta_ = {};
 
     Texture::SharedPtr mpVisualTexture_ = nullptr;
     FullScreenPass::SharedPtr mpVisualTracing_ = nullptr;
@@ -34,7 +34,7 @@ public:
     void on_gui_render(Gui::Group& group);
     void on_execute(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& pTexSampler);
 
-    void set_voxelization_meta(const voxelization_meta& meta) { voxelMeta_ = meta; }
-    void set_visual_texture(Texture::SharedPtr tex) { mpVisualTexture_ = tex; }
+    void set_voxelization_meta(const voxelization_meta& meta) { mVoxelizationMeta_ = meta; }
+    void set_voxel_texture(Texture::SharedPtr tex) { mpVisualTexture_ = tex; }
     void set_svo_node_buffer(Buffer::SharedPtr buffer) { mpSVONodeBuffer_ = buffer; }
 };
