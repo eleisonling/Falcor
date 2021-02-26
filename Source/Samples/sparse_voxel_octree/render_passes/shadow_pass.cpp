@@ -1,11 +1,11 @@
-#include "pcf_shadow_pass.h"
+#include "shadow_pass.h"
 
 namespace {
     static std::string kGenShadowMapProg = "Samples/sparse_voxel_octree/shaders/gen_shadowmap.slang";
     static std::string kMainLight = "Main Light";
 }
 
-pcf_shadow_pass::pcf_shadow_pass(const Scene::SharedPtr& pScene, const Program::Desc& genMapProgDesc,Program::DefineList& programDefines)
+shadow_pass::shadow_pass(const Scene::SharedPtr& pScene, const Program::Desc& genMapProgDesc,Program::DefineList& programDefines)
     : BaseGraphicsPass(genMapProgDesc, programDefines)
     , mpScene_(pScene) {
 
@@ -26,13 +26,13 @@ pcf_shadow_pass::pcf_shadow_pass(const Scene::SharedPtr& pScene, const Program::
     rebuild_shadowmap_buffers();
 }
 
-void pcf_shadow_pass::rebuild_shadowmap_buffers() {
+void shadow_pass::rebuild_shadowmap_buffers() {
     Fbo::Desc desc = {};
     desc.setDepthStencilTarget(ResourceFormat::D32Float);
     mpShadowMap_ = Fbo::create2D(mDimension_.x, mDimension_.y, desc);
 }
 
-void pcf_shadow_pass::rebuild_shadow_matrix(float3 lightDir, const AABB& bounds) {
+void shadow_pass::rebuild_shadow_matrix(float3 lightDir, const AABB& bounds) {
     float3 up = glm::normalize(glm::cross(glm::cross(lightDir, { 0,1,0 }), lightDir));
     float4x4 lightView = glm::lookAt(bounds.center() - bounds.radius() * lightDir, bounds.center(), up);
     float3 viewMax = lightView * float4(bounds.maxPoint, 1.0f);
@@ -52,13 +52,13 @@ void pcf_shadow_pass::rebuild_shadow_matrix(float3 lightDir, const AABB& bounds)
     mShadowMatrix_ = lightProj * lightView;
 }
 
-pcf_shadow_pass::~pcf_shadow_pass() {
+shadow_pass::~shadow_pass() {
     mpScene_ = nullptr;
     mpShadowMap_ = nullptr;
     mpPCFSampler_ = nullptr;
 }
 
-pcf_shadow_pass::SharedPtr pcf_shadow_pass::create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines /*= Program::DefineList()*/) {
+shadow_pass::SharedPtr shadow_pass::create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines /*= Program::DefineList()*/) {
     Program::Desc d_genMap;
     d_genMap.addShaderLibrary(kGenShadowMapProg).vsEntry("vs_main").psEntry("ps_main");
 
@@ -66,15 +66,15 @@ pcf_shadow_pass::SharedPtr pcf_shadow_pass::create(const Scene::SharedPtr& pScen
     Program::DefineList dl = programDefines;
     dl.add(pScene->getSceneDefines());
 
-    return SharedPtr(new pcf_shadow_pass(pScene, d_genMap, dl));
+    return SharedPtr(new shadow_pass(pScene, d_genMap, dl));
 }
 
-void pcf_shadow_pass::on_gui(Gui::Group& group) {
+void shadow_pass::on_gui(Gui::Group& group) {
     if (group.var("ShadowMap Resolution", mDimension_)) rebuild_shadowmap_buffers();
     group.var("PCF kernel size", mPcfKernel_);
 }
 
-void pcf_shadow_pass::on_render(RenderContext* pContext) {
+void shadow_pass::on_render(RenderContext* pContext) {
     PROFILE("generate shadow map");
     
     auto& bounds = mpScene_->getSceneBounds();

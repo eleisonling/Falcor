@@ -25,7 +25,7 @@
  # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **************************************************************************/
-#include "sparse_voxel_octree.h"
+#include "svo_gi.h"
 uint32_t mSampleGuiWidth = 250;
 uint32_t mSampleGuiHeight = 200;
 uint32_t mSampleGuiPositionX = 20;
@@ -45,14 +45,13 @@ namespace {
 
     const Gui::DropdownList kFinalOutputType = {
         { (uint32_t)final_output_type::defulat_type, "defulat_type" },
-        { (uint32_t)final_output_type::debug_projection, "debug_projection" },
         { (uint32_t)final_output_type::debug_volumetric, "debug_volumetric" },
     };
 
 }
 
-void sparse_voxel_octree::onGuiRender(Gui* pGui) {
-    Gui::Window w(pGui, "svo", { 250, 200 });
+void svo_gi::onGuiRender(Gui* pGui) {
+    Gui::Window w(pGui, "svo_gi", { 250, 200 });
     std::string msg = gpFramework->getFrameRate().getMsg(gpFramework->isVsyncEnabled());
     w.text(msg);
 
@@ -62,14 +61,9 @@ void sparse_voxel_octree::onGuiRender(Gui* pGui) {
     auto shadowGroup = Gui::Group(pGui, "ShadowPass");
     mpShadowMap_->on_gui(shadowGroup);
 
-    auto projectionDebugGroup = Gui::Group(pGui, "Projection Debug");
-    if (projectionDebugGroup.open()) {
-        mpDeubgProjection_->on_gui_render(projectionDebugGroup);
-    }
-
     auto volumetricGroup = Gui::Group(pGui, "Volumetric");
     if (volumetricGroup.open()) {
-        mpVolumetric_->on_gui_render(volumetricGroup);
+        mpVolumetric_->on_gui(volumetricGroup);
     }
 
     auto voxelVisualGroup = Gui::Group(pGui, "Voxel Visual");
@@ -89,7 +83,7 @@ void sparse_voxel_octree::onGuiRender(Gui* pGui) {
     }
 }
 
-void sparse_voxel_octree::load_scene(const std::string& filename, const Fbo* pTargetFbo) {
+void svo_gi::load_scene(const std::string& filename, const Fbo* pTargetFbo) {
     mpScene_ = Scene::create(filename);
     if (!mpScene_) return;
 
@@ -104,7 +98,7 @@ void sparse_voxel_octree::load_scene(const std::string& filename, const Fbo* pTa
     mpMainCam_->setAspectRatio((float)pTargetFbo->getWidth() / (float)pTargetFbo->getHeight());
 }
 
-void sparse_voxel_octree::normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
+void svo_gi::normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
     mpFinalShading_->getVars()["texShadowMap"] = mpShadowMap_->get_shadow_map();
     mpFinalShading_->getVars()["spPcfSampler"] = mpShadowMap_->get_shadow_sampler();
     mpFinalShading_->getVars()["PerFrameCB"]["matShadowMatrix"] = mpShadowMap_->get_shadow_matrix();
@@ -116,14 +110,13 @@ void sparse_voxel_octree::normal_render(RenderContext* pRenderContext, const Fbo
     mpPostEffects_->on_render(pRenderContext, pTargetFbo, mpTextureSampler_);
 }
 
-void sparse_voxel_octree::onLoad(RenderContext* pRenderContext) {
+void svo_gi::onLoad(RenderContext* pRenderContext) {
     load_scene(kDefaultScene, gpFramework->getTargetFbo().get());
     mpFinalShading_ = RasterScenePass::create(mpScene_, kRasterProg, "", "main");
-    mpDeubgProjection_ = projection_debug_pass::create(mpScene_);
-    mpVolumetric_ = volumetric_pass::create(mpScene_);
+    mpVolumetric_ = voxlization_pass::create(mpScene_);
     mpVoxelVisualizer_ = voxel_visualizer::create(mpScene_);
     mpLightInjection_ = light_injection::create(mpScene_);
-    mpShadowMap_ = pcf_shadow_pass::create(mpScene_);
+    mpShadowMap_ = shadow_pass::create(mpScene_);
     mpPostEffects_ = post_effect::create();
 
     Sampler::Desc desc = {};
@@ -135,7 +128,7 @@ void sparse_voxel_octree::onLoad(RenderContext* pRenderContext) {
 
 }
 
-void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
+void svo_gi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
     const float4 clearColor(0.f, 0.f, 0.f, 1);
     pRenderContext->clearFbo(pTargetFbo.get(), clearColor, 1.0f, 0, FboAttachmentType::All);
     pRenderContext->clearFbo(mpHDRFbo_.get(), clearColor, 1.0f, 0, FboAttachmentType::All);
@@ -143,21 +136,17 @@ void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo
     mpScene_->update(pRenderContext, gpFramework->getGlobalClock().getTime());
 
     if (mpVolumetric_->need_refresh()) {
-        mpVolumetric_->volumetric_scene(pRenderContext, mpHDRFbo_);
+        mpVolumetric_->on_voxelization(pRenderContext, mpHDRFbo_);
     }
 
     mpShadowMap_->on_render(pRenderContext);
 
     mpLightInjection_->on_inject_light(pRenderContext, mpShadowMap_->get_shadow_map(), mpShadowMap_->get_shadow_matrix(),
-        mpVolumetric_->get_albedo_voxel_texture(), mpVolumetric_->get_normal_voxel_texture(), mpVolumetric_->get_svo_meta());
+        mpVolumetric_->get_albedo_voxel_texture(), mpVolumetric_->get_normal_voxel_texture(), mpVolumetric_->get_voxelization_meta());
 
     switch ((final_output_type)mFinalOutputType_) {
-    case final_output_type::debug_projection:
-        mpDeubgProjection_->debug_scene(pRenderContext, pTargetFbo);
-        break;
     case final_output_type::debug_volumetric:
-        mpVoxelVisualizer_->set_svo_meta(mpVolumetric_->get_svo_meta());
-        mpVoxelVisualizer_->set_voxel_meta(mpVolumetric_->get_voxel_meta());
+        mpVoxelVisualizer_->set_voxelization_meta(mpVolumetric_->get_voxelization_meta());
         mpVoxelVisualizer_->set_visual_texture(mpVolumetric_->get_albedo_voxel_texture());
         mpVoxelVisualizer_->set_svo_node_buffer(mpVolumetric_->get_svo_node_buffer());
         mpVoxelVisualizer_->on_execute(pRenderContext, pTargetFbo, mpVoxelSampler_);
@@ -169,9 +158,8 @@ void sparse_voxel_octree::onFrameRender(RenderContext* pRenderContext, const Fbo
     }
 }
 
-void sparse_voxel_octree::onShutdown() {
+void svo_gi::onShutdown() {
     mpFinalShading_ = nullptr;
-    mpDeubgProjection_ = nullptr;
     mpVolumetric_ = nullptr;
     mpVoxelVisualizer_ = nullptr;
     mpLightInjection_ = nullptr;
@@ -182,24 +170,24 @@ void sparse_voxel_octree::onShutdown() {
     mpVoxelSampler_ = nullptr;
 }
 
-bool sparse_voxel_octree::onKeyEvent(const KeyboardEvent& keyEvent) {
+bool svo_gi::onKeyEvent(const KeyboardEvent& keyEvent) {
     if (mpScene_) {
         mpFinalShading_->onKeyEvent(keyEvent);
     }
     return false;
 }
 
-bool sparse_voxel_octree::onMouseEvent(const MouseEvent& mouseEvent) {
+bool svo_gi::onMouseEvent(const MouseEvent& mouseEvent) {
     if (mpScene_) {
          mpFinalShading_->onMouseEvent(mouseEvent);
     }
     return false;
 }
 
-void sparse_voxel_octree::onHotReload(HotReloadFlags reloaded) {
+void svo_gi::onHotReload(HotReloadFlags reloaded) {
 }
 
-void sparse_voxel_octree::onResizeSwapChain(uint32_t width, uint32_t height) {
+void svo_gi::onResizeSwapChain(uint32_t width, uint32_t height) {
     const auto& bkFbo = gpDevice->getSwapChainFbo();
     Fbo::Desc desc = bkFbo->getDesc();
     desc.setColorTarget(0, ResourceFormat::R11G11B10Float, true);
@@ -208,7 +196,7 @@ void sparse_voxel_octree::onResizeSwapChain(uint32_t width, uint32_t height) {
 }
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd) {
-    sparse_voxel_octree::UniquePtr pRenderer = std::make_unique<sparse_voxel_octree>();
+    svo_gi::UniquePtr pRenderer = std::make_unique<svo_gi>();
     SampleConfig config;
     config.windowDesc.title = "sparse voxel octree";
     config.windowDesc.resizableWindow = true;

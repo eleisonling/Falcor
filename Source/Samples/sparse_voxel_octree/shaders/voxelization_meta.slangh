@@ -2,25 +2,19 @@
 #include "Utils/HostDeviceShared.slangh"
 #include "Utils/Math/MathConstants.slangh"
 
-struct voxel_meta {
+
+ struct voxelization_meta {
     uint3 CellDim = uint3(0);
     float CellSize = 1.0;
+
     float3 Min = float3(FLT_MAX);
-    float3 Max = float3(-FLT_MAX);
-};
-
- #define g_avgThreads       10
- #define g_tagThreads       10
- #define g_divideThreads    64
-
- struct svo_meta {
-    uint3 CellDim = uint3(0);
     uint32_t CellNum = 0;
-    uint3 SvoDim = uint3(0);
+
+    float3 Max = float3(-FLT_MAX);
     uint32_t CurLevel = 0;
-    float3 Min = float3(FLT_MAX);
+
+    uint3 SvoDim = uint3(0);
     uint32_t TotalLevel = 0;
-    float CellSize = 1.0;
  };
 
 
@@ -52,9 +46,10 @@ inline float3 unpack_normal(float3 v) {
     return v * 2.0f - 1.0f;
 }
 
-
-#define g_maxAvgIterations 100
-#define g_packRGBFactor 255.0f
-#define g_internalFlag 0x80000000
-#define g_32SignBit 0x80000000
-#define g_maxLevel 23
+#define COMMON_THREAD_SIZE      10
+#define DIVIDE_THREAD_SIZE      64
+#define MAX_AVG_ITERATIONS      100
+#define PACKED_RGB_FACTOR       255.0f
+#define INTERNAL_FLAG           0x80000000
+#define SIGN_BIT_32             0x80000000
+#define MAX_LEVEL               23

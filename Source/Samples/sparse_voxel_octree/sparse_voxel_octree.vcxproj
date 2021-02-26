@@ -12,22 +12,19 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="render_passes\light_injection.cpp" />
-    <ClCompile Include="render_passes\pcf_shadow_pass.cpp" />
+    <ClCompile Include="render_passes\shadow_pass.cpp" />
     <ClCompile Include="render_passes\post_effect.cpp" />
-    <ClCompile Include="render_passes\projection_debug_pass.cpp" />
-    <ClCompile Include="render_passes\volumetric_pass.cpp" />
+    <ClCompile Include="render_passes\voxlization_pass.cpp" />
     <ClCompile Include="render_passes\voxel_visualizer.cpp" />
-    <ClCompile Include="sparse_voxel_octree.cpp" />
+    <ClCompile Include="svo_gi.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="render_passes\light_injection.h" />
-    <ClInclude Include="render_passes\pcf_shadow_pass.h" />
+    <ClInclude Include="render_passes\shadow_pass.h" />
     <ClInclude Include="render_passes\post_effect.h" />
-    <ClInclude Include="render_passes\projection_debug_pass.h" />
-    <ClInclude Include="render_passes\projection_debug_meta.slangh" />
-    <ClInclude Include="render_passes\volumetric_pass.h" />
+    <ClInclude Include="render_passes\voxlization_pass.h" />
     <ClInclude Include="render_passes\voxel_visualizer.h" />
-    <ClInclude Include="sparse_voxel_octree.h" />
+    <ClInclude Include="svo_gi.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Falcor\Falcor.vcxproj">
@@ -35,24 +32,20 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ShaderSource Include="render_passes\build_svo.cs.slang" />
-    <ShaderSource Include="render_passes\debug_svo.ps.slang" />
-    <ShaderSource Include="render_passes\debug_volumetric.slang" />
-    <ShaderSource Include="render_passes\exposure_adaption.cs.slang" />
-    <ShaderSource Include="render_passes\gen_mipmap.cs.slang" />
     <ShaderSource Include="render_passes\injection_meta.slangh" />
     <ShaderSource Include="render_passes\light_injection.slang" />
-    <ShaderSource Include="render_passes\pixel_avg.cs.slang" />
-    <ShaderSource Include="render_passes\projection_debug.slang" />
-    <ShaderSource Include="render_passes\svo_tracing.slangh" />
-    <ShaderSource Include="render_passes\volumetric.slang" />
-    <ShaderSource Include="render_passes\voxel_meta.slangh" />
     <ShaderSource Include="shaders\bloom.cs.slang" />
     <ShaderSource Include="shaders\final_shading.ps.slang" />
     <ShaderSource Include="shaders\gen_shadowmap.slang" />
     <ShaderSource Include="shaders\post_effects.slangh" />
     <ShaderSource Include="shaders\present.ps.slang" />
     <ShaderSource Include="shaders\tonemap.cs.slang" />
+    <ShaderSource Include="shaders\voxelization.slang" />
+    <ShaderSource Include="shaders\voxelization_meta.slangh" />
+    <ShaderSource Include="shaders\voxelization_svo.cs.slang" />
+    <ShaderSource Include="shaders\voxelization_tracing.slangh" />
+    <ShaderSource Include="shaders\voxelization_visual_raster.slang" />
+    <ShaderSource Include="shaders\voxelization_visual_tracing.ps.slang" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B966F14F-7CD3-4DC5-B8A6-91AEAE2206DB}</ProjectGuid>

@@ -78,9 +78,9 @@ float4x4 calculate_orth_view_proj(AABB bound, int32_t dim) {
 
 }
 
-#include "Samples/sparse_voxel_octree/render_passes/voxel_meta.slangh"
+#include "Samples/sparse_voxel_octree/shaders/voxelization_meta.slangh"
 cbuffer CB {
-    voxel_meta gVoxelMeta;
+    voxelization_meta bufVoxelMeta;
 }
 
 struct GSOut{
@@ -99,7 +99,7 @@ void gs_main(triangle VSOut input[3], uint InstanceID : SV_GSInstanceID, uint tr
     float3 posW2 = input[2].posW;
 
     // cacluate AABB
-    AABB bound = AABB::create(gVoxelMeta.Min, gVoxelMeta.Max);
+    AABB bound = AABB::create(bufVoxelMeta.Min, bufVoxelMeta.Max);
 
     float3 edgeW01 = posW1 - posW0;
     float3 edgeW02 = posW2 - posW0;
@@ -140,12 +140,12 @@ import Scene.Material.MaterialData;
 import Utils.Math.MathHelpers;
 #include "Scene/Material/MaterialDefines.slangh"
 
-RWTexture3D<uint32_t> gPackedAlbedo;
-RWTexture3D<uint32_t> gPackedNormal;
+RWTexture3D<uint32_t> texPackedAlbedo;
+RWTexture3D<uint32_t> texPackedNormal;
 
 void image_atomic_avg_RGBA8(RWTexture3D<uint32_t> img, uint3 coords, float4 newVal) {
 
-    newVal.xyz *= g_packRGBFactor;
+    newVal.xyz *= PACKED_RGB_FACTOR;
     uint32_t packedNewVal = RGBA8_255_to_uint32(newVal);
     uint32_t lastPackedVal = 0;
     uint32_t curPackedVal = 0;
@@ -155,7 +155,7 @@ void image_atomic_avg_RGBA8(RWTexture3D<uint32_t> img, uint3 coords, float4 newV
     [allow_uav_condition] while(true) {
 
         InterlockedCompareExchange(img[coords], lastPackedVal, packedNewVal, curPackedVal);
-        if(curPackedVal == lastPackedVal || numIterations >= g_maxAvgIterations) break;
+        if(curPackedVal == lastPackedVal || numIterations >= MAX_AVG_ITERATIONS) break;
 
         lastPackedVal = curPackedVal;
         curVal = uint32_to_RGBA8_255(curPackedVal);
@@ -170,11 +170,11 @@ void image_atomic_avg_RGBA8(RWTexture3D<uint32_t> img, uint3 coords, float4 newV
 float4 ps_main(GSOut gOut) : SV_TARGET {
 
     float3 posW = gOut.vsData.posW;
-    uint3 cellIndex = floor((posW - gVoxelMeta.Min) / gVoxelMeta.CellSize);
+    uint3 cellIndex = floor((posW - bufVoxelMeta.Min) / bufVoxelMeta.CellSize);
 
-    if(cellIndex.x >= 0 && cellIndex.x < gVoxelMeta.CellDim.x
-        && cellIndex.y >= 0 && cellIndex.y < gVoxelMeta.CellDim.y
-        && cellIndex.z >= 0 && cellIndex.z < gVoxelMeta.CellDim.z) {
+    if(cellIndex.x >= 0 && cellIndex.x < bufVoxelMeta.CellDim.x
+        && cellIndex.y >= 0 && cellIndex.y < bufVoxelMeta.CellDim.y
+        && cellIndex.z >= 0 && cellIndex.z < bufVoxelMeta.CellDim.z) {
 
         float3 viewDir = normalize(gScene.camera.getPosition() - gOut.vsData.posW);
         ShadingData sd = prepareShadingData(gOut.vsData, gOut.triangleIndex, viewDir);
@@ -182,8 +182,8 @@ float4 ps_main(GSOut gOut) : SV_TARGET {
         float4 baseColor = float4(sd.diffuse, 1.0f);
         float4 normalW = float4(sd.N, 1.0f);
 
-        image_atomic_avg_RGBA8(gPackedAlbedo, cellIndex, baseColor);
-        image_atomic_avg_RGBA8(gPackedNormal, cellIndex, normalW);
+        image_atomic_avg_RGBA8(texPackedAlbedo, cellIndex, baseColor);
+        image_atomic_avg_RGBA8(texPackedNormal, cellIndex, normalW);
     }
 
     return float4(0,0,0,0);

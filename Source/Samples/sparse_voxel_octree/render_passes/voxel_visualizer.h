@@ -3,7 +3,7 @@
 #include "Falcor.h"
 using namespace Falcor;
 
-#include "voxel_meta.slangh"
+#include "../shaders/voxelization_meta.slangh"
 
 
 class voxel_visualizer : public std::enable_shared_from_this<voxel_visualizer> {
@@ -14,12 +14,9 @@ private:
 
     Scene::SharedPtr mpScene_ = nullptr;
     bool debugSVOTracing_ = true;
-    float mipLevel_ = 0.f;
-    svo_meta svoMeta_ = {};
-    voxel_meta voxelMeta_ = {};
+    voxelization_meta voxelMeta_ = {};
 
     Texture::SharedPtr mpVisualTexture_ = nullptr;
-    // debug tracing svo
     FullScreenPass::SharedPtr mpVisualTracing_ = nullptr;
     Buffer::SharedPtr mpSVONodeBuffer_ = nullptr;
     
@@ -37,8 +34,7 @@ public:
     void on_gui_render(Gui::Group& group);
     void on_execute(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& pTexSampler);
 
-    void set_svo_meta(const svo_meta& meta) { svoMeta_ = meta; }
-    void set_voxel_meta(const voxel_meta& meta) { voxelMeta_ = meta; }
+    void set_voxelization_meta(const voxelization_meta& meta) { voxelMeta_ = meta; }
     void set_visual_texture(Texture::SharedPtr tex) { mpVisualTexture_ = tex; }
     void set_svo_node_buffer(Buffer::SharedPtr buffer) { mpSVONodeBuffer_ = buffer; }
 };

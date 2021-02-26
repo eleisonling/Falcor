@@ -3,9 +3,9 @@
 
 using namespace Falcor;
 
-class pcf_shadow_pass : public BaseGraphicsPass, public std::enable_shared_from_this<pcf_shadow_pass> {
+class shadow_pass : public BaseGraphicsPass, public std::enable_shared_from_this<shadow_pass> {
 private:
-    pcf_shadow_pass(const Scene::SharedPtr& pScene, const Program::Desc& genMapProgDesc, Program::DefineList& programDefines);
+    shadow_pass(const Scene::SharedPtr& pScene, const Program::Desc& genMapProgDesc, Program::DefineList& programDefines);
     void rebuild_shadowmap_buffers();
     void rebuild_shadow_matrix(float3 lightDir, const AABB& bounds);
 
@@ -19,8 +19,8 @@ private:
 
     
 public:
-    using SharedPtr = std::shared_ptr<pcf_shadow_pass>;
-    virtual ~pcf_shadow_pass() override;
+    using SharedPtr = std::shared_ptr<shadow_pass>;
+    virtual ~shadow_pass() override;
 
     static SharedPtr create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines = Program::DefineList());
     void on_gui(Gui::Group& group);

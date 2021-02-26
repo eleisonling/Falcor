@@ -1,12 +1,13 @@
 #pragma once
 
 #include "Samples/sparse_voxel_octree/render_passes/injection_meta.slangh"
-#include "Samples/sparse_voxel_octree/render_passes/voxel_meta.slangh"
+#include "Samples/sparse_voxel_octree/shaders/voxelization_meta.slangh"
+
 import Scene.Shading;
 import Scene.Raster;
 
 cbuffer CB {
-    svo_meta g_svoMeta;
+    voxelization_meta g_svoMeta;
     float4x4 g_shadow_matrix;
 }
 

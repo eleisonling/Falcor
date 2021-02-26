@@ -1,13 +1,13 @@
 #pragma once
-#include "Samples/sparse_voxel_octree/render_passes/voxel_meta.slangh"
+#include "Samples/sparse_voxel_octree/shaders/voxelization_meta.slangh"
 import Scene.Raster;
 
 cbuffer CB {
-    voxel_meta gVoxelMeta;
+    voxelization_meta bufVoxelMeta;
     float gMip;
 }
 
-Texture3D<float4> gPackedAlbedo;
+Texture3D<float4> texPackedAlbedo;
 SamplerState spTexSampler;
 
 struct vs_in {
@@ -28,10 +28,10 @@ vs_out vs_main(vs_in vIn)
     vs_out vOut = {};
 
     // from instance id to input position
-    uint3 cellIndex = extract_index_form_linear(vIn.instanceID, gVoxelMeta.CellDim);
-    vIn.pos *= gVoxelMeta.CellSize;
-    float3 instancePos = vIn.pos + gVoxelMeta.Min +
-        float3(cellIndex.x + 0.5f, cellIndex.y + 0.5f, cellIndex.z + 0.5f) * float3(gVoxelMeta.CellSize, gVoxelMeta.CellSize, gVoxelMeta.CellSize);
+    uint3 cellIndex = extract_index_form_linear(vIn.instanceID, bufVoxelMeta.CellDim);
+    vIn.pos *= bufVoxelMeta.CellSize;
+    float3 instancePos = vIn.pos + bufVoxelMeta.Min +
+        float3(cellIndex.x + 0.5f, cellIndex.y + 0.5f, cellIndex.z + 0.5f) * float3(bufVoxelMeta.CellSize, bufVoxelMeta.CellSize, bufVoxelMeta.CellSize);
     vOut.posW = instancePos;
     vOut.posH = mul(float4(instancePos, 1), gScene.camera.getViewProj());
 
@@ -43,15 +43,15 @@ float4 ps_main(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
     float4 finalColor = { 0 ,0, 0, 0 };
     uint32_t pixelCount = 0;
     float3 posW = vOut.posW;
-    uint3 cellIndex = floor((posW - gVoxelMeta.Min) / gVoxelMeta.CellSize);
+    uint3 cellIndex = floor((posW - bufVoxelMeta.Min) / bufVoxelMeta.CellSize);
 
-    if(cellIndex.x >= 0 && cellIndex.x < gVoxelMeta.CellDim.x
-        && cellIndex.y >= 0 && cellIndex.y < gVoxelMeta.CellDim.y
-        && cellIndex.z >= 0 && cellIndex.z < gVoxelMeta.CellDim.z) {
+    if(cellIndex.x >= 0 && cellIndex.x < bufVoxelMeta.CellDim.x
+        && cellIndex.y >= 0 && cellIndex.y < bufVoxelMeta.CellDim.y
+        && cellIndex.z >= 0 && cellIndex.z < bufVoxelMeta.CellDim.z) {
 
         // load and uncompress
-        float4 packedColor = gPackedAlbedo[cellIndex];
-        pixelCount = packedColor.a * g_packRGBFactor;
+        float4 packedColor = texPackedAlbedo[cellIndex];
+        pixelCount = packedColor.a * PACKED_RGB_FACTOR;
         finalColor = float4(packedColor.xyz, 1.0f);
     }
 

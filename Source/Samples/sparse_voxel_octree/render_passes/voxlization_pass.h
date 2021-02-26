@@ -2,35 +2,32 @@
 #include "Falcor.h"
 using namespace Falcor;
 
-#include "voxel_meta.slangh"
+#include "../shaders/voxelization_meta.slangh"
 
 
-class volumetric_pass : public BaseGraphicsPass, public std::enable_shared_from_this<volumetric_pass> {
+class voxlization_pass : public BaseGraphicsPass, public std::enable_shared_from_this<voxlization_pass> {
 public:
-    using SharedPtr = std::shared_ptr<volumetric_pass>;
-    virtual ~volumetric_pass() override;
+    using SharedPtr = std::shared_ptr<voxlization_pass>;
+    virtual ~voxlization_pass() override;
 
     static SharedPtr create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines = Program::DefineList());
-    void volumetric_scene(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
-    void on_gui_render(Gui::Group& group);
-    bool need_refresh() const { return needRefresh_; }
+    void on_voxelization(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
+    void on_gui(Gui::Group& group);
+    bool need_refresh() const { return mNeedRefresh_; }
 
-    const voxel_meta& get_voxel_meta() const;
-    const svo_meta& get_svo_meta() const;
+    const voxelization_meta& get_voxelization_meta() const;
     Buffer::SharedPtr get_svo_node_buffer() const { return mpSVONodeBuffer_; }
     Texture::SharedPtr get_albedo_voxel_texture() const { return mpPackedAlbedo_; }
     Texture::SharedPtr get_normal_voxel_texture() const { return mpPackedNormal_; }
 
 private:
-    volumetric_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc,Program::DefineList& programDefines);
-    void rebuild_pixel_data_buffers();
-    void create_svo_shaders(Program::DefineList& programDefines);
-    void rebuild_svo_buffers();
-    void build_svo(RenderContext* pContext);
-    /// <summary>
-    /// because svo need pow(2,n) size, for the full usage, we must modify the cellSize
-    /// </summary>
-    void fixture_cell_size();
+    voxlization_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc,Program::DefineList& programDefines);
+
+    void do_rebuild_pixel_data_buffers();
+    void do_create_svo_shaders(Program::DefineList& programDefines);
+    void do_rebuild_svo_buffers();
+    void do_build_svo(RenderContext* pContext);
+    void do_fixture_cell_size();
 
     // pixel volumetric
     Scene::SharedPtr mpScene_ = nullptr;
@@ -38,9 +35,9 @@ private:
     Texture::SharedPtr mpPackedNormal_ = nullptr;
 
     // pixel volumetric vars
-    bool needRefresh_ = true;
-    bool rebuildBuffer_ = false;
-    float cellSize_ = 10.0f;
+    bool mNeedRefresh_ = true;
+    bool mRebuildBuffer_ = false;
+    float mCellSize_ = 10.0f;
 
     // sparse Oct-tree builder
     Buffer::SharedPtr mpSVONodeBuffer_ = nullptr;

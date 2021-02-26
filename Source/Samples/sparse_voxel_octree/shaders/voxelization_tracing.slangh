@@ -1,6 +1,6 @@
 #pragma once
 import Scene.Raytracing;
-#include "Samples/sparse_voxel_octree/render_passes/voxel_meta.slangh"
+#include "Samples/sparse_voxel_octree/shaders/voxelization_meta.slangh"
 
 
 inline float3 convert_world_to_svo_space(float3 worldPos, float cellSize, float3 cellDim, float3 cellMin) {
@@ -15,8 +15,8 @@ struct tracing_result {
 };
 
 inline float copy_sign_32f(float newVal, float oldVal) {
-    uint32_t oldValSign = asuint(oldVal) & g_32SignBit;
-    uint32_t clearSign = asuint(newVal) & (g_32SignBit - 1);
+    uint32_t oldValSign = asuint(oldVal) & SIGN_BIT_32;
+    uint32_t clearSign = asuint(newVal) & (SIGN_BIT_32 - 1);
     return asfloat(clearSign | oldValSign);
 }
 
@@ -26,15 +26,15 @@ inline void get_node_info(uint32_t parent, uint32_t shift, out uint32_t childNod
 }
 
 inline bool is_valid_node(uint32_t nodeData) {
-    return (nodeData & g_internalFlag) != 0;
+    return (nodeData & INTERNAL_FLAG) != 0;
 }
 
 inline bool is_leaf_node(uint32_t nodeData, int32_t scale, int32_t leafLevel) {
-    return is_valid_node(nodeData) && (scale + leafLevel == g_maxLevel);
+    return is_valid_node(nodeData) && (scale + leafLevel == MAX_LEVEL);
 }
 
 uint32_t get_child_index(uint32_t nodeData) {
-    return nodeData & (g_internalFlag - 1);
+    return nodeData & (INTERNAL_FLAG - 1);
 }
 
 
@@ -52,9 +52,9 @@ inline float4 get_data(uint32_t nodeData,  Texture3D<float4> packedData, float m
 tracing_result trace_sparse_voxel_ray(inout RayDesc ray, Texture3D<float4> packedData, RWByteAddressBuffer svoNode, uint32_t leafLevel,
     uint3 cellDim, float mip, SamplerState texSampler) {
 
-    const float epsilon = exp2(-g_maxLevel);
+    const float epsilon = exp2(-MAX_LEVEL);
 	tracing_result hitInfo = {};
-	int2 stack[g_maxLevel + 1] = {};
+	int2 stack[MAX_LEVEL + 1] = {};
 
     float3 p = ray.Origin;
     float3 d = ray.Direction;
@@ -91,7 +91,7 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, Texture3D<float4> packe
 	uint32_t childNodeInParent = 0;
 	uint32_t idx = 0;
 	float3 pos = float3(1.0, 1.0, 1.0);
-	int32_t scale = g_maxLevel - 1;
+	int32_t scale = MAX_LEVEL - 1;
 	float scale_exp2 = 0.5;
 
     // this meas the mid point's t > t_min
@@ -102,7 +102,7 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, Texture3D<float4> packe
 
 	hitInfo.IsMissing = true;
 
-	while (scale < g_maxLevel) {
+	while (scale < MAX_LEVEL) {
 		if (childNodeInParent == 0) {
 			uint32_t child_shift = idx ^ octant_mask;
 			get_node_info(parent, child_shift, childNodeInParent, svoNode);
@@ -178,7 +178,7 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, Texture3D<float4> packe
             // for some number magic, we can decide parent scale
             // also can decide the exp2
 			scale = (asint((float)differing_bits) >> 23) - 127;
-			scale_exp2 = asfloat((scale - g_maxLevel + 127) << 23);
+			scale_exp2 = asfloat((scale - MAX_LEVEL + 127) << 23);
 
 			int2 stackEntry = stack[scale];
 			parent = stackEntry.x;

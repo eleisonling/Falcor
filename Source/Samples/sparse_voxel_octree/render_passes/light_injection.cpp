@@ -39,7 +39,7 @@ void light_injection::on_gui_render(Gui::Group& group) {
 
 }
 
-void light_injection::on_inject_light(RenderContext* pContext, const Texture::SharedPtr& pShadowmap, const float4x4& shadowMatrix, const Texture::SharedPtr& pAlbedoTexture, const Texture::SharedPtr& pNormalTexture, const svo_meta& meta) {
+void light_injection::on_inject_light(RenderContext* pContext, const Texture::SharedPtr& pShadowmap, const float4x4& shadowMatrix, const Texture::SharedPtr& pAlbedoTexture, const Texture::SharedPtr& pNormalTexture, const voxelization_meta& meta) {
     pContext->clearTexture(mpRadius_.get());
     mpInjection_->getVars()["CB"]["g_svoMeta"].setBlob(meta);
     mpInjection_->getVars()["CB"]["g_shadow_matrix"] = shadowMatrix;
