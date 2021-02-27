@@ -11,7 +11,7 @@ public:
     virtual ~voxlization_pass() override;
 
     static SharedPtr create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines = Program::DefineList());
-    void on_voxelization(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
+    void on_render(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
     void on_gui(Gui::Group& group);
     bool need_refresh() const { return mNeedRefresh_; }
 

@@ -71,11 +71,11 @@ voxel_visualizer::SharedPtr voxel_visualizer::create(const Scene::SharedPtr& pSc
     return voxel_visualizer::SharedPtr(new voxel_visualizer(pScene, dl));
 }
 
-void voxel_visualizer::on_gui_render(Gui::Group& group) {
+void voxel_visualizer::on_gui(Gui::Group& group) {
     group.checkbox("Use Tracing Method", mDebugSVOTracing_);
 }
 
-void voxel_visualizer::on_execute(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& pTexSampler) {
+void voxel_visualizer::on_render(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& pTexSampler) {
     PROFILE("debug volumetric");
 
     if (mDebugSVOTracing_) {

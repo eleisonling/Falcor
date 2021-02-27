@@ -35,11 +35,11 @@ light_injection::SharedPtr light_injection::create(const Scene::SharedPtr& pScen
     return light_injection::SharedPtr(new light_injection(pScene, dl));
 }
 
-void light_injection::on_gui_render(Gui::Group& group) {
+void light_injection::on_gui(Gui::Group& group) {
 
 }
 
-void light_injection::on_inject_light(RenderContext* pContext, const Texture::SharedPtr& pShadowmap, const float4x4& shadowMatrix, const Texture::SharedPtr& pAlbedoTexture, const Texture::SharedPtr& pNormalTexture, const voxelization_meta& meta) {
+void light_injection::on_execute(RenderContext* pContext, const Texture::SharedPtr& pShadowmap, const float4x4& shadowMatrix, const Texture::SharedPtr& pAlbedoTexture, const Texture::SharedPtr& pNormalTexture, const voxelization_meta& meta) {
     pContext->clearTexture(mpRadius_.get());
     mpInjection_->getVars()["CB"]["bufVoxelizationMeta"].setBlob(meta);
     mpInjection_->getVars()["CB"]["matShadowMatrix"] = shadowMatrix;
@@ -50,6 +50,6 @@ void light_injection::on_inject_light(RenderContext* pContext, const Texture::Sh
     mpInjection_->execute(pContext, meta.CellDim);
 }
 
-void light_injection::on_down_sampler(RenderContext* pContext) {
+void light_injection::do_down_sampler(RenderContext* pContext) {
 
 }

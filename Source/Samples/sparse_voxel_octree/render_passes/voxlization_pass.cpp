@@ -37,7 +37,7 @@ voxlization_pass::SharedPtr voxlization_pass::create(const Scene::SharedPtr& pSc
     return SharedPtr(new voxlization_pass(pScene, d_volumetric, dl));
 }
 
-void voxlization_pass::on_voxelization(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
+void voxlization_pass::on_render(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
     PROFILE("voxelization");
 
     // do clear

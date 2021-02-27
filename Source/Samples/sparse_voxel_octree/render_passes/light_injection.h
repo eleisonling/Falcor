@@ -10,6 +10,7 @@ private:
     light_injection(const Scene::SharedPtr& pScene, Program::DefineList& programDefines);
     void create_light_injection_shaders(Program::DefineList& programDefines);
     void create_light_injection_resources();
+    void do_down_sampler(RenderContext* pContext);
     voxelization_meta mVoxelizationMeta_ = {};
     Scene::SharedPtr mpScene_ = nullptr;
     ComputePass::SharedPtr mpInjection_ = nullptr;
@@ -21,10 +22,7 @@ public:
     virtual ~light_injection();
 
     static SharedPtr create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines = Program::DefineList());
-    void on_gui_render(Gui::Group& group);
-
-    void on_inject_light(RenderContext* pContext, const Texture::SharedPtr& pShadowmap, const float4x4& shadowMatrix, const Texture::SharedPtr& pAlbedoTexture, const Texture::SharedPtr& pNormalTexture, const voxelization_meta& meta);
-    void on_down_sampler(RenderContext* pContext);
-
+    void on_gui(Gui::Group& group);
+    void on_execute(RenderContext* pContext, const Texture::SharedPtr& pShadowmap, const float4x4& shadowMatrix, const Texture::SharedPtr& pAlbedoTexture, const Texture::SharedPtr& pNormalTexture, const voxelization_meta& meta);
     void set_voxelization_meta(const voxelization_meta& meta) { mVoxelizationMeta_ = meta; }
 };

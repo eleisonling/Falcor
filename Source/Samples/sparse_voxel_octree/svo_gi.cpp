@@ -68,7 +68,7 @@ void svo_gi::onGuiRender(Gui* pGui) {
 
     auto voxelVisualGroup = Gui::Group(pGui, "Voxelization Visual");
     if (voxelVisualGroup.open()) {
-        mpVoxelVisualizer_->on_gui_render(voxelVisualGroup);
+        mpVoxelVisualizer_->on_gui(voxelVisualGroup);
     }
 
     auto postEffects = Gui::Group(pGui, "Post Effect");
@@ -136,12 +136,12 @@ void svo_gi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& 
     mpScene_->update(pRenderContext, gpFramework->getGlobalClock().getTime());
 
     if (mpVolumetric_->need_refresh()) {
-        mpVolumetric_->on_voxelization(pRenderContext, mpHDRFbo_);
+        mpVolumetric_->on_render(pRenderContext, mpHDRFbo_);
     }
 
     mpShadowMap_->on_render(pRenderContext);
 
-    mpLightInjection_->on_inject_light(pRenderContext, mpShadowMap_->get_shadow_map(), mpShadowMap_->get_shadow_matrix(),
+    mpLightInjection_->on_execute(pRenderContext, mpShadowMap_->get_shadow_map(), mpShadowMap_->get_shadow_matrix(),
         mpVolumetric_->get_albedo_voxel_texture(), mpVolumetric_->get_normal_voxel_texture(), mpVolumetric_->get_voxelization_meta());
 
     switch ((final_output_type)mFinalOutputType_) {
@@ -149,7 +149,7 @@ void svo_gi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& 
         mpVoxelVisualizer_->set_voxelization_meta(mpVolumetric_->get_voxelization_meta());
         mpVoxelVisualizer_->set_voxel_texture(mpVolumetric_->get_albedo_voxel_texture());
         mpVoxelVisualizer_->set_svo_node_buffer(mpVolumetric_->get_svo_node_buffer());
-        mpVoxelVisualizer_->on_execute(pRenderContext, pTargetFbo, mpVoxelSampler_);
+        mpVoxelVisualizer_->on_render(pRenderContext, pTargetFbo, mpVoxelSampler_);
         break;
     case final_output_type::defulat_type:
     default:

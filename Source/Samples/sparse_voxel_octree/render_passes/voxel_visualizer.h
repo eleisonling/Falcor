@@ -31,10 +31,10 @@ public:
     virtual ~voxel_visualizer();
 
     static SharedPtr create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines = Program::DefineList());
-    void on_gui_render(Gui::Group& group);
-    void on_execute(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& pTexSampler);
+    void on_gui(Gui::Group& group);
+    void on_render(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& pTexSampler);
 
     void set_voxelization_meta(const voxelization_meta& meta) { mVoxelizationMeta_ = meta; }
-    void set_voxel_texture(Texture::SharedPtr tex) { mpVisualTexture_ = tex; }
-    void set_svo_node_buffer(Buffer::SharedPtr buffer) { mpSVONodeBuffer_ = buffer; }
+    void set_voxel_texture(Texture::SharedPtr pTex) { mpVisualTexture_ = pTex; }
+    void set_svo_node_buffer(Buffer::SharedPtr pBuffer) { mpSVONodeBuffer_ = pBuffer; }
 };
