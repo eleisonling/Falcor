@@ -115,7 +115,6 @@ void SvoGi::onLoad(RenderContext* pRenderContext) {
     mpFinalShading_ = RasterScenePass::create(mpScene_, kRasterProg, "", "main");
     mpVolumetric_ = VoxlizationPass::create(mpScene_);
     mpVoxelVisualizer_ = VoxelVisualizer::create(mpScene_);
-    mpLightInjection_ = LightInjection::create(mpScene_);
     mpShadowMap_ = ShadowPass::create(mpScene_);
     mpPostEffects_ = PostEffect::create();
 
@@ -141,9 +140,6 @@ void SvoGi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& p
 
     mpShadowMap_->on_render(pRenderContext);
 
-    mpLightInjection_->on_execute(pRenderContext, mpShadowMap_->get_shadow_map(), mpShadowMap_->get_shadow_matrix(),
-        mpVolumetric_->get_albedo_voxel_texture(), mpVolumetric_->get_normal_voxel_texture(), mpVolumetric_->get_voxelization_meta());
-
     switch ((FinalType)mFinalOutputType_) {
     case FinalType::Volumetric:
         mpVoxelVisualizer_->set_voxelization_meta(mpVolumetric_->get_voxelization_meta());
@@ -162,7 +158,6 @@ void SvoGi::onShutdown() {
     mpFinalShading_ = nullptr;
     mpVolumetric_ = nullptr;
     mpVoxelVisualizer_ = nullptr;
-    mpLightInjection_ = nullptr;
     mpScene_ = nullptr;
     mpHDRFbo_ = nullptr;
     mpPostEffects_ = nullptr;

@@ -29,7 +29,6 @@
 #include "Falcor.h"
 #include "RenderPass/VoxlizationPass.h"
 #include "RenderPass/VoxelVisualizer.h"
-#include "RenderPass/LightInjection.h"
 #include "RenderPass/ShadowPass.h"
 #include "RenderPass/PostEffect.h"
 
@@ -61,8 +60,6 @@ private:
 
     VoxlizationPass::SharedPtr mpVolumetric_ = nullptr;
     VoxelVisualizer::SharedPtr mpVoxelVisualizer_ = nullptr;
-
-    LightInjection::SharedPtr mpLightInjection_ = nullptr;
 
     uint32_t mFinalOutputType_ = 0;
     Sampler::SharedPtr mpTextureSampler_ = nullptr;

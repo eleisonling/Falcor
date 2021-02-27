@@ -10,9 +10,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SvoGi.cpp" />
-    <ClCompile Include="RenderPass\LightInjection.cpp">
-      <Filter>RenderPass</Filter>
-    </ClCompile>
     <ClCompile Include="RenderPass\PostEffect.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
@@ -28,9 +25,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SvoGi.h" />
-    <ClInclude Include="RenderPass\LightInjection.h">
-      <Filter>RenderPass</Filter>
-    </ClInclude>
     <ClInclude Include="RenderPass\PostEffect.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
@@ -49,12 +43,6 @@
       <Filter>Shaders</Filter>
     </ShaderSource>
     <ShaderSource Include="Shaders\FinalShading.ps.slang">
-      <Filter>Shaders</Filter>
-    </ShaderSource>
-    <ShaderSource Include="Shaders\LightInjection.slang">
-      <Filter>Shaders</Filter>
-    </ShaderSource>
-    <ShaderSource Include="Shaders\LightInjectionMeta.slangh">
       <Filter>Shaders</Filter>
     </ShaderSource>
     <ShaderSource Include="Shaders\PostEffects.slangh">

@@ -16,7 +16,6 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="RenderPass\LightInjection.cpp" />
     <ClCompile Include="RenderPass\PostEffect.cpp" />
     <ClCompile Include="RenderPass\ShadowPass.cpp" />
     <ClCompile Include="RenderPass\VoxelVisualizer.cpp" />
@@ -24,7 +23,6 @@
     <ClCompile Include="SvoGi.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="RenderPass\LightInjection.h" />
     <ClInclude Include="RenderPass\PostEffect.h" />
     <ClInclude Include="RenderPass\ShadowPass.h" />
     <ClInclude Include="RenderPass\VoxelVisualizer.h" />
@@ -34,8 +32,6 @@
   <ItemGroup>
     <ShaderSource Include="Shaders\Bloom.cs.slang" />
     <ShaderSource Include="Shaders\FinalShading.ps.slang" />
-    <ShaderSource Include="Shaders\LightInjection.slang" />
-    <ShaderSource Include="Shaders\LightInjectionMeta.slangh" />
     <ShaderSource Include="Shaders\PostEffects.slangh" />
     <ShaderSource Include="Shaders\Present.ps.slang" />
     <ShaderSource Include="Shaders\Shadowmap.slang" />
