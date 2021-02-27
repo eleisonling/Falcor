@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Samples/sparse_voxel_octree/shaders/light_injection_meta.slangh"
-#include "Samples/sparse_voxel_octree/shaders/voxelization_meta.slangh"
+#include "Samples/SvoGi/shaders/light_injection_meta.slangh"
+#include "Samples/SvoGi/shaders/voxelization_meta.slangh"
 
 import Scene.Shading;
 import Scene.Raster;

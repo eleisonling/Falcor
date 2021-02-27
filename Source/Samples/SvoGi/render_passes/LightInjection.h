@@ -5,9 +5,9 @@ using namespace Falcor;
 
 #include "../shaders/voxelization_meta.slangh"
 
-class light_injection : public std::enable_shared_from_this<light_injection> {
+class LightInjection : public std::enable_shared_from_this<LightInjection> {
 private:
-    light_injection(const Scene::SharedPtr& pScene, Program::DefineList& programDefines);
+    LightInjection(const Scene::SharedPtr& pScene, Program::DefineList& programDefines);
     void create_light_injection_shaders(Program::DefineList& programDefines);
     void create_light_injection_resources();
     void do_down_sampler(RenderContext* pContext);
@@ -18,8 +18,8 @@ private:
     Texture::SharedPtr mpRadius_ = nullptr;
 
 public:
-    using SharedPtr = std::shared_ptr<light_injection>;
-    virtual ~light_injection();
+    using SharedPtr = std::shared_ptr<LightInjection>;
+    virtual ~LightInjection();
 
     static SharedPtr create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines = Program::DefineList());
     void on_gui(Gui::Group& group);

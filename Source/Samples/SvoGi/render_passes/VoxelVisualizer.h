@@ -6,9 +6,9 @@ using namespace Falcor;
 #include "../shaders/voxelization_meta.slangh"
 
 
-class voxel_visualizer : public std::enable_shared_from_this<voxel_visualizer> {
+class VoxelVisualizer : public std::enable_shared_from_this<VoxelVisualizer> {
 private:
-    voxel_visualizer(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines);
+    VoxelVisualizer(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines);
     void create_visualize_shaders(const Program::DefineList& programDefines);
     void create_visualize_resources();
 
@@ -27,8 +27,8 @@ private:
     Vao::SharedPtr mpRasterVao_ = nullptr;
 
 public:
-    using SharedPtr = std::shared_ptr<voxel_visualizer>;
-    virtual ~voxel_visualizer();
+    using SharedPtr = std::shared_ptr<VoxelVisualizer>;
+    virtual ~VoxelVisualizer();
 
     static SharedPtr create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines = Program::DefineList());
     void on_gui(Gui::Group& group);

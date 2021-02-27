@@ -1,17 +1,17 @@
-#include "voxel_visualizer.h"
+#include "VoxelVisualizer.h"
 
 namespace {
-    static std::string kDebugVolProg = "Samples/sparse_voxel_octree/shaders/voxelization_visual_raster.slang";
-    static std::string kDebugSvoProg = "Samples/sparse_voxel_octree/shaders/voxelization_visual_tracing.ps.slang";
+    static std::string kDebugVolProg = "Samples/SvoGi/shaders/voxelization_visual_raster.slang";
+    static std::string kDebugSvoProg = "Samples/SvoGi/shaders/voxelization_visual_tracing.ps.slang";
 }
 
-voxel_visualizer::voxel_visualizer(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines)
+VoxelVisualizer::VoxelVisualizer(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines)
     : mpScene_(pScene) {
     create_visualize_shaders(programDefines);
     create_visualize_resources();
 }
 
-void voxel_visualizer::create_visualize_shaders(const Program::DefineList& programDefines) {
+void VoxelVisualizer::create_visualize_shaders(const Program::DefineList& programDefines) {
     // visual raster
     {
         Program::Desc d_visualRaster;
@@ -37,7 +37,7 @@ void voxel_visualizer::create_visualize_shaders(const Program::DefineList& progr
     }
 }
 
-void voxel_visualizer::create_visualize_resources() {
+void VoxelVisualizer::create_visualize_resources() {
 
     VertexBufferLayout::SharedPtr pBufferLayout = VertexBufferLayout::create();
     pBufferLayout->addElement("POSITION", offsetof(TriangleMesh::Vertex, position), ResourceFormat::RGB32Float, 1, 0);
@@ -54,7 +54,7 @@ void voxel_visualizer::create_visualize_resources() {
     mpRasterVao_->getIndexBuffer()->setBlob(mpRasterMesh_->getIndices().data(), 0, sizeof(uint32_t) * mpRasterMesh_->getIndices().size());
 }
 
-voxel_visualizer::~voxel_visualizer() {
+VoxelVisualizer::~VoxelVisualizer() {
     mpScene_ = nullptr;
     mpVisualTexture_ = nullptr;
     mpSVONodeBuffer_ = nullptr;
@@ -65,17 +65,17 @@ voxel_visualizer::~voxel_visualizer() {
     mpRasterVao_ = nullptr;
 }
 
-voxel_visualizer::SharedPtr voxel_visualizer::create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines /*= Program::DefineList()*/) {
+VoxelVisualizer::SharedPtr VoxelVisualizer::create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines /*= Program::DefineList()*/) {
     Program::DefineList dl = programDefines;
     dl.add(pScene->getSceneDefines());
-    return voxel_visualizer::SharedPtr(new voxel_visualizer(pScene, dl));
+    return VoxelVisualizer::SharedPtr(new VoxelVisualizer(pScene, dl));
 }
 
-void voxel_visualizer::on_gui(Gui::Group& group) {
+void VoxelVisualizer::on_gui(Gui::Group& group) {
     group.checkbox("Use Tracing Method", mDebugSVOTracing_);
 }
 
-void voxel_visualizer::on_render(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& pTexSampler) {
+void VoxelVisualizer::on_render(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo, const Sampler::SharedPtr& pTexSampler) {
     PROFILE("debug volumetric");
 
     if (mDebugSVOTracing_) {

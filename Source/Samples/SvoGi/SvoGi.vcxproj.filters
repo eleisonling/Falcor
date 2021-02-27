@@ -1,0 +1,91 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{eab5a91a-0237-42b8-b592-7282f0e46279}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RenderPass">
+      <UniqueIdentifier>{803bfe1a-3915-45e8-a410-880f6db25a91}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="render_passes\VoxlizationPass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="render_passes\VoxelVisualizer.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="SvoGi.cpp" />
+    <ClCompile Include="render_passes\LightInjection.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="render_passes\PostEffect.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="render_passes\ShadowPass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="render_passes\VoxlizationPass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="render_passes\VoxelVisualizer.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="SvoGi.h" />
+    <ClInclude Include="render_passes\LightInjection.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="render_passes\PostEffect.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="render_passes\ShadowPass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\bloom.cs.slang">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\final_shading.ps.slang">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\gen_shadowmap.slang">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\light_injection.slang">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\light_injection_meta.slangh">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\post_effects.slangh">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\present.ps.slang">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\tonemap.cs.slang">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\voxelization.slang">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\voxelization_meta.slangh">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\voxelization_svo.cs.slang">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\voxelization_tracing.slangh">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\voxelization_visual_raster.slang">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\voxelization_visual_tracing.ps.slang">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+</Project>

@@ -27,15 +27,15 @@
  **************************************************************************/
 #pragma once
 #include "Falcor.h"
-#include "render_passes/voxlization_pass.h"
-#include "render_passes/voxel_visualizer.h"
-#include "render_passes/light_injection.h"
-#include "render_passes/shadow_pass.h"
-#include "render_passes/post_effect.h"
+#include "render_passes/VoxlizationPass.h"
+#include "render_passes/VoxelVisualizer.h"
+#include "render_passes/LightInjection.h"
+#include "render_passes/ShadowPass.h"
+#include "render_passes/PostEffect.h"
 
 using namespace Falcor;
 
-class svo_gi : public IRenderer {
+class SvoGi : public IRenderer {
 public:
     void onLoad(RenderContext* pRenderContext) override;
     void onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) override;
@@ -54,15 +54,15 @@ private:
     Scene::SharedPtr mpScene_ = nullptr;
     Camera::SharedPtr mpMainCam_ = nullptr;
 
-    shadow_pass::SharedPtr mpShadowMap_ = nullptr;
+    ShadowPass::SharedPtr mpShadowMap_ = nullptr;
     RasterScenePass::SharedPtr mpFinalShading_ = nullptr;
-    post_effect::SharedPtr mpPostEffects_ = nullptr;
+    PostEffect::SharedPtr mpPostEffects_ = nullptr;
     Fbo::SharedPtr mpHDRFbo_ = nullptr;
 
-    voxlization_pass::SharedPtr mpVolumetric_ = nullptr;
-    voxel_visualizer::SharedPtr mpVoxelVisualizer_ = nullptr;
+    VoxlizationPass::SharedPtr mpVolumetric_ = nullptr;
+    VoxelVisualizer::SharedPtr mpVoxelVisualizer_ = nullptr;
 
-    light_injection::SharedPtr mpLightInjection_ = nullptr;
+    LightInjection::SharedPtr mpLightInjection_ = nullptr;
 
     uint32_t mFinalOutputType_ = 0;
     Sampler::SharedPtr mpTextureSampler_ = nullptr;

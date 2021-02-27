@@ -1,5 +1,5 @@
 #pragma once
-#include "Samples/sparse_voxel_octree/shaders/voxelization_meta.slangh"
+#include "Samples/SvoGi/shaders/voxelization_meta.slangh"
 
 cbuffer CB {
     voxelization_meta bufVoxelMeta;

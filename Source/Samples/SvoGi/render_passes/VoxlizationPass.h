@@ -5,10 +5,10 @@ using namespace Falcor;
 #include "../shaders/voxelization_meta.slangh"
 
 
-class voxlization_pass : public BaseGraphicsPass, public std::enable_shared_from_this<voxlization_pass> {
+class VoxlizationPass : public BaseGraphicsPass, public std::enable_shared_from_this<VoxlizationPass> {
 public:
-    using SharedPtr = std::shared_ptr<voxlization_pass>;
-    virtual ~voxlization_pass() override;
+    using SharedPtr = std::shared_ptr<VoxlizationPass>;
+    virtual ~VoxlizationPass() override;
 
     static SharedPtr create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines = Program::DefineList());
     void on_render(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
@@ -21,7 +21,7 @@ public:
     Texture::SharedPtr get_normal_voxel_texture() const { return mpPackedNormal_; }
 
 private:
-    voxlization_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc,Program::DefineList& programDefines);
+    VoxlizationPass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc,Program::DefineList& programDefines);
 
     void do_create_svo_shaders(Program::DefineList& programDefines);
     void do_create_vps();

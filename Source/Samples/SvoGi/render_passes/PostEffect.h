@@ -3,9 +3,9 @@
 
 using namespace Falcor;
 
-class post_effect : public std::enable_shared_from_this<post_effect> {
+class PostEffect : public std::enable_shared_from_this<PostEffect> {
 
-    post_effect(const Program::DefineList& programDefines);
+    PostEffect(const Program::DefineList& programDefines);
 
     ShaderResourceView::SharedPtr mpInput_ = nullptr;
     Sampler::SharedPtr mpTexSampler_ = nullptr;
@@ -54,8 +54,8 @@ class post_effect : public std::enable_shared_from_this<post_effect> {
     void do_present(RenderContext* pContext, const Fbo::SharedPtr& pDestFbo);
 
 public:
-    using SharedPtr = std::shared_ptr<post_effect>;
-    virtual ~post_effect();
+    using SharedPtr = std::shared_ptr<PostEffect>;
+    virtual ~PostEffect();
 
     inline void set_input(const ShaderResourceView::SharedPtr& input) { mpInput_ = input; }
     inline void set_sampler(const Sampler::SharedPtr& input) { mpTexSampler_ = input; }

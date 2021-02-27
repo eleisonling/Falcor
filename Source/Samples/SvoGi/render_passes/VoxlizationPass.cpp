@@ -1,12 +1,12 @@
-#include "voxlization_pass.h"
+#include "VoxlizationPass.h"
 
 namespace {
-    static std::string kVolumetricProg = "Samples/sparse_voxel_octree/shaders/voxelization.slang";
-    static std::string kBuildSVOProg = "Samples/sparse_voxel_octree/shaders/voxelization_svo.cs.slang";
+    static std::string kVolumetricProg = "Samples/SvoGi/shaders/voxelization.slang";
+    static std::string kBuildSVOProg = "Samples/SvoGi/shaders/voxelization_svo.cs.slang";
     static voxelization_meta kVoxelizationMeta{};
 }
 
-voxlization_pass::~voxlization_pass() {
+VoxlizationPass::~VoxlizationPass() {
     mpScene_ = nullptr;
     mpViewProjections_ = nullptr;
     mpPackedAlbedo_ = nullptr;
@@ -22,7 +22,7 @@ voxlization_pass::~voxlization_pass() {
     mpDivideSubNodeVars_ = nullptr;
 }
 
-voxlization_pass::SharedPtr voxlization_pass::create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines /*= Program::DefineList()*/) {
+VoxlizationPass::SharedPtr VoxlizationPass::create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines /*= Program::DefineList()*/) {
 
     Program::Desc d_volumetric;
     d_volumetric.addShaderLibrary(kVolumetricProg)
@@ -34,10 +34,10 @@ voxlization_pass::SharedPtr voxlization_pass::create(const Scene::SharedPtr& pSc
     Program::DefineList dl = programDefines;
     dl.add(pScene->getSceneDefines());
 
-    return SharedPtr(new voxlization_pass(pScene, d_volumetric, dl));
+    return SharedPtr(new VoxlizationPass(pScene, d_volumetric, dl));
 }
 
-void voxlization_pass::on_render(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
+void VoxlizationPass::on_render(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
     PROFILE("voxelization");
 
     // do clear
@@ -55,7 +55,7 @@ void voxlization_pass::on_render(RenderContext* pContext, const Fbo::SharedPtr& 
     mNeedRefresh_ = false;
 }
 
-void voxlization_pass::do_build_svo(RenderContext* pContext) {
+void VoxlizationPass::do_build_svo(RenderContext* pContext) {
 
     PROFILE("build svo");
     pContext->clearUAV(mpSVONodeBuffer_->getUAV().get(), uint4{ 0, 0, 0, 0 });
@@ -89,7 +89,7 @@ void voxlization_pass::do_build_svo(RenderContext* pContext) {
     }
 }
 
-void voxlization_pass::do_fixture_cell_size() {
+void VoxlizationPass::do_fixture_cell_size() {
     auto& bound = mpScene_->getSceneBounds();
     glm::uvec3 cellDim = glm::ceil((bound.extent() + mCellSize_) / mCellSize_);
     uint32_t maxDim = std::max(cellDim.x, std::max(cellDim.y, cellDim.z));
@@ -101,7 +101,7 @@ void voxlization_pass::do_fixture_cell_size() {
     mCellSize_ = maxSceneDim / maxDim;
 }
 
-void voxlization_pass::on_gui(Gui::Group& group) {
+void VoxlizationPass::on_gui(Gui::Group& group) {
     mRebuildBuffer_ |= group.var("Cell Size", mCellSize_);
     if (group.button("Rebuild")) {
         if (mRebuildBuffer_) {
@@ -113,11 +113,11 @@ void voxlization_pass::on_gui(Gui::Group& group) {
     }
 }
 
-const voxelization_meta& voxlization_pass::get_voxelization_meta() const {
+const voxelization_meta& VoxlizationPass::get_voxelization_meta() const {
     return kVoxelizationMeta;
 }
 
-voxlization_pass::voxlization_pass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc, Program::DefineList& programDefines)
+VoxlizationPass::VoxlizationPass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc, Program::DefineList& programDefines)
     : BaseGraphicsPass(volumetricProgDesc, programDefines)
     , mpScene_(pScene) {
 
@@ -153,7 +153,7 @@ float3 next_pow_2(float3 v) {
     return { std::pow(2, std::ceil(std::log2(v.x))), std::pow(2, std::ceil(std::log2(v.y))), std::pow(2, std::ceil(std::log2(v.z))) };
 }
 
-void voxlization_pass::do_rebuild_pixel_data_buffers() {
+void VoxlizationPass::do_rebuild_pixel_data_buffers() {
 
     mRebuildBuffer_ = false;
     auto& bound = mpScene_->getSceneBounds();
@@ -177,7 +177,7 @@ void voxlization_pass::do_rebuild_pixel_data_buffers() {
   }
 
 
-void voxlization_pass::do_create_svo_shaders(Program::DefineList& programDefines) {
+void VoxlizationPass::do_create_svo_shaders(Program::DefineList& programDefines) {
     {
         Program::Desc d_tagNode;
         d_tagNode.addShaderLibrary(kBuildSVOProg).csEntry("tag_node");
@@ -206,7 +206,7 @@ void voxlization_pass::do_create_svo_shaders(Program::DefineList& programDefines
     }
 }
 
-void voxlization_pass::do_create_vps() {
+void VoxlizationPass::do_create_vps() {
     mpViewProjections_ = Buffer::createStructured(sizeof(float4x4), 3);
 
     auto& bounds = mpScene_->getSceneBounds();
@@ -226,7 +226,7 @@ void voxlization_pass::do_create_vps() {
     mpViewProjections_->setBlob(viewProj, 0, sizeof(float4x4) * 3);
 }
 
-void voxlization_pass::do_rebuild_svo_buffers() {
+void VoxlizationPass::do_rebuild_svo_buffers() {
     uint32_t maxDim = std::max(std::max(kVoxelizationMeta.CellDim.x, kVoxelizationMeta.CellDim.y), kVoxelizationMeta.CellDim.z);
     kVoxelizationMeta.TotalLevel = (uint32_t)std::ceil(std::log2f((float)maxDim));
     assert(kVoxelizationMeta.TotalLevel <= MAX_LEVEL);

@@ -25,7 +25,7 @@
  # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **************************************************************************/
-#include "svo_gi.h"
+#include "SvoGi.h"
 uint32_t mSampleGuiWidth = 250;
 uint32_t mSampleGuiHeight = 200;
 uint32_t mSampleGuiPositionX = 20;
@@ -33,7 +33,7 @@ uint32_t mSampleGuiPositionY = 40;
 
 namespace {
     static const std::string kDefaultScene = "sponza/sponza.pyscene";
-    static const std::string kRasterProg = "Samples/sparse_voxel_octree/shaders/final_shading.ps.slang";
+    static const std::string kRasterProg = "Samples/SvoGi/shaders/final_shading.ps.slang";
 
     enum class final_output_type {
         defulat_type,
@@ -50,7 +50,7 @@ namespace {
 
 }
 
-void svo_gi::onGuiRender(Gui* pGui) {
+void SvoGi::onGuiRender(Gui* pGui) {
     Gui::Window w(pGui, "svo_gi", { 250, 200 });
     std::string msg = gpFramework->getFrameRate().getMsg(gpFramework->isVsyncEnabled());
     w.text(msg);
@@ -83,7 +83,7 @@ void svo_gi::onGuiRender(Gui* pGui) {
     }
 }
 
-void svo_gi::load_scene(const std::string& filename, const Fbo* pTargetFbo) {
+void SvoGi::load_scene(const std::string& filename, const Fbo* pTargetFbo) {
     mpScene_ = Scene::create(filename);
     if (!mpScene_) return;
 
@@ -98,7 +98,7 @@ void svo_gi::load_scene(const std::string& filename, const Fbo* pTargetFbo) {
     mpMainCam_->setAspectRatio((float)pTargetFbo->getWidth() / (float)pTargetFbo->getHeight());
 }
 
-void svo_gi::normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
+void SvoGi::normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
     mpFinalShading_->getVars()["texShadowMap"] = mpShadowMap_->get_shadow_map();
     mpFinalShading_->getVars()["spPcfSampler"] = mpShadowMap_->get_shadow_sampler();
     mpFinalShading_->getVars()["PerFrameCB"]["matShadowMatrix"] = mpShadowMap_->get_shadow_matrix();
@@ -110,14 +110,14 @@ void svo_gi::normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& 
     mpPostEffects_->on_render(pRenderContext, pTargetFbo, mpTextureSampler_);
 }
 
-void svo_gi::onLoad(RenderContext* pRenderContext) {
+void SvoGi::onLoad(RenderContext* pRenderContext) {
     load_scene(kDefaultScene, gpFramework->getTargetFbo().get());
     mpFinalShading_ = RasterScenePass::create(mpScene_, kRasterProg, "", "main");
-    mpVolumetric_ = voxlization_pass::create(mpScene_);
-    mpVoxelVisualizer_ = voxel_visualizer::create(mpScene_);
-    mpLightInjection_ = light_injection::create(mpScene_);
-    mpShadowMap_ = shadow_pass::create(mpScene_);
-    mpPostEffects_ = post_effect::create();
+    mpVolumetric_ = VoxlizationPass::create(mpScene_);
+    mpVoxelVisualizer_ = VoxelVisualizer::create(mpScene_);
+    mpLightInjection_ = LightInjection::create(mpScene_);
+    mpShadowMap_ = ShadowPass::create(mpScene_);
+    mpPostEffects_ = PostEffect::create();
 
     Sampler::Desc desc = {};
     desc.setFilterMode(Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Filter::Point).setAddressingMode(Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp);
@@ -128,7 +128,7 @@ void svo_gi::onLoad(RenderContext* pRenderContext) {
 
 }
 
-void svo_gi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
+void SvoGi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
     const float4 clearColor(0.f, 0.f, 0.f, 1);
     pRenderContext->clearFbo(pTargetFbo.get(), clearColor, 1.0f, 0, FboAttachmentType::All);
     pRenderContext->clearFbo(mpHDRFbo_.get(), clearColor, 1.0f, 0, FboAttachmentType::All);
@@ -158,7 +158,7 @@ void svo_gi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& 
     }
 }
 
-void svo_gi::onShutdown() {
+void SvoGi::onShutdown() {
     mpFinalShading_ = nullptr;
     mpVolumetric_ = nullptr;
     mpVoxelVisualizer_ = nullptr;
@@ -170,24 +170,24 @@ void svo_gi::onShutdown() {
     mpVoxelSampler_ = nullptr;
 }
 
-bool svo_gi::onKeyEvent(const KeyboardEvent& keyEvent) {
+bool SvoGi::onKeyEvent(const KeyboardEvent& keyEvent) {
     if (mpScene_) {
         mpFinalShading_->onKeyEvent(keyEvent);
     }
     return false;
 }
 
-bool svo_gi::onMouseEvent(const MouseEvent& mouseEvent) {
+bool SvoGi::onMouseEvent(const MouseEvent& mouseEvent) {
     if (mpScene_) {
          mpFinalShading_->onMouseEvent(mouseEvent);
     }
     return false;
 }
 
-void svo_gi::onHotReload(HotReloadFlags reloaded) {
+void SvoGi::onHotReload(HotReloadFlags reloaded) {
 }
 
-void svo_gi::onResizeSwapChain(uint32_t width, uint32_t height) {
+void SvoGi::onResizeSwapChain(uint32_t width, uint32_t height) {
     const auto& bkFbo = gpDevice->getSwapChainFbo();
     Fbo::Desc desc = bkFbo->getDesc();
     desc.setColorTarget(0, ResourceFormat::R11G11B10Float, true);
@@ -196,7 +196,7 @@ void svo_gi::onResizeSwapChain(uint32_t width, uint32_t height) {
 }
 
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd) {
-    svo_gi::UniquePtr pRenderer = std::make_unique<svo_gi>();
+    SvoGi::UniquePtr pRenderer = std::make_unique<SvoGi>();
     SampleConfig config;
     config.windowDesc.title = "svo_gi";
     config.windowDesc.resizableWindow = true;

@@ -1,5 +1,5 @@
 #pragma once
-#include "Samples/sparse_voxel_octree/shaders/post_effects.slangh"
+#include "Samples/SvoGi/shaders/post_effects.slangh"
 
 SamplerState spTexSampler;
 Texture2D texSource;

@@ -1,6 +1,6 @@
 #pragma once
-#include "Samples/sparse_voxel_octree/shaders/voxelization_meta.slangh"
-#include "Samples/sparse_voxel_octree/shaders/voxelization_tracing.slangh"
+#include "Samples/SvoGi/shaders/voxelization_meta.slangh"
+#include "Samples/SvoGi/shaders/voxelization_tracing.slangh"
 import Scene.Shading;
 import Scene.Raytracing;
 

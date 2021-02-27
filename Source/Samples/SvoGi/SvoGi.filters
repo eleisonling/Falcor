@@ -2,46 +2,46 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="render_passes\voxel_visualizer.cpp">
-      <Filter>render_passes</Filter>
+      <Filter>render_pass</Filter>
     </ClCompile>
     <ClCompile Include="render_passes\light_injection.cpp">
-      <Filter>render_passes</Filter>
+      <Filter>render_pass</Filter>
     </ClCompile>
     <ClCompile Include="render_passes\post_effect.cpp">
-      <Filter>render_passes</Filter>
+      <Filter>render_pass</Filter>
     </ClCompile>
     <ClCompile Include="svo_gi.cpp" />
     <ClCompile Include="render_passes\voxlization_pass.cpp">
-      <Filter>render_passes</Filter>
+      <Filter>render_pass</Filter>
     </ClCompile>
     <ClCompile Include="render_passes\shadow_pass.cpp">
-      <Filter>render_passes</Filter>
+      <Filter>render_pass</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="render_passes\voxel_visualizer.h">
-      <Filter>render_passes</Filter>
+      <Filter>render_pass</Filter>
     </ClInclude>
     <ClInclude Include="render_passes\light_injection.h">
-      <Filter>render_passes</Filter>
+      <Filter>render_pass</Filter>
     </ClInclude>
     <ClInclude Include="render_passes\post_effect.h">
-      <Filter>render_passes</Filter>
+      <Filter>render_pass</Filter>
     </ClInclude>
     <ClInclude Include="svo_gi.h" />
     <ClInclude Include="render_passes\voxlization_pass.h">
-      <Filter>render_passes</Filter>
+      <Filter>render_pass</Filter>
     </ClInclude>
     <ClInclude Include="render_passes\shadow_pass.h">
-      <Filter>render_passes</Filter>
+      <Filter>render_pass</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="render_passes">
-      <UniqueIdentifier>{bb29cfcd-175c-46a5-a8d6-6ce904c79840}</UniqueIdentifier>
-    </Filter>
     <Filter Include="shaders">
       <UniqueIdentifier>{ca4afe78-2854-4f2f-b4af-e52adebd9b75}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="render_pass">
+      <UniqueIdentifier>{bb29cfcd-175c-46a5-a8d6-6ce904c79840}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

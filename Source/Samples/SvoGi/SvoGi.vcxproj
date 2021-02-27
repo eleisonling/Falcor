@@ -11,22 +11,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="render_passes\light_injection.cpp" />
-    <ClCompile Include="render_passes\shadow_pass.cpp" />
-    <ClCompile Include="render_passes\post_effect.cpp" />
-    <ClCompile Include="render_passes\voxlization_pass.cpp" />
-    <ClCompile Include="render_passes\voxel_visualizer.cpp" />
-    <ClCompile Include="svo_gi.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="render_passes\light_injection.h" />
-    <ClInclude Include="render_passes\shadow_pass.h" />
-    <ClInclude Include="render_passes\post_effect.h" />
-    <ClInclude Include="render_passes\voxlization_pass.h" />
-    <ClInclude Include="render_passes\voxel_visualizer.h" />
-    <ClInclude Include="svo_gi.h" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\..\Falcor\Falcor.vcxproj">
       <Project>{2c535635-e4c5-4098-a928-574f0e7cd5f9}</Project>
     </ProjectReference>
@@ -47,11 +31,44 @@
     <ShaderSource Include="shaders\voxelization_visual_raster.slang" />
     <ShaderSource Include="shaders\voxelization_visual_tracing.ps.slang" />
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="render_passes\LightInjection.cpp" />
+    <ClCompile Include="render_passes\PostEffect.cpp" />
+    <ClCompile Include="render_passes\ShadowPass.cpp" />
+    <ClCompile Include="render_passes\VoxelVisualizer.cpp" />
+    <ClCompile Include="render_passes\VoxlizationPass.cpp" />
+    <ClCompile Include="SvoGi.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="render_passes\LightInjection.h" />
+    <ClInclude Include="render_passes\PostEffect.h" />
+    <ClInclude Include="render_passes\ShadowPass.h" />
+    <ClInclude Include="render_passes\VoxelVisualizer.h" />
+    <ClInclude Include="render_passes\VoxlizationPass.h" />
+    <ClInclude Include="SvoGi.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\bloom.cs.slang" />
+    <None Include="shaders\final_shading.ps.slang" />
+    <None Include="shaders\gen_shadowmap.slang" />
+    <None Include="shaders\light_injection.slang" />
+    <None Include="shaders\light_injection_meta.slangh" />
+    <None Include="shaders\post_effects.slangh" />
+    <None Include="shaders\present.ps.slang" />
+    <None Include="shaders\tonemap.cs.slang" />
+    <None Include="shaders\voxelization.slang" />
+    <None Include="shaders\voxelization_meta.slangh" />
+    <None Include="shaders\voxelization_svo.cs.slang" />
+    <None Include="shaders\voxelization_tracing.slangh" />
+    <None Include="shaders\voxelization_visual_raster.slang" />
+    <None Include="shaders\voxelization_visual_tracing.ps.slang" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B966F14F-7CD3-4DC5-B8A6-91AEAE2206DB}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>sparse_voxel_octree</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
+    <ProjectName>SvoGi</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
