@@ -1,10 +1,10 @@
 #include "PostEffect.h"
-#include "../shaders/post_effects.slangh"
+#include "../Shaders/PostEffects.slangh"
 
 namespace {
-    static std::string kBloomProg = "samples/SvoGi/shaders/bloom.cs.slang";
-    static std::string kTonemapProg = "samples/SvoGi/shaders/tonemap.cs.slang";
-    static std::string kPresentProg = "Samples/SvoGi/shaders/present.ps.slang";
+    static std::string kBloomProg = "samples/SvoGi/Shaders/Bloom.cs.slang";
+    static std::string kTonemapProg = "samples/SvoGi/Shaders/ToneMap.cs.slang";
+    static std::string kPresentProg = "Samples/SvoGi/Shaders/Present.ps.slang";
     static exposure_meta bufExposure = {};
 }
 

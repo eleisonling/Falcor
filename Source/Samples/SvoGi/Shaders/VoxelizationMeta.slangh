@@ -3,7 +3,7 @@
 #include "Utils/Math/MathConstants.slangh"
 
 
- struct voxelization_meta {
+ struct VoxelizationMeta {
     uint3 CellDim = uint3(0);
     float CellSize = 1.0;
 

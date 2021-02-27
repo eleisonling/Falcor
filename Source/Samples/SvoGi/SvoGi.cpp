@@ -33,25 +33,25 @@ uint32_t mSampleGuiPositionY = 40;
 
 namespace {
     static const std::string kDefaultScene = "sponza/sponza.pyscene";
-    static const std::string kRasterProg = "Samples/SvoGi/shaders/final_shading.ps.slang";
+    static const std::string kRasterProg = "Samples/SvoGi/Shaders/FinalShading.ps.slang";
 
-    enum class final_output_type {
-        defulat_type,
+    enum class FinalType {
+        Defulat,
         debug_projection,
-        debug_volumetric,
+        Volumetric,
 
         max_count,
     };
 
     const Gui::DropdownList kFinalOutputType = {
-        { (uint32_t)final_output_type::defulat_type, "defulat_type" },
-        { (uint32_t)final_output_type::debug_volumetric, "debug_volumetric" },
+        { (uint32_t)FinalType::Defulat, "Defulat" },
+        { (uint32_t)FinalType::Volumetric, "Volumetric" },
     };
 
 }
 
 void SvoGi::onGuiRender(Gui* pGui) {
-    Gui::Window w(pGui, "svo_gi", { 250, 200 });
+    Gui::Window w(pGui, "SvoGi", { 250, 200 });
     std::string msg = gpFramework->getFrameRate().getMsg(gpFramework->isVsyncEnabled());
     w.text(msg);
 
@@ -144,14 +144,14 @@ void SvoGi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& p
     mpLightInjection_->on_execute(pRenderContext, mpShadowMap_->get_shadow_map(), mpShadowMap_->get_shadow_matrix(),
         mpVolumetric_->get_albedo_voxel_texture(), mpVolumetric_->get_normal_voxel_texture(), mpVolumetric_->get_voxelization_meta());
 
-    switch ((final_output_type)mFinalOutputType_) {
-    case final_output_type::debug_volumetric:
+    switch ((FinalType)mFinalOutputType_) {
+    case FinalType::Volumetric:
         mpVoxelVisualizer_->set_voxelization_meta(mpVolumetric_->get_voxelization_meta());
         mpVoxelVisualizer_->set_voxel_texture(mpVolumetric_->get_albedo_voxel_texture());
         mpVoxelVisualizer_->set_svo_node_buffer(mpVolumetric_->get_svo_node_buffer());
         mpVoxelVisualizer_->on_render(pRenderContext, pTargetFbo, mpVoxelSampler_);
         break;
-    case final_output_type::defulat_type:
+    case FinalType::Defulat:
     default:
         normal_render(pRenderContext, pTargetFbo);
         break;
@@ -198,7 +198,7 @@ void SvoGi::onResizeSwapChain(uint32_t width, uint32_t height) {
 int WINAPI WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine, _In_ int nShowCmd) {
     SvoGi::UniquePtr pRenderer = std::make_unique<SvoGi>();
     SampleConfig config;
-    config.windowDesc.title = "svo_gi";
+    config.windowDesc.title = "SvoGi";
     config.windowDesc.resizableWindow = true;
     Sample::run(config, pRenderer);
     return 0;

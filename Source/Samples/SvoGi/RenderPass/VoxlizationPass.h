@@ -2,7 +2,7 @@
 #include "Falcor.h"
 using namespace Falcor;
 
-#include "../shaders/voxelization_meta.slangh"
+#include "../Shaders/VoxelizationMeta.slangh"
 
 
 class VoxlizationPass : public BaseGraphicsPass, public std::enable_shared_from_this<VoxlizationPass> {
@@ -15,7 +15,7 @@ public:
     void on_gui(Gui::Group& group);
     bool need_refresh() const { return mNeedRefresh_; }
 
-    const voxelization_meta& get_voxelization_meta() const;
+    const VoxelizationMeta& get_voxelization_meta() const;
     Buffer::SharedPtr get_svo_node_buffer() const { return mpSVONodeBuffer_; }
     Texture::SharedPtr get_albedo_voxel_texture() const { return mpPackedAlbedo_; }
     Texture::SharedPtr get_normal_voxel_texture() const { return mpPackedNormal_; }

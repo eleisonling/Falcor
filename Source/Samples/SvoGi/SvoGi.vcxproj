@@ -16,52 +16,38 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ShaderSource Include="shaders\bloom.cs.slang" />
-    <ShaderSource Include="shaders\final_shading.ps.slang" />
-    <ShaderSource Include="shaders\gen_shadowmap.slang" />
-    <ShaderSource Include="shaders\light_injection_meta.slangh" />
-    <ShaderSource Include="shaders\light_injection.slang" />
-    <ShaderSource Include="shaders\post_effects.slangh" />
-    <ShaderSource Include="shaders\present.ps.slang" />
-    <ShaderSource Include="shaders\tonemap.cs.slang" />
-    <ShaderSource Include="shaders\voxelization.slang" />
-    <ShaderSource Include="shaders\voxelization_meta.slangh" />
-    <ShaderSource Include="shaders\voxelization_svo.cs.slang" />
-    <ShaderSource Include="shaders\voxelization_tracing.slangh" />
-    <ShaderSource Include="shaders\voxelization_visual_raster.slang" />
-    <ShaderSource Include="shaders\voxelization_visual_tracing.ps.slang" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="render_passes\LightInjection.cpp" />
-    <ClCompile Include="render_passes\PostEffect.cpp" />
-    <ClCompile Include="render_passes\ShadowPass.cpp" />
-    <ClCompile Include="render_passes\VoxelVisualizer.cpp" />
-    <ClCompile Include="render_passes\VoxlizationPass.cpp" />
+    <ClCompile Include="RenderPass\LightInjection.cpp" />
+    <ClCompile Include="RenderPass\PostEffect.cpp" />
+    <ClCompile Include="RenderPass\ShadowPass.cpp" />
+    <ClCompile Include="RenderPass\VoxelVisualizer.cpp" />
+    <ClCompile Include="RenderPass\VoxlizationPass.cpp" />
     <ClCompile Include="SvoGi.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="render_passes\LightInjection.h" />
-    <ClInclude Include="render_passes\PostEffect.h" />
-    <ClInclude Include="render_passes\ShadowPass.h" />
-    <ClInclude Include="render_passes\VoxelVisualizer.h" />
-    <ClInclude Include="render_passes\VoxlizationPass.h" />
+    <ClInclude Include="RenderPass\LightInjection.h" />
+    <ClInclude Include="RenderPass\PostEffect.h" />
+    <ClInclude Include="RenderPass\ShadowPass.h" />
+    <ClInclude Include="RenderPass\VoxelVisualizer.h" />
+    <ClInclude Include="RenderPass\VoxlizationPass.h" />
     <ClInclude Include="SvoGi.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\bloom.cs.slang" />
-    <None Include="shaders\final_shading.ps.slang" />
-    <None Include="shaders\gen_shadowmap.slang" />
-    <None Include="shaders\light_injection.slang" />
-    <None Include="shaders\light_injection_meta.slangh" />
-    <None Include="shaders\post_effects.slangh" />
-    <None Include="shaders\present.ps.slang" />
-    <None Include="shaders\tonemap.cs.slang" />
-    <None Include="shaders\voxelization.slang" />
-    <None Include="shaders\voxelization_meta.slangh" />
-    <None Include="shaders\voxelization_svo.cs.slang" />
-    <None Include="shaders\voxelization_tracing.slangh" />
-    <None Include="shaders\voxelization_visual_raster.slang" />
-    <None Include="shaders\voxelization_visual_tracing.ps.slang" />
+    <ShaderSource Include="Shaders\Bloom.cs.slang" />
+    <ShaderSource Include="Shaders\FinalShading.ps.slang" />
+    <ShaderSource Include="Shaders\LightInjection.slang" />
+    <ShaderSource Include="Shaders\LightInjectionMeta.slangh" />
+    <ShaderSource Include="Shaders\PostEffects.slangh" />
+    <ShaderSource Include="Shaders\Present.ps.slang" />
+    <ShaderSource Include="Shaders\Shadowmap.slang" />
+    <ShaderSource Include="Shaders\ToneMap.cs.slang" />
+    <ShaderSource Include="Shaders\Voxelization.slang" />
+    <ShaderSource Include="Shaders\VoxelizationMeta.slangh" />
+    <ShaderSource Include="Shaders\VoxelizationSvo.cs.slang" />
+    <ShaderSource Include="Shaders\VoxelizationTracing.slangh" />
+    <ShaderSource Include="Shaders\VoxelizationVisualRaster.slang" />
+    <ShaderSource Include="Shaders\VoxelizationVisualTracing.ps.slang" />
+  </ItemGroup>
+  <ItemGroup>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B966F14F-7CD3-4DC5-B8A6-91AEAE2206DB}</ProjectGuid>

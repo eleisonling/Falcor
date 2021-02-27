@@ -1,8 +1,8 @@
 #include "VoxelVisualizer.h"
 
 namespace {
-    static std::string kDebugVolProg = "Samples/SvoGi/shaders/voxelization_visual_raster.slang";
-    static std::string kDebugSvoProg = "Samples/SvoGi/shaders/voxelization_visual_tracing.ps.slang";
+    static std::string kDebugVolProg = "Samples/SvoGi/Shaders/VoxelizationVisualRaster.slang";
+    static std::string kDebugSvoProg = "Samples/SvoGi/Shaders/VoxelizationVisualTracing.ps.slang";
 }
 
 VoxelVisualizer::VoxelVisualizer(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines)

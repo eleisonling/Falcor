@@ -1,8 +1,8 @@
 #include "LightInjection.h"
-#include "../shaders/light_injection_meta.slangh"
+#include "../Shaders/LightInjectionMeta.slangh"
 
 namespace {
-    static std::string kInjectLightProg = "Samples/SvoGi/shaders/light_injection.slang";
+    static std::string kInjectLightProg = "Samples/SvoGi/Shaders/LightInjection.slang";
 }
 
 LightInjection::LightInjection(const Scene::SharedPtr& pScene, Program::DefineList& programDefines)
@@ -39,7 +39,7 @@ void LightInjection::on_gui(Gui::Group& group) {
 
 }
 
-void LightInjection::on_execute(RenderContext* pContext, const Texture::SharedPtr& pShadowmap, const float4x4& shadowMatrix, const Texture::SharedPtr& pAlbedoTexture, const Texture::SharedPtr& pNormalTexture, const voxelization_meta& meta) {
+void LightInjection::on_execute(RenderContext* pContext, const Texture::SharedPtr& pShadowmap, const float4x4& shadowMatrix, const Texture::SharedPtr& pAlbedoTexture, const Texture::SharedPtr& pNormalTexture, const VoxelizationMeta& meta) {
     pContext->clearTexture(mpRadius_.get());
     mpInjection_->getVars()["CB"]["bufVoxelizationMeta"].setBlob(meta);
     mpInjection_->getVars()["CB"]["matShadowMatrix"] = shadowMatrix;

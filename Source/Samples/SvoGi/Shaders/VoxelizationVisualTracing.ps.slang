@@ -1,11 +1,11 @@
 #pragma once
-#include "Samples/SvoGi/shaders/voxelization_meta.slangh"
-#include "Samples/SvoGi/shaders/voxelization_tracing.slangh"
+#include "Samples/SvoGi/Shaders/VoxelizationMeta.slangh"
+#include "Samples/SvoGi/Shaders/VoxelizationTracing.slangh"
 import Scene.Shading;
 import Scene.Raytracing;
 
 cbuffer CB {
-    voxelization_meta bufVoxelMeta;
+    VoxelizationMeta bufVoxelMeta;
     float2 fViewportDims;   
 }
 

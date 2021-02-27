@@ -27,11 +27,11 @@
  **************************************************************************/
 #pragma once
 #include "Falcor.h"
-#include "render_passes/VoxlizationPass.h"
-#include "render_passes/VoxelVisualizer.h"
-#include "render_passes/LightInjection.h"
-#include "render_passes/ShadowPass.h"
-#include "render_passes/PostEffect.h"
+#include "RenderPass/VoxlizationPass.h"
+#include "RenderPass/VoxelVisualizer.h"
+#include "RenderPass/LightInjection.h"
+#include "RenderPass/ShadowPass.h"
+#include "RenderPass/PostEffect.h"
 
 using namespace Falcor;
 

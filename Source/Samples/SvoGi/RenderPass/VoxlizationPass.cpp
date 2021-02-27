@@ -1,9 +1,9 @@
 #include "VoxlizationPass.h"
 
 namespace {
-    static std::string kVolumetricProg = "Samples/SvoGi/shaders/voxelization.slang";
-    static std::string kBuildSVOProg = "Samples/SvoGi/shaders/voxelization_svo.cs.slang";
-    static voxelization_meta kVoxelizationMeta{};
+    static std::string kVolumetricProg = "Samples/SvoGi/Shaders/Voxelization.slang";
+    static std::string kBuildSVOProg = "Samples/SvoGi/Shaders/VoxelizationSvo.cs.slang";
+    static VoxelizationMeta kVoxelizationMeta{};
 }
 
 VoxlizationPass::~VoxlizationPass() {
@@ -113,7 +113,7 @@ void VoxlizationPass::on_gui(Gui::Group& group) {
     }
 }
 
-const voxelization_meta& VoxlizationPass::get_voxelization_meta() const {
+const VoxelizationMeta& VoxlizationPass::get_voxelization_meta() const {
     return kVoxelizationMeta;
 }
 

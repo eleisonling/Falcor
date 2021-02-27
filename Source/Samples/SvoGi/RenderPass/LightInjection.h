@@ -3,7 +3,7 @@
 #include "Falcor.h"
 using namespace Falcor;
 
-#include "../shaders/voxelization_meta.slangh"
+#include "../Shaders/VoxelizationMeta.slangh"
 
 class LightInjection : public std::enable_shared_from_this<LightInjection> {
 private:
@@ -11,7 +11,7 @@ private:
     void create_light_injection_shaders(Program::DefineList& programDefines);
     void create_light_injection_resources();
     void do_down_sampler(RenderContext* pContext);
-    voxelization_meta mVoxelizationMeta_ = {};
+    VoxelizationMeta mVoxelizationMeta_ = {};
     Scene::SharedPtr mpScene_ = nullptr;
     ComputePass::SharedPtr mpInjection_ = nullptr;
     ComputePass::SharedPtr mpDownSample_ = nullptr;
@@ -23,6 +23,6 @@ public:
 
     static SharedPtr create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines = Program::DefineList());
     void on_gui(Gui::Group& group);
-    void on_execute(RenderContext* pContext, const Texture::SharedPtr& pShadowmap, const float4x4& shadowMatrix, const Texture::SharedPtr& pAlbedoTexture, const Texture::SharedPtr& pNormalTexture, const voxelization_meta& meta);
-    void set_voxelization_meta(const voxelization_meta& meta) { mVoxelizationMeta_ = meta; }
+    void on_execute(RenderContext* pContext, const Texture::SharedPtr& pShadowmap, const float4x4& shadowMatrix, const Texture::SharedPtr& pAlbedoTexture, const Texture::SharedPtr& pNormalTexture, const VoxelizationMeta& meta);
+    void set_voxelization_meta(const VoxelizationMeta& meta) { mVoxelizationMeta_ = meta; }
 };

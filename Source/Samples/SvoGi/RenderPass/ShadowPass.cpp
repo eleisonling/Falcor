@@ -1,7 +1,7 @@
 #include "ShadowPass.h"
 
 namespace {
-    static std::string kGenShadowMapProg = "Samples/SvoGi/shaders/gen_shadowmap.slang";
+    static std::string kGenShadowMapProg = "Samples/SvoGi/Shaders/Shadowmap.slang";
     static std::string kMainLight = "Main Light";
 }
 

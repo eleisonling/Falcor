@@ -1,6 +1,6 @@
 #pragma once
 import Scene.Raytracing;
-#include "Samples/SvoGi/shaders/voxelization_meta.slangh"
+#include "Samples/SvoGi/Shaders/VoxelizationMeta.slangh"
 
 
 inline float3 convert_world_to_svo_space(float3 worldPos, float cellSize, float3 cellDim, float3 cellMin) {

@@ -9,83 +9,83 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="render_passes\VoxlizationPass.cpp">
-      <Filter>RenderPass</Filter>
-    </ClCompile>
-    <ClCompile Include="render_passes\VoxelVisualizer.cpp">
-      <Filter>RenderPass</Filter>
-    </ClCompile>
     <ClCompile Include="SvoGi.cpp" />
-    <ClCompile Include="render_passes\LightInjection.cpp">
+    <ClCompile Include="RenderPass\LightInjection.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
-    <ClCompile Include="render_passes\PostEffect.cpp">
+    <ClCompile Include="RenderPass\PostEffect.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
-    <ClCompile Include="render_passes\ShadowPass.cpp">
+    <ClCompile Include="RenderPass\ShadowPass.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\VoxelVisualizer.cpp">
+      <Filter>RenderPass</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderPass\VoxlizationPass.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="render_passes\VoxlizationPass.h">
-      <Filter>RenderPass</Filter>
-    </ClInclude>
-    <ClInclude Include="render_passes\VoxelVisualizer.h">
-      <Filter>RenderPass</Filter>
-    </ClInclude>
     <ClInclude Include="SvoGi.h" />
-    <ClInclude Include="render_passes\LightInjection.h">
+    <ClInclude Include="RenderPass\LightInjection.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
-    <ClInclude Include="render_passes\PostEffect.h">
+    <ClInclude Include="RenderPass\PostEffect.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
-    <ClInclude Include="render_passes\ShadowPass.h">
+    <ClInclude Include="RenderPass\ShadowPass.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\VoxelVisualizer.h">
+      <Filter>RenderPass</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderPass\VoxlizationPass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\bloom.cs.slang">
+    <ShaderSource Include="Shaders\Bloom.cs.slang">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\final_shading.ps.slang">
+    </ShaderSource>
+    <ShaderSource Include="Shaders\FinalShading.ps.slang">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\gen_shadowmap.slang">
+    </ShaderSource>
+    <ShaderSource Include="Shaders\LightInjection.slang">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\light_injection.slang">
+    </ShaderSource>
+    <ShaderSource Include="Shaders\LightInjectionMeta.slangh">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\light_injection_meta.slangh">
+    </ShaderSource>
+    <ShaderSource Include="Shaders\PostEffects.slangh">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\post_effects.slangh">
+    </ShaderSource>
+    <ShaderSource Include="Shaders\Present.ps.slang">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\present.ps.slang">
+    </ShaderSource>
+    <ShaderSource Include="Shaders\Shadowmap.slang">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\tonemap.cs.slang">
+    </ShaderSource>
+    <ShaderSource Include="Shaders\ToneMap.cs.slang">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\voxelization.slang">
+    </ShaderSource>
+    <ShaderSource Include="Shaders\Voxelization.slang">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\voxelization_meta.slangh">
+    </ShaderSource>
+    <ShaderSource Include="Shaders\VoxelizationMeta.slangh">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\voxelization_svo.cs.slang">
+    </ShaderSource>
+    <ShaderSource Include="Shaders\VoxelizationSvo.cs.slang">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\voxelization_tracing.slangh">
+    </ShaderSource>
+    <ShaderSource Include="Shaders\VoxelizationTracing.slangh">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\voxelization_visual_raster.slang">
+    </ShaderSource>
+    <ShaderSource Include="Shaders\VoxelizationVisualRaster.slang">
       <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\voxelization_visual_tracing.ps.slang">
+    </ShaderSource>
+    <ShaderSource Include="Shaders\VoxelizationVisualTracing.ps.slang">
       <Filter>Shaders</Filter>
-    </None>
+    </ShaderSource>
   </ItemGroup>
 </Project>

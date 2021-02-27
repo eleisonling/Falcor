@@ -1,9 +1,9 @@
 #pragma once
-#include "Samples/SvoGi/shaders/voxelization_meta.slangh"
+#include "Samples/SvoGi/Shaders/VoxelizationMeta.slangh"
 import Scene.Raster;
 
 cbuffer CB {
-    voxelization_meta bufVoxelMeta;
+    VoxelizationMeta bufVoxelMeta;
 }
 
 Texture3D<float4> texPackedAlbedo;
