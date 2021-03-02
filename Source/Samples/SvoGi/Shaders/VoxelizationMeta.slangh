@@ -43,10 +43,29 @@ inline float3 unpack_normal(float3 v) {
     return v * 2.0f - 1.0f;
 }
 
+inline uint32_t uint3_to_uint_XYZ10(uint3 val) {
+    return (uint(val.z) & 0x000003FF)   << 20U
+            |(uint(val.y) & 0x000003FF) << 10U 
+            |(uint(val.x) & 0x000003FF);
+}
+
+inline uint3 uint_XYZ10_to_uint3(uint val) {
+  return uint3(uint((val & 0x000003FF)),
+                    uint((val & 0x000FFC00) >> 10U), 
+                    uint((val & 0x3FF00000) >> 20U));
+}
+
 #define COMMON_THREAD_SIZE      10
-#define DIVIDE_THREAD_SIZE      64
+#define DIVIDE_THREAD_SIZE      512
 #define MAX_AVG_ITERATIONS      100
 #define PACKED_RGB_FACTOR       255.0f
 #define INTERNAL_FLAG           0x80000000
 #define SIGN_BIT_32             0x80000000
 #define MAX_LEVEL               23
+
+// Atomics and Indirect
+#define ATOM_FRAG_NEXT          0
+#define ATOM_NODE_NEXT          1
+#define FRAG_NEXT_INDIRECT      2
+#define NODE_NEXT_INDIRECT      5
+#define BUFFER_COUNT            8

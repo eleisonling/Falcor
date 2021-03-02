@@ -50,8 +50,6 @@ float4 ps_main(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
     float3 posTex = (posW - bufVoxelMeta.Min) / float3(maxAxis);
     uint3 cellIndex = uint3(floor(posTex * (bufVoxelMeta.CellDim - 1)));
 
-
-
     // load and uncompress
     float4 packedColor = texPackedAlbedo[cellIndex];
     pixelCount = packedColor.a * PACKED_RGB_FACTOR;

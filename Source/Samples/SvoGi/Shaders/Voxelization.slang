@@ -69,6 +69,8 @@ import Utils.Math.MathHelpers;
 
 RWTexture3D<uint32_t> texPackedAlbedo;
 RWTexture3D<uint32_t> texPackedNormal;
+RWByteAddressBuffer bufFragPosition;
+RWByteAddressBuffer bufAtomicAndIndirect;
 
 void image_atomic_avg_RGBA8(RWTexture3D<uint32_t> img, uint3 coords, float4 newVal) {
 
@@ -110,4 +112,9 @@ void ps_main(GSOut gOut) {
 
     image_atomic_avg_RGBA8(texPackedAlbedo, cellIndex, baseColor);
     image_atomic_avg_RGBA8(texPackedNormal, cellIndex, normalW);
+
+    uint32_t fragPosIndex = 0;
+    bufAtomicAndIndirect.InterlockedAdd(ATOM_FRAG_NEXT * 4, 1, fragPosIndex);
+    uint32_t packedCellIndex = uint3_to_uint_XYZ10(cellIndex);
+    bufFragPosition.Store(fragPosIndex * 4, packedCellIndex);
 }

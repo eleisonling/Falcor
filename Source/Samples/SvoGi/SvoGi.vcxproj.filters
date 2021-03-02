@@ -75,5 +75,11 @@
     <ShaderSource Include="Shaders\VoxelizationVisualTracing.ps.slang">
       <Filter>Shaders</Filter>
     </ShaderSource>
+    <ShaderSource Include="Shaders\VoxelizationClear.cs.slang">
+      <Filter>Shaders</Filter>
+    </ShaderSource>
+    <ShaderSource Include="Shaders\VoxelizationDispatch.cs.slang">
+      <Filter>Shaders</Filter>
+    </ShaderSource>
   </ItemGroup>
 </Project>

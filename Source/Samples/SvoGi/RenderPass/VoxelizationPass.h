@@ -23,30 +23,42 @@ public:
 private:
     VoxelizationPass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc,Program::DefineList& programDefines);
 
-    void do_create_svo_shaders(Program::DefineList& programDefines);
+    void do_create_shaders(Program::DefineList& programDefines);
     void do_create_vps();
     void do_rebuild_pixel_data_buffers();
     void do_rebuild_svo_buffers();
+    void do_clear(RenderContext* pContext);
     void do_build_svo(RenderContext* pContext);
+
+    // clear
+    ComputePass::SharedPtr mpClearTexture3D_ = nullptr;
+    ComputePass::SharedPtr mpClearBuffer1D_ = nullptr;
+
+    // atomics
+    Buffer::SharedPtr mpAtomicAndIndirect_ = nullptr;
 
     // pixel volumetric
     Scene::SharedPtr mpScene_ = nullptr;
     Buffer::SharedPtr mpViewProjections_ = nullptr;
     Texture::SharedPtr mpPackedAlbedo_ = nullptr;
     Texture::SharedPtr mpPackedNormal_ = nullptr;
+    Buffer::SharedPtr mpFragPositions_ = nullptr;
+    ComputePass::SharedPtr mpFragPosIndirectArg_ = nullptr;
 
     // pixel volumetric vars
     bool mNeedRefresh_ = true;
-    uint32_t mVoxelGridResolution = 256;
+    uint32_t mVoxelGridResolution_ = 256;
 
     // sparse Oct-tree builder
     Buffer::SharedPtr mpSVONodeBuffer_ = nullptr;
     Buffer::SharedPtr mpIndirectArgBuffer_ = nullptr;
+    uint32_t mSVONodeNum_ = 0;
+    std::vector<uint32_t> mSVOPerLevelNodeNum_;
 
-    ComputeState::SharedPtr mpTagNode_ = nullptr;
-    ComputeVars::SharedPtr mpTagNodeVars_ = nullptr;
+    ComputePass::SharedPtr mpTagNode_ = nullptr;
     ComputeState::SharedPtr mpCaculateIndirectArg_ = nullptr;
     ComputeVars::SharedPtr mpCaculateIndirectArgVars_ = nullptr;
     ComputeState::SharedPtr mpDivideSubNode_ = nullptr;
     ComputeVars::SharedPtr mpDivideSubNodeVars_ = nullptr;
+    ComputePass::SharedPtr mpNodeIndirect_ = nullptr;
 };
