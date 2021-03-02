@@ -28,7 +28,9 @@ vs_out vs_main(vs_in vIn)
 
     // from instance id to input position
     uint3 cellIndex = extract_index_form_linear(vIn.instanceID, bufVoxelMeta.CellDim);
-    float3 cellSize = (bufVoxelMeta.Max - bufVoxelMeta.Min) / float3(bufVoxelMeta.CellDim);
+    float3 worldExtent = bufVoxelMeta.Max - bufVoxelMeta.Min;
+    float maxAxis = max(worldExtent.x, max(worldExtent.y, worldExtent.z));
+    float3 cellSize = float3(maxAxis) / float3(bufVoxelMeta.CellDim);
 
     vIn.pos *= cellSize;
     float3 instancePos = vIn.pos + bufVoxelMeta.Min + float3(cellIndex.x + 0.5f, cellIndex.y + 0.5f, cellIndex.z + 0.5f) * cellSize;
@@ -43,8 +45,11 @@ float4 ps_main(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
     float4 finalColor = { 0 ,0, 0, 0 };
     uint32_t pixelCount = 0;
     float3 posW = vOut.posW;
-    float3 posTex = (posW - bufVoxelMeta.Min) / (bufVoxelMeta.Max - bufVoxelMeta.Min);
+    float3 worldExtent = bufVoxelMeta.Max - bufVoxelMeta.Min;
+    float maxAxis = max(worldExtent.x, max(worldExtent.y, worldExtent.z));
+    float3 posTex = (posW - bufVoxelMeta.Min) / float3(maxAxis);
     uint3 cellIndex = uint3(floor(posTex * (bufVoxelMeta.CellDim - 1)));
+
 
 
     // load and uncompress

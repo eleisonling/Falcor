@@ -97,7 +97,9 @@ void image_atomic_avg_RGBA8(RWTexture3D<uint32_t> img, uint3 coords, float4 newV
 void ps_main(GSOut gOut) {
 
     float3 posW = gOut.vsData.posW;
-    float3 posTex = (posW - bufVoxelMeta.Min) / (bufVoxelMeta.Max - bufVoxelMeta.Min);
+    float3 worldExtent = bufVoxelMeta.Max - bufVoxelMeta.Min;
+    float maxAxis = max(worldExtent.x, max(worldExtent.y, worldExtent.z));
+    float3 posTex = (posW - bufVoxelMeta.Min) / float3(maxAxis);
     uint3 cellIndex = uint3(floor(posTex * (bufVoxelMeta.CellDim - 1)));
 
     float3 viewDir = normalize(gScene.camera.getPosition() - gOut.vsData.posW);
