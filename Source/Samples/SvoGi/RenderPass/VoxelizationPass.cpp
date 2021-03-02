@@ -61,6 +61,10 @@ void VoxelizationPass::on_render(RenderContext* pContext, const Fbo::SharedPtr& 
         mpFragPosIndirectArg_->execute(pContext, uint3(1));
     }
 
+    uint32_t* data = (uint32_t*)mpAtomicAndIndirect_->map(Buffer::MapType::Read);
+    mpAtomicAndIndirect_->unmap();
+
+
     do_build_svo(pContext);
     mNeedRefresh_ = false;
 }

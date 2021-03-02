@@ -41,7 +41,8 @@ bool is_valid_node(uint32_t nodeData) {
 void tag_node(uint3 DTid : SV_DispatchThreadID){
 
     uint32_t fragPosNum = bufAtomicAndIndirect.Load(ATOM_FRAG_NEXT * 4);
-    uint32_t linearIndex = DTid.z * DIVIDE_THREAD_SIZE * DIVIDE_THREAD_SIZE + DTid.y * DIVIDE_THREAD_SIZE + DTid.x;
+    uint3 groupSize = bufAtomicAndIndirect.Load3(FRAG_NEXT_INDIRECT * 4) * uint3(COMMON_THREAD_SIZE);
+    uint32_t linearIndex = DTid.z * groupSize.y * groupSize.x + DTid.y * groupSize.x + DTid.x;
     if (linearIndex >= fragPosNum) return;
 
     uint32_t cellIndexU =  bufFragPosition.Load(linearIndex * 4);
@@ -64,6 +65,7 @@ void tag_node(uint3 DTid : SV_DispatchThreadID){
 
     if(bufVoxelMeta.CurLevel == bufVoxelMeta.TotalLevel) {
         // svo node is same as the pixel cell node count
+        linearIndex = cellIndex.z * svoCellDim.x * svoCellDim.y + cellIndex.y * svoCellDim.x + cellIndex.x;
         bufSvoNode.Store(curID * 4, set_child_index(linearIndex));
     } else {
         bufSvoNode.InterlockedOr(curID * 4, INTERNAL_FLAG); 
