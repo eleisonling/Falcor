@@ -3,8 +3,8 @@ import Scene.Raytracing;
 #include "Samples/SvoGi/Shaders/VoxelizationMeta.slangh"
 
 
-inline float3 convert_world_to_svo_space(float3 worldPos, float cellSize, float3 cellDim, float3 cellMin) {
-    float3 boundSize = cellSize * cellDim;  
+inline float3 convert_world_to_svo_space(float3 worldPos, float3 cellDim, float3 cellMin, float3 cellMax) {
+    float3 boundSize = cellMax - cellMin;  
     float3 convertedPos = (worldPos - cellMin) / boundSize + float3(1.0);
     return convertedPos;
 }

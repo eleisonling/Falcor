@@ -28,9 +28,10 @@ vs_out vs_main(vs_in vIn)
 
     // from instance id to input position
     uint3 cellIndex = extract_index_form_linear(vIn.instanceID, bufVoxelMeta.CellDim);
-    vIn.pos *= bufVoxelMeta.CellSize;
-    float3 instancePos = vIn.pos + bufVoxelMeta.Min +
-        float3(cellIndex.x + 0.5f, cellIndex.y + 0.5f, cellIndex.z + 0.5f) * float3(bufVoxelMeta.CellSize, bufVoxelMeta.CellSize, bufVoxelMeta.CellSize);
+    float3 cellSize = (bufVoxelMeta.Max - bufVoxelMeta.Min) / float3(bufVoxelMeta.CellDim);
+
+    vIn.pos *= cellSize;
+    float3 instancePos = vIn.pos + bufVoxelMeta.Min + float3(cellIndex.x + 0.5f, cellIndex.y + 0.5f, cellIndex.z + 0.5f) * cellSize;
     vOut.posW = instancePos;
     vOut.posH = mul(float4(instancePos, 1), gScene.camera.getViewProj());
 
@@ -42,17 +43,14 @@ float4 ps_main(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
     float4 finalColor = { 0 ,0, 0, 0 };
     uint32_t pixelCount = 0;
     float3 posW = vOut.posW;
-    uint3 cellIndex = floor((posW - bufVoxelMeta.Min) / bufVoxelMeta.CellSize);
+    float3 posTex = (posW - bufVoxelMeta.Min) / (bufVoxelMeta.Max - bufVoxelMeta.Min);
+    uint3 cellIndex = uint3(floor(posTex * (bufVoxelMeta.CellDim - 1)));
 
-    if(cellIndex.x >= 0 && cellIndex.x < bufVoxelMeta.CellDim.x
-        && cellIndex.y >= 0 && cellIndex.y < bufVoxelMeta.CellDim.y
-        && cellIndex.z >= 0 && cellIndex.z < bufVoxelMeta.CellDim.z) {
 
-        // load and uncompress
-        float4 packedColor = texPackedAlbedo[cellIndex];
-        pixelCount = packedColor.a * PACKED_RGB_FACTOR;
-        finalColor = float4(packedColor.xyz, 1.0f);
-    }
+    // load and uncompress
+    float4 packedColor = texPackedAlbedo[cellIndex];
+    pixelCount = packedColor.a * PACKED_RGB_FACTOR;
+    finalColor = float4(packedColor.xyz, 1.0f);
 
     if(pixelCount == 0) discard;
     return finalColor;

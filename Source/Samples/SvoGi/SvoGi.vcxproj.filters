@@ -19,7 +19,7 @@
     <ClCompile Include="RenderPass\VoxelVisualizer.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
-    <ClCompile Include="RenderPass\VoxlizationPass.cpp">
+    <ClCompile Include="RenderPass\VoxelizationPass.cpp">
       <Filter>RenderPass</Filter>
     </ClCompile>
   </ItemGroup>
@@ -34,7 +34,7 @@
     <ClInclude Include="RenderPass\VoxelVisualizer.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
-    <ClInclude Include="RenderPass\VoxlizationPass.h">
+    <ClInclude Include="RenderPass\VoxelizationPass.h">
       <Filter>RenderPass</Filter>
     </ClInclude>
   </ItemGroup>

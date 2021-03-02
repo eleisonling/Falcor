@@ -27,7 +27,7 @@
  **************************************************************************/
 #pragma once
 #include "Falcor.h"
-#include "RenderPass/VoxlizationPass.h"
+#include "RenderPass/VoxelizationPass.h"
 #include "RenderPass/VoxelVisualizer.h"
 #include "RenderPass/ShadowPass.h"
 #include "RenderPass/PostEffect.h"
@@ -58,7 +58,7 @@ private:
     PostEffect::SharedPtr mpPostEffects_ = nullptr;
     Fbo::SharedPtr mpHDRFbo_ = nullptr;
 
-    VoxlizationPass::SharedPtr mpVolumetric_ = nullptr;
+    VoxelizationPass::SharedPtr mpVolumetric_ = nullptr;
     VoxelVisualizer::SharedPtr mpVoxelVisualizer_ = nullptr;
 
     uint32_t mFinalOutputType_ = 1;

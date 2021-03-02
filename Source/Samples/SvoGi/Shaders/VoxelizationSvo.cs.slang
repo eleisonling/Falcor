@@ -47,7 +47,7 @@ void tag_node(uint3 DTid : SV_DispatchThreadID){
 
     uint32_t childID = 0;
     uint32_t curID = 0;
-    uint3 svoCellDim = bufVoxelMeta.SvoDim;
+    uint3 svoCellDim = bufVoxelMeta.CellDim;
 
     for(int32_t i = 0; i < bufVoxelMeta.CurLevel; ++i) {
         svoCellDim >>= 1;

@@ -19,14 +19,14 @@
     <ClCompile Include="RenderPass\PostEffect.cpp" />
     <ClCompile Include="RenderPass\ShadowPass.cpp" />
     <ClCompile Include="RenderPass\VoxelVisualizer.cpp" />
-    <ClCompile Include="RenderPass\VoxlizationPass.cpp" />
+    <ClCompile Include="RenderPass\VoxelizationPass.cpp" />
     <ClCompile Include="SvoGi.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RenderPass\PostEffect.h" />
     <ClInclude Include="RenderPass\ShadowPass.h" />
     <ClInclude Include="RenderPass\VoxelVisualizer.h" />
-    <ClInclude Include="RenderPass\VoxlizationPass.h" />
+    <ClInclude Include="RenderPass\VoxelizationPass.h" />
     <ClInclude Include="SvoGi.h" />
   </ItemGroup>
   <ItemGroup>

@@ -112,7 +112,7 @@ void SvoGi::normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& p
 void SvoGi::onLoad(RenderContext* pRenderContext) {
     load_scene(kDefaultScene, gpFramework->getTargetFbo().get());
     mpFinalShading_ = RasterScenePass::create(mpScene_, kRasterProg, "", "main");
-    mpVolumetric_ = VoxlizationPass::create(mpScene_);
+    mpVolumetric_ = VoxelizationPass::create(mpScene_);
     mpVoxelVisualizer_ = VoxelVisualizer::create(mpScene_);
     mpShadowMap_ = ShadowPass::create(mpScene_);
     mpPostEffects_ = PostEffect::create();

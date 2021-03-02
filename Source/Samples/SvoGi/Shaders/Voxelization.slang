@@ -94,24 +94,18 @@ void image_atomic_avg_RGBA8(RWTexture3D<uint32_t> img, uint3 coords, float4 newV
     }
 }
 
-float4 ps_main(GSOut gOut) : SV_TARGET {
+void ps_main(GSOut gOut) {
 
     float3 posW = gOut.vsData.posW;
-    uint3 cellIndex = floor((posW - bufVoxelMeta.Min) / bufVoxelMeta.CellSize);
+    float3 posTex = (posW - bufVoxelMeta.Min) / (bufVoxelMeta.Max - bufVoxelMeta.Min);
+    uint3 cellIndex = uint3(floor(posTex * (bufVoxelMeta.CellDim - 1)));
 
-    if(cellIndex.x >= 0 && cellIndex.x < bufVoxelMeta.CellDim.x
-        && cellIndex.y >= 0 && cellIndex.y < bufVoxelMeta.CellDim.y
-        && cellIndex.z >= 0 && cellIndex.z < bufVoxelMeta.CellDim.z) {
+    float3 viewDir = normalize(gScene.camera.getPosition() - gOut.vsData.posW);
+    ShadingData sd = prepareShadingData(gOut.vsData, gOut.triangleIndex, viewDir);
 
-        float3 viewDir = normalize(gScene.camera.getPosition() - gOut.vsData.posW);
-        ShadingData sd = prepareShadingData(gOut.vsData, gOut.triangleIndex, viewDir);
+    float4 baseColor = float4(sd.diffuse, 1.0f);
+    float4 normalW = float4(sd.N, 1.0f);
 
-        float4 baseColor = float4(sd.diffuse, 1.0f);
-        float4 normalW = float4(sd.N, 1.0f);
-
-        image_atomic_avg_RGBA8(texPackedAlbedo, cellIndex, baseColor);
-        image_atomic_avg_RGBA8(texPackedNormal, cellIndex, normalW);
-    }
-
-    return float4(0,0,0,0);
+    image_atomic_avg_RGBA8(texPackedAlbedo, cellIndex, baseColor);
+    image_atomic_avg_RGBA8(texPackedNormal, cellIndex, normalW);
 }

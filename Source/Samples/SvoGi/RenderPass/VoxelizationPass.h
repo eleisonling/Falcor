@@ -5,10 +5,10 @@ using namespace Falcor;
 #include "../Shaders/VoxelizationMeta.slangh"
 
 
-class VoxlizationPass : public BaseGraphicsPass, public std::enable_shared_from_this<VoxlizationPass> {
+class VoxelizationPass : public BaseGraphicsPass, public std::enable_shared_from_this<VoxelizationPass> {
 public:
-    using SharedPtr = std::shared_ptr<VoxlizationPass>;
-    virtual ~VoxlizationPass() override;
+    using SharedPtr = std::shared_ptr<VoxelizationPass>;
+    virtual ~VoxelizationPass() override;
 
     static SharedPtr create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines = Program::DefineList());
     void on_render(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
@@ -21,14 +21,13 @@ public:
     Texture::SharedPtr get_normal_voxel_texture() const { return mpPackedNormal_; }
 
 private:
-    VoxlizationPass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc,Program::DefineList& programDefines);
+    VoxelizationPass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc,Program::DefineList& programDefines);
 
     void do_create_svo_shaders(Program::DefineList& programDefines);
     void do_create_vps();
     void do_rebuild_pixel_data_buffers();
     void do_rebuild_svo_buffers();
     void do_build_svo(RenderContext* pContext);
-    void do_fixture_cell_size();
 
     // pixel volumetric
     Scene::SharedPtr mpScene_ = nullptr;
@@ -38,8 +37,7 @@ private:
 
     // pixel volumetric vars
     bool mNeedRefresh_ = true;
-    bool mRebuildBuffer_ = false;
-    float mCellSize_ = 1.0f;
+    uint32_t mVoxelGridResolution = 256;
 
     // sparse Oct-tree builder
     Buffer::SharedPtr mpSVONodeBuffer_ = nullptr;
