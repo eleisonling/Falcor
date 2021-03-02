@@ -20,8 +20,7 @@
 
 inline uint3 extract_index_form_linear(uint32_t linearIndex, uint3 dim) {
     uint32_t z = linearIndex / (dim.x * dim.y);
-    linearIndex -= (z * dim.x * dim.y);
-    uint32_t y = linearIndex / dim.x;
+    uint32_t y = (linearIndex / dim.x) % dim.y;
     uint32_t x = linearIndex % dim.x;
 
     return { x, y, z };

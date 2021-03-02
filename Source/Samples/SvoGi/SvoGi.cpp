@@ -32,12 +32,11 @@ uint32_t mSampleGuiPositionX = 20;
 uint32_t mSampleGuiPositionY = 40;
 
 namespace {
-    static const std::string kDefaultScene = "sponza/sponza.pyscene";
+    static const std::string kDefaultScene = "Arcade/Arcade.pyscene";
     static const std::string kRasterProg = "Samples/SvoGi/Shaders/FinalShading.ps.slang";
 
     enum class FinalType {
         Defulat,
-        debug_projection,
         Volumetric,
 
         max_count,
