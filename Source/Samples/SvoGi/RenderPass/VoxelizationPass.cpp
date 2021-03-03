@@ -74,7 +74,7 @@ void VoxelizationPass::on_render(RenderContext* pContext, const Fbo::SharedPtr& 
 
     do_build_svo(pContext);
     do_build_brick(pContext);
-    mNeedRefresh_ = false;
+    //mNeedRefresh_ = false;
 }
 
 void VoxelizationPass::do_build_svo(RenderContext* pContext) {
@@ -115,6 +115,9 @@ void VoxelizationPass::do_build_svo(RenderContext* pContext) {
 }
 
 void VoxelizationPass::do_build_brick(RenderContext* pContext) {
+
+    PROFILE("build brick");
+
     mpNodeIndirectArg_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
     mpNodeIndirectArg_->execute(pContext, uint3(1));
 
@@ -133,6 +136,7 @@ void VoxelizationPass::do_build_brick(RenderContext* pContext) {
     mpWriteLeaf_["bufFragPosition"] = mpFragPositions_;
     mpWriteLeaf_["texPackedAlbedo"] = mpPackedAlbedo_;
     mpWriteLeaf_["texPackedNormal"] = mpPackedNormal_;
+    mpWriteLeaf_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
     mpWriteLeaf_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
     mpWriteLeaf_["texBrickAlbedo"] = mpBrickTextures_[BRICKPOOL_COLOR];
     mpWriteLeaf_["texBrickNormal"] = mpBrickTextures_[BRICKPOOL_NORMAL];
@@ -312,6 +316,17 @@ void VoxelizationPass::do_clear(RenderContext* pContext) {
     mpClearBuffer1D_->getVars()["CB"]["uDim3"] = groups;
     mpClearBuffer1D_->getVars()["CB"]["uDim1"] = 3 * mVoxelGridResolution_ * mVoxelGridResolution_ * mVoxelGridResolution_;
     mpClearBuffer1D_->execute(pContext, threads);
+
+    mpClearTexture3D_["texClear"] = mpBrickTextures_[BRICKPOOL_COLOR];
+    mpClearTexture3D_->getVars()["CB"]["uDim3"] = uint3(mBrickPoolResolution_);
+    mpClearTexture3D_->execute(pContext, uint3(mBrickPoolResolution_));
+
+    mpClearTexture3D_["texClear"] = mpBrickTextures_[BRICKPOOL_NORMAL];
+    mpClearTexture3D_->execute(pContext, uint3(mBrickPoolResolution_));
+
+    mpClearTexture3D_["texClear"] = mpBrickTextures_[BRICKPOOL_IRRADIANCE];
+    mpClearTexture3D_->execute(pContext, uint3(mBrickPoolResolution_));
+
 
     uint32_t initialVal[BUFFER_COUNT] = { 0 };
     initialVal[ATOM_NODE_NEXT] = 1;
