@@ -57,7 +57,7 @@ void VoxelVisualizer::create_visualize_resources() {
 VoxelVisualizer::~VoxelVisualizer() {
     mpScene_ = nullptr;
     mpVisualTexture_ = nullptr;
-    mpSVONodeBuffer_ = nullptr;
+    mpSVONodeNextBuffer_ = nullptr;
     mpVisualTracing_ = nullptr;
     mpVisualRasterVars_ = nullptr;
     mpVisualRaster_ = nullptr;
@@ -82,7 +82,7 @@ void VoxelVisualizer::on_render(RenderContext* pContext, const Fbo::SharedPtr& p
         mpVisualTracing_->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
         mpVisualTracing_->getVars()["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
         mpVisualTracing_->getVars()["texPackedAlbedo"] = mpVisualTexture_;
-        mpVisualTracing_->getVars()["bufSvoNode"] = mpSVONodeBuffer_;
+        mpVisualTracing_->getVars()["bufSvoNode"] = mpSVONodeNextBuffer_;
         mpVisualTracing_->getVars()["spTexSampler"] = pTexSampler;
         mpVisualTracing_->getVars()["CB"]["fViewportDims"] = float2{ pDstFbo->getWidth(), pDstFbo->getHeight() };
         mpVisualTracing_->execute(pContext, pDstFbo);

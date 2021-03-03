@@ -18,7 +18,7 @@ private:
 
     Texture::SharedPtr mpVisualTexture_ = nullptr;
     FullScreenPass::SharedPtr mpVisualTracing_ = nullptr;
-    Buffer::SharedPtr mpSVONodeBuffer_ = nullptr;
+    Buffer::SharedPtr mpSVONodeNextBuffer_ = nullptr;
     
     // volumetric debug
     GraphicsVars::SharedPtr mpVisualRasterVars_ = nullptr;
@@ -36,5 +36,5 @@ public:
 
     void set_voxelization_meta(const VoxelizationMeta& meta) { mVoxelizationMeta_ = meta; }
     void set_voxel_texture(Texture::SharedPtr pTex) { mpVisualTexture_ = pTex; }
-    void set_svo_node_buffer(Buffer::SharedPtr pBuffer) { mpSVONodeBuffer_ = pBuffer; }
+    void set_svo_node_next_buffer(Buffer::SharedPtr pBuffer) { mpSVONodeNextBuffer_ = pBuffer; }
 };

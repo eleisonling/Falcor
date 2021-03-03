@@ -143,7 +143,7 @@ void SvoGi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& p
     case FinalType::Volumetric:
         mpVoxelVisualizer_->set_voxelization_meta(mpVolumetric_->get_voxelization_meta());
         mpVoxelVisualizer_->set_voxel_texture(mpVolumetric_->get_albedo_voxel_texture());
-        mpVoxelVisualizer_->set_svo_node_buffer(mpVolumetric_->get_svo_node_buffer());
+        mpVoxelVisualizer_->set_svo_node_next_buffer(mpVolumetric_->get_svo_node_next_buffer());
         mpVoxelVisualizer_->on_render(pRenderContext, pTargetFbo, mpVoxelSampler_);
         break;
     case FinalType::Defulat:

@@ -16,7 +16,7 @@ public:
     bool need_refresh() const { return mNeedRefresh_; }
 
     const VoxelizationMeta& get_voxelization_meta() const;
-    Buffer::SharedPtr get_svo_node_buffer() const { return mpSVONodeBuffer_; }
+    Buffer::SharedPtr get_svo_node_next_buffer() const { return mpSVONodeBufferNext_; }
     Texture::SharedPtr get_albedo_voxel_texture() const { return mpPackedAlbedo_; }
     Texture::SharedPtr get_normal_voxel_texture() const { return mpPackedNormal_; }
 
@@ -50,7 +50,7 @@ private:
     uint32_t mVoxelGridResolution_ = 256;
 
     // sparse Oct-tree builder
-    Buffer::SharedPtr mpSVONodeBuffer_ = nullptr;
+    Buffer::SharedPtr mpSVONodeBufferNext_ = nullptr;
     Buffer::SharedPtr mpIndirectArgBuffer_ = nullptr;
     uint32_t mSVONodeNum_ = 0;
     std::vector<uint32_t> mSVOPerLevelNodeNum_;
@@ -58,7 +58,6 @@ private:
     ComputePass::SharedPtr mpTagNode_ = nullptr;
     ComputeState::SharedPtr mpCaculateIndirectArg_ = nullptr;
     ComputeVars::SharedPtr mpCaculateIndirectArgVars_ = nullptr;
-    ComputeState::SharedPtr mpDivideSubNode_ = nullptr;
-    ComputeVars::SharedPtr mpDivideSubNodeVars_ = nullptr;
+    ComputePass::SharedPtr mpDivideSubNode_ = nullptr;
     ComputePass::SharedPtr mpNodeIndirect_ = nullptr;
 };

@@ -102,6 +102,7 @@ void sub_divide_node(uint3 DTid : SV_DispatchThreadID){
     if(is_valid_node(nodeData) && get_child_index(nodeData) == 0) {
         uint32_t nodeNum = 0;
         bufDivideIndirectArg.InterlockedAdd(g_curNodeNum, 1, nodeNum);
+        bufAtomicAndIndirect.InterlockedAdd(ATOM_NODE_NEXT * 4, 1);
 
         bufSvoNode.Store(index * 4, set_child_index(nodeNum));
         uint32_t childNodeStart = nodeNum * 8;
