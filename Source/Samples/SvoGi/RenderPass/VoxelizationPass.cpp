@@ -84,7 +84,6 @@ void VoxelizationPass::do_build_svo(RenderContext* pContext) {
         kVoxelizationMeta.CurLevel = i;
         // bound resource to shader
         mpTagNode_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-        mpTagNode_["texPackedAlbedo"] = mpPackedAlbedo_;
         mpTagNode_["bufSvoNode"] = mpSVONodeBufferNext_;
         mpTagNode_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
         mpTagNode_["bufFragPosition"] = mpFragPositions_;

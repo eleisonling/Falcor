@@ -5,7 +5,6 @@ cbuffer CB {
     VoxelizationMeta bufVoxelMeta;
 }
 
-Texture3D<float4> texPackedAlbedo;
 RWByteAddressBuffer bufSvoNode;
 RWByteAddressBuffer bufAtomicAndIndirect;
 RWByteAddressBuffer bufFragPosition;
@@ -25,18 +24,6 @@ static constexpr uint32_t g_nodeOffset = 24;
 
 RWByteAddressBuffer bufDivideIndirectArg;
 
-uint32_t get_child_index(uint32_t nodeData) {
-    return nodeData & (INTERNAL_FLAG - 1);
-}
-
-uint32_t set_child_index(uint32_t index) {
-    return index | INTERNAL_FLAG;
-}
-
-bool is_valid_node(uint32_t nodeData) {
-    return (nodeData & INTERNAL_FLAG) != 0;
-}
-
 [numthreads(COMMON_THREAD_SIZE, COMMON_THREAD_SIZE, COMMON_THREAD_SIZE)]
 void tag_node(uint3 DTid : SV_DispatchThreadID){
 
@@ -47,9 +34,6 @@ void tag_node(uint3 DTid : SV_DispatchThreadID){
 
     uint32_t cellIndexU =  bufFragPosition.Load(linearIndex * 4);
     uint3 cellIndex = uint_XYZ10_to_uint3(cellIndexU);
-
-    float4 packedColor = texPackedAlbedo[cellIndex];
-    if(packedColor.a == 0.f) return;
 
     uint32_t childID = 0;
     uint32_t curID = 0;

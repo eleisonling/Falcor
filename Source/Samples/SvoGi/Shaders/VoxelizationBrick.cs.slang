@@ -62,7 +62,7 @@ void write_leaf_brick(uint3 DTid : SV_DispatchThreadID){
     float4 voxelNormal = texPackedNormal[cellIndex]
 
     uint32_t onLevel = 0;
-    uint32_t nodeAddress = traverse_octree_pos_out(cellIndex, onLevel);
+    uint32_t nodeAddress = traverse_octree_pos_out(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, onLevel);
 
     store_in_leaf(cellIndex, nodeAddress, voxelColor, voxelNormal);
 }

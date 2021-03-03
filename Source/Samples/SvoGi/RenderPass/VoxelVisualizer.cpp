@@ -92,8 +92,8 @@ void VoxelVisualizer::on_render(RenderContext* pContext, const Fbo::SharedPtr& p
         mpVisualRaster_->setVao(mpRasterVao_);
         mpVisualRasterVars_->setParameterBlock("gScene", mpScene_->getParameterBlock());
         mpVisualRasterVars_["texPackedAlbedo"] = mpVisualTexture_;
+        mpVisualRasterVars_["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
         mpVisualRasterVars_["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
-        mpVisualRasterVars_["spTexSampler"] = pTexSampler;
         pContext->drawIndexedInstanced(mpVisualRaster_.get(), mpVisualRasterVars_.get(), (uint32_t)mpRasterMesh_->getIndices().size(), instanceCount, 0, 0, 0);
     }
 }

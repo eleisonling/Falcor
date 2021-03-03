@@ -1,5 +1,6 @@
 #pragma once
 #include "Samples/SvoGi/Shaders/VoxelizationMeta.slangh"
+#include "Samples/SvoGi/Shaders/VoxelizationTracing.slangh"
 import Scene.Raster;
 
 cbuffer CB {
@@ -7,7 +8,7 @@ cbuffer CB {
 }
 
 Texture3D<float4> texPackedAlbedo;
-SamplerState spTexSampler;
+RWByteAddressBuffer bufSvoNodeNext;
 
 struct vs_in {
     float3 pos                      : POSITION;
@@ -50,11 +51,13 @@ float4 ps_main(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
     float3 posTex = (posW - bufVoxelMeta.Min) / float3(maxAxis);
     uint3 cellIndex = uint3(floor(posTex * (bufVoxelMeta.CellDim - 1)));
 
+    uint32_t foundLevel = 0;
+    uint32_t nodeNext = traverse_octree_simple(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, foundLevel);
+    if(foundLevel != bufVoxelMeta.TotalLevel - 1) discard;
+
     // load and uncompress
     float4 packedColor = texPackedAlbedo[cellIndex];
-    pixelCount = packedColor.a * PACKED_RGB_FACTOR;
     finalColor = float4(packedColor.xyz, 1.0f);
 
-    if(pixelCount == 0) discard;
     return finalColor;
 }
