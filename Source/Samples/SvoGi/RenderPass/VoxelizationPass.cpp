@@ -18,6 +18,7 @@ VoxelizationPass::~VoxelizationPass() {
     mpClearTexture3D_ = nullptr;
     mpClearBuffer1D_ = nullptr;
     mpSVONodeBufferNext_ = nullptr;
+    mpSVONodeBufferColor_ = nullptr;
     mpIndirectArgBuffer_ = nullptr;
     mpTagNode_ = nullptr;
     mpCaculateIndirectArg_ = nullptr;
@@ -68,6 +69,7 @@ void VoxelizationPass::on_render(RenderContext* pContext, const Fbo::SharedPtr& 
 
 
     do_build_svo(pContext);
+    do_build_brick(pContext);
     mNeedRefresh_ = false;
 }
 
@@ -107,7 +109,16 @@ void VoxelizationPass::do_build_svo(RenderContext* pContext) {
     assert((data[ATOM_NODE_NEXT] + 1) * size_t(8) < mpSVONodeBufferNext_->getSize() / sizeof(uint32_t));
     mpAtomicAndIndirect_->unmap();
 #endif
+}
 
+void VoxelizationPass::do_build_brick(RenderContext* pContext) {
+    mpNodeIndirectArg_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
+    mpNodeIndirectArg_->execute(pContext, uint3(1));
+
+#ifdef _DEBUG
+    uint32_t* data = (uint32_t*)mpAtomicAndIndirect_->map(Buffer::MapType::Read);
+    mpAtomicAndIndirect_->unmap();
+#endif
 
 }
 
@@ -184,7 +195,7 @@ void VoxelizationPass::do_create_shaders(Program::DefineList& programDefines) {
 
     {
         mpFragPosIndirectArg_ = ComputePass::create(kIndirectArgProg, "make_indirect_frag_pos_arg", programDefines);
-        mpNodeIndirect_ = ComputePass::create(kIndirectArgProg, "make_indirect_frag_node_arg", programDefines);
+        mpNodeIndirectArg_ = ComputePass::create(kIndirectArgProg, "make_indirect_frag_node_arg", programDefines);
     }
 
     {
@@ -237,6 +248,7 @@ void VoxelizationPass::do_rebuild_svo_buffers() {
         mSVOPerLevelNodeNum_.push_back(levelNum);
     }
     mpSVONodeBufferNext_ = Buffer::create(mSVONodeNum_ * sizeof(uint32_t));
+    mpSVONodeBufferColor_ = Buffer::create(mSVONodeNum_ * sizeof(uint32_t));
 
     uint32_t initialValue[7] = { 1, 1, 1, 0, 1, 0, 0 };
     mpIndirectArgBuffer_ = Buffer::create(7 * sizeof(uint32_t), ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess, Buffer::CpuAccess::None, initialValue);
@@ -250,14 +262,20 @@ void VoxelizationPass::do_clear(RenderContext* pContext) {
     mpClearTexture3D_->getVars()["texClear"] = mpPackedNormal_;
     mpClearTexture3D_->execute(pContext, uint3(mVoxelGridResolution_));
 
-    uint3 threads = extract_index_form_linear(mSVONodeNum_, uint3(DIVIDE_THREAD_SIZE));
+    uint3 threads = uint3(uint32_t(glm::pow(mSVONodeNum_, 1.0f/ 3.0f))) + uint3(1);
+    uint3 groups = div_round_up(threads, uint3(COMMON_THREAD_SIZE));
     mpClearBuffer1D_->getVars()["bufClear"] = mpSVONodeBufferNext_;
-    mpClearBuffer1D_->getVars()["CB"]["uDim3"] = uint3(DIVIDE_THREAD_SIZE);
+    mpClearBuffer1D_->getVars()["CB"]["uDim3"] = groups;
     mpClearBuffer1D_->getVars()["CB"]["uDim1"] = mSVONodeNum_;
     mpClearBuffer1D_->execute(pContext, threads);
 
-    threads = extract_index_form_linear(3 * mVoxelGridResolution_ * mVoxelGridResolution_ * mVoxelGridResolution_, uint3(DIVIDE_THREAD_SIZE));
+    mpClearBuffer1D_->getVars()["bufClear"] = mpSVONodeBufferColor_;
+    mpClearBuffer1D_->execute(pContext, threads);
+
+    threads = uint3(uint32_t(glm::pow(3 * mVoxelGridResolution_ * mVoxelGridResolution_ * mVoxelGridResolution_, 1.0f / 3.0f))) + uint3(1);
+    groups = div_round_up(threads, uint3(COMMON_THREAD_SIZE));
     mpClearBuffer1D_->getVars()["bufClear"] = mpFragPositions_;
+    mpClearBuffer1D_->getVars()["CB"]["uDim3"] = groups;
     mpClearBuffer1D_->getVars()["CB"]["uDim1"] = 3 * mVoxelGridResolution_ * mVoxelGridResolution_ * mVoxelGridResolution_;
     mpClearBuffer1D_->execute(pContext, threads);
 

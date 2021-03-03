@@ -17,7 +17,8 @@ void clear_texture_3d(uint3 DTid : SV_DispatchThreadID){
 
 [numthreads(COMMON_THREAD_SIZE, COMMON_THREAD_SIZE, COMMON_THREAD_SIZE)]
 void clear_buffer_linear(uint3 DTid : SV_DispatchThreadID){
-    uint32_t index = DTid.z *  uDim3.x * uDim3.y + DTid.y * uDim3.x + DTid.x;
+    uint3 dimSize = uDim3 * uint3(COMMON_THREAD_SIZE);
+    uint32_t index = DTid.z *  dimSize.x * dimSize.y + DTid.y * dimSize.x + DTid.x;
     if(index >= uDim1) return;
     bufClear.Store(index * 4, 0);
 }

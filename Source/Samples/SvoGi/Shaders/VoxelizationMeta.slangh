@@ -13,6 +13,7 @@
     float3 Max = float3(-FLT_MAX);
     uint32_t CurLevel = 0;
 
+    uint32_t BrickPoolResolution = 0;
  };
 
 
@@ -66,6 +67,7 @@ inline uint3 uint_XYZ10_to_uint3(uint val) {
 // Atomics and Indirect
 #define ATOM_FRAG_NEXT          0
 #define ATOM_NODE_NEXT          1
-#define FRAG_NEXT_INDIRECT      2
-#define NODE_NEXT_INDIRECT      5
-#define BUFFER_COUNT            8
+#define ATOM_BRICK_NEXT         2
+#define FRAG_NEXT_INDIRECT      3
+#define NODE_NEXT_INDIRECT      6
+#define BUFFER_COUNT            9

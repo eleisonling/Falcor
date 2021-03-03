@@ -81,5 +81,8 @@
     <ShaderSource Include="Shaders\VoxelizationDispatch.cs.slang">
       <Filter>Shaders</Filter>
     </ShaderSource>
+    <ShaderSource Include="Shaders\VoxelizationBrick.cs.slang">
+      <Filter>Shaders</Filter>
+    </ShaderSource>
   </ItemGroup>
 </Project>

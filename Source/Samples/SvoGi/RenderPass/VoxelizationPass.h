@@ -29,6 +29,7 @@ private:
     void do_rebuild_svo_buffers();
     void do_clear(RenderContext* pContext);
     void do_build_svo(RenderContext* pContext);
+    void do_build_brick(RenderContext* pContext);
 
     // clear
     ComputePass::SharedPtr mpClearTexture3D_ = nullptr;
@@ -51,6 +52,7 @@ private:
 
     // sparse Oct-tree builder
     Buffer::SharedPtr mpSVONodeBufferNext_ = nullptr;
+    Buffer::SharedPtr mpSVONodeBufferColor_ = nullptr;
     Buffer::SharedPtr mpIndirectArgBuffer_ = nullptr;
     uint32_t mSVONodeNum_ = 0;
     std::vector<uint32_t> mSVOPerLevelNodeNum_;
@@ -59,5 +61,5 @@ private:
     ComputeState::SharedPtr mpCaculateIndirectArg_ = nullptr;
     ComputeVars::SharedPtr mpCaculateIndirectArgVars_ = nullptr;
     ComputePass::SharedPtr mpDivideSubNode_ = nullptr;
-    ComputePass::SharedPtr mpNodeIndirect_ = nullptr;
+    ComputePass::SharedPtr mpNodeIndirectArg_ = nullptr;
 };

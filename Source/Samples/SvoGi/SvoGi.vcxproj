@@ -37,6 +37,7 @@
     <ShaderSource Include="Shaders\Shadowmap.slang" />
     <ShaderSource Include="Shaders\ToneMap.cs.slang" />
     <ShaderSource Include="Shaders\Voxelization.slang" />
+    <ShaderSource Include="Shaders\VoxelizationBrick.cs.slang" />
     <ShaderSource Include="Shaders\VoxelizationClear.cs.slang" />
     <ShaderSource Include="Shaders\VoxelizationDispatch.cs.slang" />
     <ShaderSource Include="Shaders\VoxelizationMeta.slangh" />
