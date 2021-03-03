@@ -90,3 +90,13 @@ inline uint32_t set_child_index(uint32_t index) {
     return index | INTERNAL_FLAG;
 }
 
+
+static const uint3 childOffsets[8] = {
+  uint3(0, 0, 0),
+  uint3(1, 0, 0),
+  uint3(0, 1, 0),
+  uint3(1, 1, 0),
+  uint3(0, 0, 1),
+  uint3(1, 0, 1),
+  uint3(0, 1, 1), 
+  uint3(1, 1, 1)};

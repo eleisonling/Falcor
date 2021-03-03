@@ -7,6 +7,22 @@ using namespace Falcor;
 
 class VoxelizationPass : public BaseGraphicsPass, public std::enable_shared_from_this<VoxelizationPass> {
 public:
+
+    enum EBrickPoolAttributes {
+        BRICKPOOL_COLOR = 0,
+        BRICKPOOL_COLOR_X,
+        BRICKPOOL_COLOR_X_NEG,
+        BRICKPOOL_COLOR_Y,
+        BRICKPOOL_COLOR_Y_NEG,
+        BRICKPOOL_COLOR_Z,
+        BRICKPOOL_COLOR_Z_NEG,
+        BRICKPOOL_IRRADIANCE,
+        BRICKPOOL_NORMAL,
+
+        BRICKPOOL_ATTRIBUTES_ALL,
+        BRICKPOOL_ATTRIBUTES_NUM = BRICKPOOL_ATTRIBUTES_ALL
+    };
+
     using SharedPtr = std::shared_ptr<VoxelizationPass>;
     virtual ~VoxelizationPass() override;
 
@@ -21,12 +37,13 @@ public:
     Texture::SharedPtr get_normal_voxel_texture() const { return mpPackedNormal_; }
 
 private:
-    VoxelizationPass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc,Program::DefineList& programDefines);
+    VoxelizationPass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc, Program::DefineList& programDefines);
 
     void do_create_shaders(Program::DefineList& programDefines);
     void do_create_vps();
     void do_rebuild_pixel_data_buffers();
     void do_rebuild_svo_buffers();
+    void do_rebuild_brick_buffers();
     void do_clear(RenderContext* pContext);
     void do_build_svo(RenderContext* pContext);
     void do_build_brick(RenderContext* pContext);
@@ -48,7 +65,7 @@ private:
 
     // pixel volumetric vars
     bool mNeedRefresh_ = true;
-    uint32_t mVoxelGridResolution_ = 256;
+    const uint32_t mVoxelGridResolution_ = 256;
 
     // sparse Oct-tree builder
     Buffer::SharedPtr mpSVONodeBufferNext_ = nullptr;
@@ -62,4 +79,11 @@ private:
     ComputeVars::SharedPtr mpCaculateIndirectArgVars_ = nullptr;
     ComputePass::SharedPtr mpDivideSubNode_ = nullptr;
     ComputePass::SharedPtr mpNodeIndirectArg_ = nullptr;
+
+    // brick
+    const uint32_t mBrickPoolResolution_ = 70 * 3;
+    const uint32_t mBrickPoolNodeResolution_ = mBrickPoolResolution_ / 2;
+    Texture::SharedPtr mpBrickTextures_[BRICKPOOL_ATTRIBUTES_ALL] = {};
+    ComputePass::SharedPtr mpAllocBrick_ = nullptr;
+    ComputePass::SharedPtr mpWriteLeaf_ = nullptr;
 };

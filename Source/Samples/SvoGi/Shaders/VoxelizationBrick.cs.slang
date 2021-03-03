@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Samples/SvoGi/Shaders/VoxelizationMeta.slangh"
+#include "Samples/SvoGi/Shaders/VoxelizationTracing.slangh"
+
 
 cbuffer CB {
     VoxelizationMeta bufVoxelMeta;
@@ -10,13 +12,14 @@ cbuffer CB {
 RWByteAddressBuffer bufAtomicAndIndirect;
 RWByteAddressBuffer bufSvoNodeNext;
 RWByteAddressBuffer bufSvoNodeColor;
+RWByteAddressBuffer bufFragPosition;
 
 Texture3D<float4> texPackedAlbedo;
 Texture3D<float4> texPackedNormal;
 
-Texture3D<float4> texBrickAlbedo;
-Texture3D<float4> texBrickNormal;
-Texture3D<float4> texBrickRadius;
+RWTexture3D<float4> texBrickAlbedo;
+RWTexture3D<float4> texBrickNormal;
+RWTexture3D<float4> texBrickRadius;
 
 void alloc_3x3x3_texture_brick(uint32_t address) {
     uint32_t nextFreeTexBrick = 0;
@@ -44,7 +47,14 @@ void alloc_brick(uint3 DTid : SV_DispatchThreadID){
     }
 }
 
-void store_in_leaf(uint3 localCellIndex, uint32_t address, float4 voxelColor, float4 voxelNormal) {
+void store_in_leaf(uint3 relative, uint32_t address, float4 voxelColor, float4 voxelNormal) {
+    uint32_t nodeColorU = bufSvoNodeColor.Load(address * 4);
+    uint3 brickCoords = uint_XYZ10_to_uint3(nodeColorU);
+    uint32_t off = relative.x | relative.y << 1 | relative.z << 2;
+
+    texBrickAlbedo[brickCoords + 2 * childOffsets[off]] = voxelColor;
+    texBrickNormal[brickCoords + 2 * childOffsets[off]] = voxelNormal;
+    texBrickRadius[brickCoords + 2 * childOffsets[off]] = float4(0,0,0,1);
 }
 
 
@@ -58,12 +68,12 @@ void write_leaf_brick(uint3 DTid : SV_DispatchThreadID){
     uint32_t cellIndexU =  bufFragPosition.Load(linearIndex * 4);
     uint3 cellIndex = uint_XYZ10_to_uint3(cellIndexU);
 
-    float4 voxelColor = texPackedAlbedo[cellIndex]
-    float4 voxelNormal = texPackedNormal[cellIndex]
+    float4 voxelColor = texPackedAlbedo[cellIndex];
+    float4 voxelNormal = texPackedNormal[cellIndex];
 
     uint32_t onLevel = 0;
-    uint32_t nodeAddress = traverse_octree_pos_out(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, onLevel);
-
-    store_in_leaf(cellIndex, nodeAddress, voxelColor, voxelNormal);
+    uint3 relative = uint3(0);
+    uint32_t nodeAddress = traverse_octree_relative_out(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, onLevel, relative);
+    store_in_leaf(relative, nodeAddress, voxelColor, voxelNormal);
 }
 

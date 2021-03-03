@@ -5,6 +5,7 @@ namespace {
     static std::string kIndirectArgProg = "Samples/SvoGi/Shaders/VoxelizationDispatch.cs.slang";
     static std::string kVolumetricProg = "Samples/SvoGi/Shaders/Voxelization.slang";
     static std::string kBuildSVOProg = "Samples/SvoGi/Shaders/VoxelizationSvo.cs.slang";
+    static std::string kBuildBrickProg = "Samples/SvoGi/Shaders/VoxelizationBrick.cs.slang";
     static VoxelizationMeta kVoxelizationMeta{};
 }
 
@@ -25,6 +26,9 @@ VoxelizationPass::~VoxelizationPass() {
     mpCaculateIndirectArgVars_ = nullptr;
     mpDivideSubNode_ = nullptr;
     mpAtomicAndIndirect_ = nullptr;
+
+    mpAllocBrick_ = nullptr;
+    mpWriteLeaf_ = nullptr;
 }
 
 VoxelizationPass::SharedPtr VoxelizationPass::create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines /*= Program::DefineList()*/) {
@@ -119,6 +123,21 @@ void VoxelizationPass::do_build_brick(RenderContext* pContext) {
     mpAtomicAndIndirect_->unmap();
 #endif
 
+    mpAllocBrick_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+    mpAllocBrick_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
+    mpAllocBrick_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
+    mpAllocBrick_->executeIndirect(pContext, mpAtomicAndIndirect_.get(), NODE_NEXT_INDIRECT * 4);
+
+    mpWriteLeaf_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+    mpWriteLeaf_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
+    mpWriteLeaf_["bufFragPosition"] = mpFragPositions_;
+    mpWriteLeaf_["texPackedAlbedo"] = mpPackedAlbedo_;
+    mpWriteLeaf_["texPackedNormal"] = mpPackedNormal_;
+    mpWriteLeaf_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
+    mpWriteLeaf_["texBrickAlbedo"] = mpBrickTextures_[BRICKPOOL_COLOR];
+    mpWriteLeaf_["texBrickNormal"] = mpBrickTextures_[BRICKPOOL_NORMAL];
+    mpWriteLeaf_["texBrickRadius"] = mpBrickTextures_[BRICKPOOL_IRRADIANCE];
+    mpWriteLeaf_->executeIndirect(pContext, mpAtomicAndIndirect_.get(), FRAG_NEXT_INDIRECT * 4);
 }
 
 void VoxelizationPass::on_gui(Gui::Group& group) {}
@@ -156,6 +175,7 @@ VoxelizationPass::VoxelizationPass(const Scene::SharedPtr& pScene, const Program
     do_create_shaders(programDefines);
     do_rebuild_pixel_data_buffers();
     do_rebuild_svo_buffers();
+    do_rebuild_brick_buffers();
 }
 
 void VoxelizationPass::do_rebuild_pixel_data_buffers() {
@@ -213,6 +233,11 @@ void VoxelizationPass::do_create_shaders(Program::DefineList& programDefines) {
     {
         mpDivideSubNode_ = ComputePass::create(kBuildSVOProg, "sub_divide_node", programDefines);
     }
+
+    {
+        mpAllocBrick_ = ComputePass::create(kBuildBrickProg, "alloc_brick", programDefines);
+        mpWriteLeaf_ = ComputePass::create(kBuildBrickProg, "write_leaf_brick", programDefines);
+    }
 }
 
 void VoxelizationPass::do_create_vps() {
@@ -250,6 +275,17 @@ void VoxelizationPass::do_rebuild_svo_buffers() {
 
     uint32_t initialValue[7] = { 1, 1, 1, 0, 1, 0, 0 };
     mpIndirectArgBuffer_ = Buffer::create(7 * sizeof(uint32_t), ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess, Buffer::CpuAccess::None, initialValue);
+}
+
+void VoxelizationPass::do_rebuild_brick_buffers() {
+    mpBrickTextures_[BRICKPOOL_COLOR] = Texture::create3D(mBrickPoolResolution_, mBrickPoolResolution_, mBrickPoolResolution_, ResourceFormat::RGBA8Unorm, 1,
+        nullptr, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess);
+    mpBrickTextures_[BRICKPOOL_NORMAL] = Texture::create3D(mBrickPoolResolution_, mBrickPoolResolution_, mBrickPoolResolution_, ResourceFormat::RGBA8Unorm, 1,
+        nullptr, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess);
+    mpBrickTextures_[BRICKPOOL_IRRADIANCE] = Texture::create3D(mBrickPoolResolution_, mBrickPoolResolution_, mBrickPoolResolution_, ResourceFormat::RGBA8Unorm, 1,
+        nullptr, ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess);
+
+    kVoxelizationMeta.BrickPoolResolution = mBrickPoolResolution_;
 }
 
 void VoxelizationPass::do_clear(RenderContext* pContext) {

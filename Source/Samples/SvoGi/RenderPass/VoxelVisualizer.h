@@ -13,7 +13,7 @@ private:
     void create_visualize_resources();
 
     Scene::SharedPtr mpScene_ = nullptr;
-    bool mDebugSVOTracing_ = false;
+    bool mDebugSVOTracing_ = true;
     VoxelizationMeta mVoxelizationMeta_ = {};
 
     Texture::SharedPtr mpVisualTexture_ = nullptr;
