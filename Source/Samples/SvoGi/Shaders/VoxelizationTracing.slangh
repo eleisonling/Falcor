@@ -193,19 +193,17 @@ inline uint32_t traverse_octree_simple(uint3 cellIndex, uint3 cellDim, uint32_t 
     uint32_t childID = 0;
     uint32_t curID = 0;
     foundOnLevel = 0;
-    float sideLength = 1.0;
   
-    for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
+    for (uint iLevel = 1; iLevel <= numLevels; ++iLevel) {
         foundOnLevel = iLevel;
-        cellDim >= 1;
+        cellDim >>= 1;
         uint3 relative = step(cellDim, cellIndex);
         curID = childID + (relative.x | relative.y << 1 | relative.z << 2);
         uint32_t nodeNext = svNodeNext.Load(curID * 4);
-        uint childStartAddress = get_child_index(nodeNext);
-        if (!is_valid_node(nodeNext) || childStartAddress == 0U) {
+        childID = get_child_index(nodeNext) * 8;
+        if (!is_valid_node(nodeNext) || childID == 0U) {
             break;
         }
-        childID = get_child_index(svNodeNext.Load(curID * 4)) * 8;
         cellIndex -= cellDim * relative;
     } // level-for
     return curID;
@@ -215,20 +213,17 @@ inline uint32_t traverse_octree_pos_out(uint3 cellIndex, uint3 cellDim, uint32_t
     uint32_t childID = 0;
     uint32_t curID = 0;
     foundOnLevel = 0;
-    float sideLength = 1.0;
   
-    for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
+    for (uint iLevel = 1; iLevel <= numLevels; ++iLevel) {
         foundOnLevel = iLevel;
-        cellDim >= 1;
+        cellDim >>= 1;
         uint3 relative = step(cellDim, cellIndex);
         curID = childID + (relative.x | relative.y << 1 | relative.z << 2);
         uint32_t nodeNext = svNodeNext.Load(curID * 4);
-        uint childStartAddress = get_child_index(nodeNext);
-        if (!is_valid_node(nodeNext) || childStartAddress == 0U) {
-            foundOnLevel = iLevel;
+        childID = get_child_index(nodeNext) * 8;
+        if (!is_valid_node(nodeNext) || childID == 0U) {
             break;
         }
-        childID = get_child_index(svNodeNext.Load(curID * 4)) * 8;
         cellIndex -= cellDim * relative;
     } // level-for
     return curID;

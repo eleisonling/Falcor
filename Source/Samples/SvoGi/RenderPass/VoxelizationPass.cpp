@@ -239,9 +239,8 @@ void VoxelizationPass::do_rebuild_svo_buffers() {
 
     mpAtomicAndIndirect_ = Buffer::create(sizeof(uint32_t) * BUFFER_COUNT);
 
-    mSVONodeNum_ = 8;
-    mSVOPerLevelNodeNum_.push_back(8);
-    for (uint32_t i = 1; i < kVoxelizationMeta.TotalLevel; ++i) {
+    mSVONodeNum_ = 0;
+    for (uint32_t i = 1; i <= kVoxelizationMeta.TotalLevel; ++i) {
         uint32_t levelNum = (uint32_t)std::powf(8, (float)i);
         mSVONodeNum_ += levelNum;
         mSVOPerLevelNodeNum_.push_back(levelNum);

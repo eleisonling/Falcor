@@ -15,6 +15,7 @@ void VoxelVisualizer::create_visualize_shaders(const Program::DefineList& progra
     // visual raster
     {
         Program::Desc d_visualRaster;
+        d_visualRaster.setCompilerFlags(Shader::CompilerFlags::GenerateDebugInfo | Shader::CompilerFlags::DisableOptimize);
         d_visualRaster.addShaderLibrary(kDebugVolProg).vsEntry("vs_main").psEntry("ps_main");
         // create debug program
         auto pDebugProg = GraphicsProgram::create(d_visualRaster, programDefines);

@@ -53,7 +53,10 @@ float4 ps_main(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
 
     uint32_t foundLevel = 0;
     uint32_t nodeNext = traverse_octree_simple(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, foundLevel);
-    if(foundLevel != bufVoxelMeta.TotalLevel - 1) discard;
+    uint32_t leafPointer = get_child_index(bufSvoNodeNext.Load(nodeNext * 4));
+
+    if(foundLevel != bufVoxelMeta.TotalLevel || leafPointer == 0) discard;
+    cellIndex = extract_index_form_linear(leafPointer, bufVoxelMeta.CellDim);
 
     // load and uncompress
     float4 packedColor = texPackedAlbedo[cellIndex];
