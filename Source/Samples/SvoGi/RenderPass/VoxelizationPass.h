@@ -71,6 +71,7 @@ private:
     Buffer::SharedPtr mpSVONodeBufferNext_ = nullptr;
     Buffer::SharedPtr mpSVONodeBufferColor_ = nullptr;
     Buffer::SharedPtr mpIndirectArgBuffer_ = nullptr;
+    Buffer::SharedPtr mpLevelAddressBuffer_ = nullptr;
     uint32_t mSVONodeNum_ = 0;
     std::vector<uint32_t> mSVOPerLevelNodeNum_;
 

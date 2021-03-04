@@ -8,6 +8,7 @@ cbuffer CB {
 RWByteAddressBuffer bufSvoNode;
 RWByteAddressBuffer bufAtomicAndIndirect;
 RWByteAddressBuffer bufFragPosition;
+RWByteAddressBuffer bufLevelAddress;
 
 // 0, 4, 8 dispath group
 // 12 preNode num
@@ -87,8 +88,9 @@ void sub_divide_node(uint3 DTid : SV_DispatchThreadID){
         uint32_t nodeNum = 0;
         bufDivideIndirectArg.InterlockedAdd(g_curNodeNum, 1, nodeNum);
         bufAtomicAndIndirect.InterlockedAdd(ATOM_NODE_NEXT * 4, 1);
-
         bufSvoNode.Store(index * 4, set_child_index(nodeNum));
+        bufLevelAddress.InterlockedMin((bufVoxelMeta.CurLevel) * 4, nodeNum);
+
         uint32_t childNodeStart = nodeNum * 8;
         for (int32_t i = 0; i < 8; ++i) {
             uint32_t address = (childNodeStart + i) * 4;

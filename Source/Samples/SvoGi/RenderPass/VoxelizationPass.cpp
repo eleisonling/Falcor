@@ -21,6 +21,7 @@ VoxelizationPass::~VoxelizationPass() {
     mpSVONodeBufferNext_ = nullptr;
     mpSVONodeBufferColor_ = nullptr;
     mpIndirectArgBuffer_ = nullptr;
+    mpLevelAddressBuffer_ = nullptr;
     mpTagNode_ = nullptr;
     mpCaculateIndirectArg_ = nullptr;
     mpCaculateIndirectArgVars_ = nullptr;
@@ -100,9 +101,11 @@ void VoxelizationPass::do_build_svo(RenderContext* pContext) {
             pContext->dispatch(mpCaculateIndirectArg_.get(), mpCaculateIndirectArgVars_.get(), uint3{ 1 ,1 ,1 });
 
             // sub-divide
+            mpDivideSubNode_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
             mpDivideSubNode_["bufDivideIndirectArg"] = mpIndirectArgBuffer_;
             mpDivideSubNode_["bufSvoNode"] = mpSVONodeBufferNext_;
             mpDivideSubNode_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
+            mpDivideSubNode_["bufLevelAddress"] = mpLevelAddressBuffer_;
             mpDivideSubNode_->executeIndirect(pContext, mpIndirectArgBuffer_.get());
         }
     }
@@ -111,6 +114,15 @@ void VoxelizationPass::do_build_svo(RenderContext* pContext) {
     uint32_t* data = (uint32_t*)mpAtomicAndIndirect_->map(Buffer::MapType::Read);
     assert((data[ATOM_NODE_NEXT] + 1) * size_t(8) < mpSVONodeBufferNext_->getSize() / sizeof(uint32_t));
     mpAtomicAndIndirect_->unmap();
+
+    data = (uint32_t*)mpLevelAddressBuffer_->map(Buffer::MapType::Read);
+    for (uint32_t i = 0; i < kVoxelizationMeta.CurLevel; ++i) {
+        std::stringstream s;
+        s <<  "Dump Address Buff(Level " << i << "): " << std::to_string(data[i]) << std::endl;
+        logInfo(s.str());
+    }
+    mpLevelAddressBuffer_->unmap();
+
 #endif
 }
 
@@ -279,6 +291,7 @@ void VoxelizationPass::do_rebuild_svo_buffers() {
 
     uint32_t initialValue[7] = { 1, 1, 1, 0, 1, 0, 0 };
     mpIndirectArgBuffer_ = Buffer::create(7 * sizeof(uint32_t), ResourceBindFlags::ShaderResource | ResourceBindFlags::UnorderedAccess, Buffer::CpuAccess::None, initialValue);
+    mpLevelAddressBuffer_ = Buffer::create(kVoxelizationMeta.TotalLevel * sizeof(uint32_t));
 }
 
 void VoxelizationPass::do_rebuild_brick_buffers() {
@@ -328,7 +341,13 @@ void VoxelizationPass::do_clear(RenderContext* pContext) {
     mpClearTexture3D_->execute(pContext, uint3(mBrickPoolResolution_));
 
 
-    uint32_t initialVal[BUFFER_COUNT] = { 0 };
-    initialVal[ATOM_NODE_NEXT] = 1;
-    mpAtomicAndIndirect_->setBlob(initialVal, 0, sizeof(uint32_t) * BUFFER_COUNT);
+    std::vector<uint32_t> atomicInit;
+    atomicInit.resize(BUFFER_COUNT, 0);
+    atomicInit[ATOM_NODE_NEXT] = 1;
+    mpAtomicAndIndirect_->setBlob(atomicInit.data(), 0, sizeof(uint32_t) * BUFFER_COUNT);
+
+    std::vector<uint32_t> levleAddressBufInit;
+    levleAddressBufInit.resize(kVoxelizationMeta.TotalLevel, std::numeric_limits<uint32_t>::max());
+    levleAddressBufInit[0] = 0;
+    mpLevelAddressBuffer_->setBlob(levleAddressBufInit.data(), 0, sizeof(uint32_t) * kVoxelizationMeta.TotalLevel);
 }

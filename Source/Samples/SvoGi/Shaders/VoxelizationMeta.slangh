@@ -65,6 +65,13 @@ inline uint3 uint_XYZ10_to_uint3(uint val) {
 #define SIGN_BIT_32             0x80000000
 #define MAX_LEVEL               23
 
+#define AXIS_X                  0
+#define AXIS_Y                  1
+#define AXIS_Z                  2
+#define AXIS_X_NEG              3
+#define AXIS_Y_NEG              4
+#define AXIS_Z_NEG              5
+
 // Atomics and Indirect
 #define ATOM_FRAG_NEXT          0
 #define ATOM_NODE_NEXT          1
