@@ -6,6 +6,7 @@
 
 cbuffer CB {
     VoxelizationMeta bufVoxelMeta;
+    uint3 uDispathGroupSize;
     int32_t iBorderTransferAxis;
 }
 
@@ -82,7 +83,7 @@ void write_leaf_brick(uint3 DTid : SV_DispatchThreadID){
 
 RWTexture3D<float4> texBrickValue;
 
-void load_brick_values(uint3 address, float4[8] brickValues) {
+void load_brick_values(uint3 brickAddress, float4[8] brickValues) {
     for(int32_t i = 0; i < 8; ++i) {
         brickValues[i] = texBrickValue[brickAddress + 2 * childOffsets[i]];
     }
@@ -90,7 +91,7 @@ void load_brick_values(uint3 address, float4[8] brickValues) {
 
 [numthreads(COMMON_THREAD_SIZE, COMMON_THREAD_SIZE, COMMON_THREAD_SIZE)]
 void spread_leaf_node(uint3 DTid : SV_DispatchThreadID){
-    uint32_t linearIndex = DTid.z * groupSize.y * groupSize.x + DTid.y * groupSize.x + DTid.x;
+    uint32_t linearIndex = DTid.z * uDispathGroupSize.y * uDispathGroupSize.x + DTid.y * uDispathGroupSize.x + DTid.x;
     uint32_t levelStart = bufLevelAddress.Load((bufVoxelMeta.CurLevel - 1) * 4);
     uint32_t levelNextStart = bufLevelAddress.Load(bufVoxelMeta.CurLevel * 4);
 
@@ -100,7 +101,7 @@ void spread_leaf_node(uint3 DTid : SV_DispatchThreadID){
     uint32_t brickAddressU = bufSvoNodeColor.Load(nodeAddress * 8 * 4);
     uint3 brickAddress = uint_XYZ10_to_uint3(brickAddressU);
 
-    float4[8] brickValue = {};
+    float4 brickValue[8] = {};
     load_brick_values(brickAddress, brickValue);
 
     float4 col = float4(0);
@@ -109,7 +110,7 @@ void spread_leaf_node(uint3 DTid : SV_DispatchThreadID){
     for(int32_t i = 0; i < 8; ++i) {
         col += 0.125f * brickValue[i];
     }
-    texBrickValue[brickAddress + uint3(1)] = color;
+    texBrickValue[brickAddress + uint3(1)] = col;
 
     // face x
     col = float4(0);
@@ -145,7 +146,7 @@ void spread_leaf_node(uint3 DTid : SV_DispatchThreadID){
 
   
     // Face Z
-    col = vec4(0);
+    col = float4(0);
     col += 0.25 * brickValue[4];
     col += 0.25 * brickValue[5];
     col += 0.25 * brickValue[6];
@@ -153,7 +154,7 @@ void spread_leaf_node(uint3 DTid : SV_DispatchThreadID){
     texBrickValue[brickAddress + uint3(1,1,2)] = col;
 
     // Face Z Neg
-    col = vec4(0);
+    col = float4(0);
     col += 0.25 * brickValue[0];
     col += 0.25 * brickValue[1];
     col += 0.25 * brickValue[2];
@@ -162,62 +163,62 @@ void spread_leaf_node(uint3 DTid : SV_DispatchThreadID){
 
 
     // Edges
-    col = vec4(0);
+    col = float4(0);
     col += 0.5 * brickValue[0];
     col += 0.5 * brickValue[1];
     texBrickValue[brickAddress + uint3(1,0,0)] = col;
 
-    col = vec4(0);
+    col = float4(0);
     col += 0.5 * brickValue[0];
     col += 0.5 * brickValue[2];
     texBrickValue[brickAddress + uint3(0,1,0)] = col;
 
-    col = vec4(0);
+    col = float4(0);
     col += 0.5 * brickValue[2];
     col += 0.5 * brickValue[3];
     texBrickValue[brickAddress + uint3(1,2,0)] = col;
 
-    col = vec4(0);
+    col = float4(0);
     col += 0.5 * brickValue[3];
     col += 0.5 * brickValue[1];
     texBrickValue[brickAddress + uint3(2,1,0)] = col;
 
-    col = vec4(0);
+    col = float4(0);
     col += 0.5 * brickValue[0];
     col += 0.5 * brickValue[4];
     texBrickValue[brickAddress + uint3(0,0,1)] = col;
 
-    col = vec4(0);
+    col = float4(0);
     col += 0.5 * brickValue[2];
     col += 0.5 * brickValue[6];
     texBrickValue[brickAddress + uint3(0,2,1)] = col;
 
-    col = vec4(0);
+    col = float4(0);
     col += 0.5 * brickValue[3];
     col += 0.5 * brickValue[7];
     texBrickValue[brickAddress + uint3(2,2,1)] = col;
 
-    col = vec4(0);
+    col = float4(0);
     col += 0.5 * brickValue[1];
     col += 0.5 * brickValue[5];
     texBrickValue[brickAddress + uint3(2,0,1)] = col;
 
-    col = vec4(0);
+    col = float4(0);
     col += 0.5 * brickValue[4];
     col += 0.5 * brickValue[6];
     texBrickValue[brickAddress + uint3(0,1,2)] = col;
 
-    col = vec4(0);
+    col = float4(0);
     col += 0.5 * brickValue[6];
     col += 0.5 * brickValue[7];
     texBrickValue[brickAddress + uint3(1,2,2)] = col;
 
-    col = vec4(0);
+    col = float4(0);
     col += 0.5 * brickValue[5];
     col += 0.5 * brickValue[7];
     texBrickValue[brickAddress + uint3(2,1,2)] = col;
 
-    col = vec4(0);
+    col = float4(0);
     col += 0.5 * brickValue[4];
     col += 0.5 * brickValue[5];
     texBrickValue[brickAddress + uint3(1,0,2)] = col;
@@ -230,7 +231,7 @@ float4 get_final_val(in float4 borderVal, in float4 neighbourBorderVal) {
 
 [numthreads(COMMON_THREAD_SIZE, COMMON_THREAD_SIZE, COMMON_THREAD_SIZE)]
 void border_transfer(uint3 DTid : SV_DispatchThreadID){
-    uint32_t linearIndex = DTid.z * groupSize.y * groupSize.x + DTid.y * groupSize.x + DTid.x;
+    uint32_t linearIndex = DTid.z * uDispathGroupSize.y * uDispathGroupSize.x + DTid.y * uDispathGroupSize.x + DTid.x;
     uint32_t levelStart = bufLevelAddress.Load((bufVoxelMeta.CurLevel - 1) * 4);
     uint32_t levelNextStart = bufLevelAddress.Load(bufVoxelMeta.CurLevel * 4);
 
@@ -247,7 +248,7 @@ void border_transfer(uint3 DTid : SV_DispatchThreadID){
         for (int32_t y = 0; y <= 2; ++y) {
             for (int32_t z = 0; z <= 2; ++z) {
                 uint3 offset = uint3(2,y,z);
-                uint3 nOffset = uintc3(0,y,z);
+                uint3 nOffset = uint3(0,y,z);
                 float4 borderVal = texBrickValue[brickAddr + offset];
                 float4 neighbourBorderVal = texBrickValue[nBrickAddr + nOffset];
                 DeviceMemoryBarrier();
