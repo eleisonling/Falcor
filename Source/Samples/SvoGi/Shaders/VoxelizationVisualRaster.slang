@@ -66,7 +66,7 @@ float4 ps_main(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
 }
 
 RWByteAddressBuffer bufSvoNodeColor;
-RWByteAddressBuffer brickTexValue;
+Texture3D<float4> texBrickTexValue;
 
 float4 raster_brick(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
 
@@ -80,13 +80,13 @@ float4 raster_brick(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGE
 
     uint32_t foundLevel = 0;
     uint32_t nodeNext = traverse_octree_simple(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, foundLevel);
-    uint32_t leafPointer = brickTexValue.Load(nodeNext * 4);
+    uint32_t leafPointer = bufSvoNodeColor.Load(nodeNext * 4);
 
     if(foundLevel != bufVoxelMeta.TotalLevel) discard;
     uint3 brickCoords = uint_XYZ10_to_uint3(leafPointer);
 
     // load and uncompress
-    float4 packedColor = brickTexValue[brickCoords];
+    float4 packedColor = texBrickTexValue[brickCoords];
     finalColor = float4(packedColor.xyz, 1.0f);
 
     return finalColor;

@@ -107,7 +107,7 @@ void VoxelVisualizer::do_visual_brick(RenderContext* pContext, const Fbo::Shared
         mpVisualR_[VisualBrick]->setFbo(pDstFbo);
         mpVisualR_[VisualBrick]->setVao(mpRasterVao_);
         mpVisualVarsR_[VisualBrick]->setParameterBlock("gScene", mpScene_->getParameterBlock());
-        mpVisualVarsR_[VisualBrick]["bufSvoNodeColor"] = mpBrickAlbedoTexture_;
+        mpVisualVarsR_[VisualBrick]["texBrickTexValue"] = mpBrickAlbedoTexture_;
         mpVisualVarsR_[VisualBrick]["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
         mpVisualVarsR_[VisualBrick]["bufSvoNodeColor"] = mpSVONodeColorBuffer_;
         mpVisualVarsR_[VisualBrick]["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
