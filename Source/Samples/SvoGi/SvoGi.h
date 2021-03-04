@@ -58,7 +58,7 @@ private:
     PostEffect::SharedPtr mpPostEffects_ = nullptr;
     Fbo::SharedPtr mpHDRFbo_ = nullptr;
 
-    VoxelizationPass::SharedPtr mpVolumetric_ = nullptr;
+    VoxelizationPass::SharedPtr mpVoxelizationPass_ = nullptr;
     VoxelVisualizer::SharedPtr mpVoxelVisualizer_ = nullptr;
 
     uint32_t mFinalOutputType_ = 1;

@@ -62,7 +62,7 @@ void SvoGi::onGuiRender(Gui* pGui) {
 
     auto volumetricGroup = Gui::Group(pGui, "Voxelization");
     if (volumetricGroup.open()) {
-        mpVolumetric_->on_gui(volumetricGroup);
+        mpVoxelizationPass_->on_gui(volumetricGroup);
     }
 
     auto voxelVisualGroup = Gui::Group(pGui, "Voxelization Visual");
@@ -112,7 +112,7 @@ void SvoGi::normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& p
 void SvoGi::onLoad(RenderContext* pRenderContext) {
     load_scene(kDefaultScene, gpFramework->getTargetFbo().get());
     mpFinalShading_ = RasterScenePass::create(mpScene_, kRasterProg, "", "main");
-    mpVolumetric_ = VoxelizationPass::create(mpScene_);
+    mpVoxelizationPass_ = VoxelizationPass::create(mpScene_);
     mpVoxelVisualizer_ = VoxelVisualizer::create(mpScene_);
     mpShadowMap_ = ShadowPass::create(mpScene_);
     mpPostEffects_ = PostEffect::create();
@@ -133,18 +133,21 @@ void SvoGi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& p
 
     mpScene_->update(pRenderContext, gpFramework->getGlobalClock().getTime());
 
-    if (mpVolumetric_->need_refresh()) {
-        mpVolumetric_->on_render(pRenderContext, mpHDRFbo_);
+    if (mpVoxelizationPass_->need_refresh()) {
+        mpVoxelizationPass_->on_render(pRenderContext, mpHDRFbo_);
     }
 
     mpShadowMap_->on_render(pRenderContext);
 
     switch ((FinalType)mFinalOutputType_) {
     case FinalType::Volumetric:
-        mpVoxelVisualizer_->set_voxelization_meta(mpVolumetric_->get_voxelization_meta());
-        mpVoxelVisualizer_->set_voxel_texture(mpVolumetric_->get_albedo_voxel_texture());
-        mpVoxelVisualizer_->set_svo_node_next_buffer(mpVolumetric_->get_svo_node_next_buffer());
-        mpVoxelVisualizer_->on_render(pRenderContext, pTargetFbo, mpVoxelSampler_);
+        mpVoxelVisualizer_->set_voxelization_meta(mpVoxelizationPass_->get_voxelization_meta());
+        mpVoxelVisualizer_->set_voxel_texture(mpVoxelizationPass_->get_albedo_voxel_texture());
+        mpVoxelVisualizer_->set_brick_albedo_texture(mpVoxelizationPass_->get_albedo_brick_texture());
+        mpVoxelVisualizer_->set_texture_sampler(mpTextureSampler_);
+        mpVoxelVisualizer_->set_svo_node_next_buffer(mpVoxelizationPass_->get_svo_node_next_buffer());
+        mpVoxelVisualizer_->set_svo_node_color_buffer(mpVoxelizationPass_->get_svo_node_color_buffer());
+        mpVoxelVisualizer_->on_render(pRenderContext, pTargetFbo);
         break;
     case FinalType::Defulat:
     default:
@@ -155,7 +158,7 @@ void SvoGi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& p
 
 void SvoGi::onShutdown() {
     mpFinalShading_ = nullptr;
-    mpVolumetric_ = nullptr;
+    mpVoxelizationPass_ = nullptr;
     mpVoxelVisualizer_ = nullptr;
     mpScene_ = nullptr;
     mpHDRFbo_ = nullptr;

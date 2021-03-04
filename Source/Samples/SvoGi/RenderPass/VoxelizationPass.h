@@ -33,8 +33,10 @@ public:
 
     const VoxelizationMeta& get_voxelization_meta() const;
     Buffer::SharedPtr get_svo_node_next_buffer() const { return mpSVONodeBufferNext_; }
+    Buffer::SharedPtr get_svo_node_color_buffer() const { return mpSVONodeBufferColor_; }
     Texture::SharedPtr get_albedo_voxel_texture() const { return mpPackedAlbedo_; }
     Texture::SharedPtr get_normal_voxel_texture() const { return mpPackedNormal_; }
+    Texture::SharedPtr get_albedo_brick_texture() const { return mpBrickTextures_[BRICKPOOL_COLOR]; }
 
 private:
     VoxelizationPass(const Scene::SharedPtr& pScene, const Program::Desc& volumetricProgDesc, Program::DefineList& programDefines);
