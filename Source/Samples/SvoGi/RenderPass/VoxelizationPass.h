@@ -87,4 +87,5 @@ private:
     Texture::SharedPtr mpBrickTextures_[BRICKPOOL_ATTRIBUTES_ALL] = {};
     ComputePass::SharedPtr mpAllocBrick_ = nullptr;
     ComputePass::SharedPtr mpWriteLeaf_ = nullptr;
+    ComputePass::SharedPtr mpSpreadNodeLeaf_ = nullptr;
 };
