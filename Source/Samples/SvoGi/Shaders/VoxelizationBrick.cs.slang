@@ -93,10 +93,10 @@ void load_brick_values(uint3 brickAddress, float4[8] brickValues) {
 void spread_leaf_node(uint3 DTid : SV_DispatchThreadID){
     uint32_t linearIndex = DTid.z * uDispathGroupSize.y * uDispathGroupSize.x + DTid.y * uDispathGroupSize.x + DTid.x;
     uint32_t levelStart = bufLevelAddress.Load((bufVoxelMeta.CurLevel - 1) * 4);
-    uint32_t levelNextStart = bufLevelAddress.Load(bufVoxelMeta.CurLevel * 4);
+    uint32_t levelNextStart = bufVoxeMeta.CurLevel <= bufVoxelMeta.TotalLevel ? bufLevelAddress.Load(bufVoxelMeta.CurLevel * 4) : 0;
 
     uint32_t nodeAddress = levelStart + linearIndex;
-    if(bufVoxelMeta.CurLevel < bufVoxelMeta.TotalLevel && nodeAddress >= levelNextStart) return;
+    if(bufVoxelMeta.CurLevel > bufVoxelMeta.TotalLevel || nodeAddress >= levelNextStart) return;
 
     uint32_t brickAddressU = bufSvoNodeColor.Load(nodeAddress * 8 * 4);
     uint3 brickAddress = uint_XYZ10_to_uint3(brickAddressU);
