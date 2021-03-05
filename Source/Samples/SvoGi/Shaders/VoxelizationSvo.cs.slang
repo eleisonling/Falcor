@@ -43,12 +43,12 @@ void tag_node(uint3 DTid : SV_DispatchThreadID){
     for(int32_t i = 0; i < bufVoxelMeta.CurLevel; ++i) {
         svoCellDim >>= 1;
         uint3 relative = step(svoCellDim, cellIndex);
-        curID = childID + (relative.x | relative.y << 1 | relative.z << 2);
         childID = get_child_index(bufSvoNode.Load(curID * 4)) * 8;
+        curID = childID + (relative.x | relative.y << 1 | relative.z << 2);
         cellIndex -= svoCellDim * relative;
     }
 
-    if(bufVoxelMeta.CurLevel == bufVoxelMeta.TotalLevel) {
+    if(bufVoxelMeta.CurLevel == bufVoxelMeta.TotalLevel - 1) {
         // svo node is same as the pixel cell node count
         cellIndex = uint_XYZ10_to_uint3(cellIndexU);
         linearIndex = cellIndex.z * bufVoxelMeta.CellDim.x * bufVoxelMeta.CellDim.y + cellIndex.y * bufVoxelMeta.CellDim.x + cellIndex.x;
@@ -81,7 +81,6 @@ void caculate_divide_indirect_arg() {
 void sub_divide_node(uint3 DTid : SV_DispatchThreadID){
     if(DTid.x >= bufDivideIndirectArg.Load(g_deltaNodeNum)) return;
     uint32_t index = DTid.x + bufDivideIndirectArg.Load(g_nodeOffset);
-
     uint32_t nodeData = bufSvoNode.Load(index * 4);
 
     if(is_valid_node(nodeData) && get_child_index(nodeData) == 0) {
@@ -89,12 +88,6 @@ void sub_divide_node(uint3 DTid : SV_DispatchThreadID){
         bufDivideIndirectArg.InterlockedAdd(g_curNodeNum, 1, nodeNum);
         bufAtomicAndIndirect.InterlockedAdd(ATOM_NODE_NEXT * 4, 1);
         bufSvoNode.Store(index * 4, set_child_index(nodeNum));
-        bufLevelAddress.InterlockedMin((bufVoxelMeta.CurLevel) * 4, nodeNum);
-
-        uint32_t childNodeStart = nodeNum * 8;
-        for (int32_t i = 0; i < 8; ++i) {
-            uint32_t address = (childNodeStart + i) * 4;
-            bufSvoNode.Store(address, 0);
-        }
+        bufLevelAddress.InterlockedMin((bufVoxelMeta.CurLevel + 1) * 4, nodeNum);
     }
 }

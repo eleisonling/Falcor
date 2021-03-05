@@ -55,7 +55,7 @@ float4 ps_main(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
     uint32_t nodeNext = traverse_octree_simple(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, foundLevel);
     uint32_t leafPointer = get_child_index(bufSvoNodeNext.Load(nodeNext * 4));
 
-    if(foundLevel != bufVoxelMeta.TotalLevel || leafPointer == 0) discard;
+    if(foundLevel != (bufVoxelMeta.TotalLevel - 1) || leafPointer == 0) discard;
     cellIndex = extract_index_form_linear(leafPointer, bufVoxelMeta.CellDim);
 
     // load and uncompress
@@ -82,7 +82,7 @@ float4 raster_brick(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGE
     uint32_t nodeNext = traverse_octree_simple(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, foundLevel);
     uint32_t leafPointer = bufSvoNodeColor.Load(nodeNext * 4);
 
-    if(foundLevel != bufVoxelMeta.TotalLevel || leafPointer == 0) discard;
+    if(foundLevel != (bufVoxelMeta.TotalLevel - 1) || leafPointer == 0) discard;
     uint3 brickCoords = uint_XYZ10_to_uint3(leafPointer);
 
     // load and uncompress

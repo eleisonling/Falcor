@@ -193,39 +193,40 @@ inline uint32_t traverse_octree_simple(uint3 cellIndex, uint3 cellDim, uint32_t 
     uint32_t childID = 0;
     uint32_t curID = 0;
     foundOnLevel = 0;
+    uint3 levelDim = uint3(0);
   
-    for (uint iLevel = 1; iLevel <= numLevels; ++iLevel) {
+    for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
         foundOnLevel = iLevel;
-        cellDim >>= 1;
-        uint3 relative = step(cellDim, cellIndex);
+        levelDim = cellDim >> iLevel;
+        uint3 relative = step(levelDim, cellIndex);
         curID = childID + (relative.x | relative.y << 1 | relative.z << 2);
         uint32_t nodeNext = svNodeNext.Load(curID * 4);
         childID = get_child_index(nodeNext) * 8;
         if (!is_valid_node(nodeNext) || childID == 0U) {
             break;
         }
-        cellIndex -= cellDim * relative;
+        cellIndex -= levelDim * relative;
     } // level-for
     return curID;
 }
 
-inline uint32_t traverse_octree_relative_out(uint3 cellIndex, uint3 cellDim, uint32_t numLevels, RWByteAddressBuffer svNodeNext,
-    out uint32_t foundOnLevel, out uint3 relative) {
+inline uint32_t traverse_octree_relative_out(uint3 cellIndex, uint3 cellDim, uint32_t numLevels, RWByteAddressBuffer svNodeNext, out uint32_t foundOnLevel, out uint3 relative) {
     uint32_t childID = 0;
     uint32_t curID = 0;
     foundOnLevel = 0;
+    uint3 levelDim = uint3(0);
   
-    for (uint iLevel = 1; iLevel <= numLevels; ++iLevel) {
+    for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
         foundOnLevel = iLevel;
-        cellDim >>= 1;
-        relative = step(cellDim, cellIndex);
+        levelDim = cellDim >> iLevel;
+        relative = step(levelDim, cellIndex);
         curID = childID + (relative.x | relative.y << 1 | relative.z << 2);
         uint32_t nodeNext = svNodeNext.Load(curID * 4);
         childID = get_child_index(nodeNext) * 8;
         if (!is_valid_node(nodeNext) || childID == 0U) {
             break;
         }
-        cellIndex -= cellDim * relative;
+        cellIndex -= levelDim * relative;
     } // level-for
     return curID;
 }
