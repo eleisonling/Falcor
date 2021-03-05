@@ -160,7 +160,7 @@ void VoxelizationPass::do_build_brick(RenderContext* pContext) {
     uint3 groupSize = div_round_up(threads, uint3(COMMON_THREAD_SIZE));
     kVoxelizationMeta.CurLevel = kVoxelizationMeta.TotalLevel - 1;
     mpSpreadNodeLeaf_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-    mpSpreadNodeLeaf_["CB"]["uDispathGroupSize"] = groupSize;
+    mpSpreadNodeLeaf_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
     mpSpreadNodeLeaf_["bufLevelAddress"] = mpLevelAddressBuffer_;
     mpSpreadNodeLeaf_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
     mpSpreadNodeLeaf_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
