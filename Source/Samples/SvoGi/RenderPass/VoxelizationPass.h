@@ -74,6 +74,7 @@ private:
     Buffer::SharedPtr mpSVONodeBufferColor_ = nullptr;
     Buffer::SharedPtr mpIndirectArgBuffer_ = nullptr;
     Buffer::SharedPtr mpLevelAddressBuffer_ = nullptr;
+    Buffer::SharedPtr mpSVONeighbourBuffer_[3] = {};
     uint32_t mSVONodeNum_ = 0;
     std::vector<uint32_t> mSVOPerLevelNodeNum_;
 
@@ -82,6 +83,7 @@ private:
     ComputeVars::SharedPtr mpCaculateIndirectArgVars_ = nullptr;
     ComputePass::SharedPtr mpDivideSubNode_ = nullptr;
     ComputePass::SharedPtr mpNodeIndirectArg_ = nullptr;
+    ComputePass::SharedPtr mpBuildNeighbours_ = nullptr;
 
     // brick
     const uint32_t mBrickPoolResolution_ = 80 * 3;

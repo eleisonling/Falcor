@@ -22,11 +22,15 @@ VoxelizationPass::~VoxelizationPass() {
     mpSVONodeBufferColor_ = nullptr;
     mpIndirectArgBuffer_ = nullptr;
     mpLevelAddressBuffer_ = nullptr;
+    mpSVONeighbourBuffer_[AXIS_X] = nullptr;
+    mpSVONeighbourBuffer_[AXIS_Y] = nullptr;
+    mpSVONeighbourBuffer_[AXIS_Z] = nullptr;
     mpTagNode_ = nullptr;
     mpCaculateIndirectArg_ = nullptr;
     mpCaculateIndirectArgVars_ = nullptr;
     mpDivideSubNode_ = nullptr;
     mpAtomicAndIndirect_ = nullptr;
+    mpBuildNeighbours_ = nullptr;
 
     mpAllocBrick_ = nullptr;
     mpWriteLeaf_ = nullptr;
@@ -90,12 +94,24 @@ void VoxelizationPass::do_build_svo(RenderContext* pContext) {
             mpTagNode_["bufSvoNode"] = mpSVONodeBufferNext_;
             mpTagNode_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
             mpTagNode_["bufFragPosition"] = mpFragPositions_;
-            mpTagNode_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
             mpTagNode_->executeIndirect(pContext, mpAtomicAndIndirect_.get(), FRAG_NEXT_INDIRECT * 4);
         }
 
         // calculate indirect
         if (i > 0) {
+
+            PROFILE("Build Neighbour");
+            mpBuildNeighbours_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+            mpBuildNeighbours_["bufSvoNode"] = mpSVONodeBufferNext_;
+            mpBuildNeighbours_["bufNeighbour_X"] = mpSVONeighbourBuffer_[AXIS_X];
+            mpBuildNeighbours_["bufNeighbour_Y"] = mpSVONeighbourBuffer_[AXIS_Y];
+            mpBuildNeighbours_["bufNeighbour_Z"] = mpSVONeighbourBuffer_[AXIS_Z];
+            mpBuildNeighbours_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
+            mpBuildNeighbours_["bufFragPosition"] = mpFragPositions_;
+            mpBuildNeighbours_->executeIndirect(pContext, mpAtomicAndIndirect_.get(), FRAG_NEXT_INDIRECT * 4);
+        }
+
+        {
             mpCaculateIndirectArgVars_["bufDivideIndirectArg"] = mpIndirectArgBuffer_;
             pContext->dispatch(mpCaculateIndirectArg_.get(), mpCaculateIndirectArgVars_.get(), uint3{ 1 ,1 ,1 });
         }
@@ -262,19 +278,14 @@ void VoxelizationPass::do_create_shaders(Program::DefineList& programDefines) {
 
     {
         mpTagNode_ = ComputePass::create(kBuildSVOProg, "tag_node", programDefines);
-    }
-
-    {
         Program::Desc d_divideArg;
         d_divideArg.addShaderLibrary(kBuildSVOProg).csEntry("caculate_divide_indirect_arg");
         auto pProg = ComputeProgram::create(d_divideArg, programDefines);
         mpCaculateIndirectArg_ = ComputeState::create();
         mpCaculateIndirectArg_->setProgram(pProg);
         mpCaculateIndirectArgVars_ = ComputeVars::create(pProg.get());
-    }
-
-    {
         mpDivideSubNode_ = ComputePass::create(kBuildSVOProg, "sub_divide_node", programDefines);
+        mpBuildNeighbours_ = ComputePass::create(kBuildSVOProg, "create_neighbours", programDefines);
     }
 
     {
@@ -317,6 +328,9 @@ void VoxelizationPass::do_rebuild_svo_buffers() {
     }
     mpSVONodeBufferNext_ = Buffer::create(mSVONodeNum_ * sizeof(uint32_t));
     mpSVONodeBufferColor_ = Buffer::create(mSVONodeNum_ * sizeof(uint32_t));
+    mpSVONeighbourBuffer_[AXIS_X] = Buffer::create(mSVONodeNum_ * sizeof(uint32_t));
+    mpSVONeighbourBuffer_[AXIS_Y] = Buffer::create(mSVONodeNum_ * sizeof(uint32_t));
+    mpSVONeighbourBuffer_[AXIS_Z] = Buffer::create(mSVONodeNum_ * sizeof(uint32_t));
 
     mpIndirectArgBuffer_ = Buffer::create(7 * sizeof(uint32_t));
     mpLevelAddressBuffer_ = Buffer::create((kVoxelizationMeta.TotalLevel + 1) * sizeof(uint32_t));
@@ -349,6 +363,15 @@ void VoxelizationPass::do_clear(RenderContext* pContext) {
     mpClearBuffer1D_->execute(pContext, threads);
 
     mpClearBuffer1D_->getVars()["bufClear"] = mpSVONodeBufferColor_;
+    mpClearBuffer1D_->execute(pContext, threads);
+
+    mpClearBuffer1D_->getVars()["bufClear"] = mpSVONeighbourBuffer_[AXIS_X];
+    mpClearBuffer1D_->execute(pContext, threads);
+
+    mpClearBuffer1D_->getVars()["bufClear"] = mpSVONeighbourBuffer_[AXIS_Y];
+    mpClearBuffer1D_->execute(pContext, threads);
+
+    mpClearBuffer1D_->getVars()["bufClear"] = mpSVONeighbourBuffer_[AXIS_Z];
     mpClearBuffer1D_->execute(pContext, threads);
 
     threads = uint3(uint32_t(glm::pow(3 * mVoxelGridResolution_ * mVoxelGridResolution_ * mVoxelGridResolution_, 1.0f / 3.0f))) + uint3(1);
