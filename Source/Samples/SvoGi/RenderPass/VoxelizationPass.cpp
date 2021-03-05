@@ -80,18 +80,19 @@ void VoxelizationPass::on_render(RenderContext* pContext, const Fbo::SharedPtr& 
 
 void VoxelizationPass::do_build_svo(RenderContext* pContext) {
 
-    PROFILE("build svo");
+    PROFILE("BuildSvo");
 
     for (uint32_t i = 0; i < kVoxelizationMeta.TotalLevel; ++i) {
-        // tag
-        kVoxelizationMeta.CurLevel = i;
-        // bound resource to shader
-        mpTagNode_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-        mpTagNode_["bufSvoNode"] = mpSVONodeBufferNext_;
-        mpTagNode_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
-        mpTagNode_["bufFragPosition"] = mpFragPositions_;
-        mpTagNode_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-        mpTagNode_->executeIndirect(pContext, mpAtomicAndIndirect_.get(), FRAG_NEXT_INDIRECT * 4);
+        {
+            PROFILE("Tag");
+            kVoxelizationMeta.CurLevel = i;
+            mpTagNode_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+            mpTagNode_["bufSvoNode"] = mpSVONodeBufferNext_;
+            mpTagNode_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
+            mpTagNode_["bufFragPosition"] = mpFragPositions_;
+            mpTagNode_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+            mpTagNode_->executeIndirect(pContext, mpAtomicAndIndirect_.get(), FRAG_NEXT_INDIRECT * 4);
+        }
 
         // calculate indirect
         if (i > 0) {
@@ -99,13 +100,15 @@ void VoxelizationPass::do_build_svo(RenderContext* pContext) {
             pContext->dispatch(mpCaculateIndirectArg_.get(), mpCaculateIndirectArgVars_.get(), uint3{ 1 ,1 ,1 });
         }
 
-        // sub-divide
-        mpDivideSubNode_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-        mpDivideSubNode_["bufDivideIndirectArg"] = mpIndirectArgBuffer_;
-        mpDivideSubNode_["bufSvoNode"] = mpSVONodeBufferNext_;
-        mpDivideSubNode_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
-        mpDivideSubNode_["bufLevelAddress"] = mpLevelAddressBuffer_;
-        i > 0 ? mpDivideSubNode_->executeIndirect(pContext, mpIndirectArgBuffer_.get()) : mpDivideSubNode_->execute(pContext, uint3(1));
+        {
+            PROFILE("Allocate");
+            mpDivideSubNode_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+            mpDivideSubNode_["bufDivideIndirectArg"] = mpIndirectArgBuffer_;
+            mpDivideSubNode_["bufSvoNode"] = mpSVONodeBufferNext_;
+            mpDivideSubNode_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
+            mpDivideSubNode_["bufLevelAddress"] = mpLevelAddressBuffer_;
+            i > 0 ? mpDivideSubNode_->executeIndirect(pContext, mpIndirectArgBuffer_.get()) : mpDivideSubNode_->execute(pContext, uint3(1));
+        }
     }
 
 #ifdef _DEBUG
@@ -126,48 +129,57 @@ void VoxelizationPass::do_build_svo(RenderContext* pContext) {
 
 void VoxelizationPass::do_build_brick(RenderContext* pContext) {
 
-    PROFILE("build brick");
+    PROFILE("BuildBrick");
 
-    mpNodeIndirectArg_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
-    mpNodeIndirectArg_->execute(pContext, uint3(1));
 
-    mpAllocBrick_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-    mpAllocBrick_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
-    mpAllocBrick_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
-    mpAllocBrick_->executeIndirect(pContext, mpAtomicAndIndirect_.get(), NODE_NEXT_INDIRECT * 4);
+    {
+        PROFILE("Allocate");
+        mpNodeIndirectArg_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
+        mpNodeIndirectArg_->execute(pContext, uint3(1));
+
+        mpAllocBrick_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+        mpAllocBrick_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
+        mpAllocBrick_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
+        mpAllocBrick_->executeIndirect(pContext, mpAtomicAndIndirect_.get(), NODE_NEXT_INDIRECT * 4);
 
 #ifdef _DEBUG
-    uint32_t* data = (uint32_t*)mpAtomicAndIndirect_->map(Buffer::MapType::Read);
-    assert(data[ATOM_BRICK_NEXT] < pow(mBrickPoolResolution_ / 3, 3));
-    mpAtomicAndIndirect_->unmap();
+        uint32_t* data = (uint32_t*)mpAtomicAndIndirect_->map(Buffer::MapType::Read);
+        assert(data[ATOM_BRICK_NEXT] < pow(mBrickPoolResolution_ / 3, 3));
+        mpAtomicAndIndirect_->unmap();
 #endif
+    }
 
-    mpWriteLeaf_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-    mpWriteLeaf_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
-    mpWriteLeaf_["bufFragPosition"] = mpFragPositions_;
-    mpWriteLeaf_["texPackedAlbedo"] = mpPackedAlbedo_;
-    mpWriteLeaf_["texPackedNormal"] = mpPackedNormal_;
-    mpWriteLeaf_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
-    mpWriteLeaf_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
-    mpWriteLeaf_["texBrickAlbedo"] = mpBrickTextures_[BRICKPOOL_COLOR];
-    mpWriteLeaf_["texBrickNormal"] = mpBrickTextures_[BRICKPOOL_NORMAL];
-    mpWriteLeaf_["texBrickRadius"] = mpBrickTextures_[BRICKPOOL_IRRADIANCE];
-    mpWriteLeaf_->executeIndirect(pContext, mpAtomicAndIndirect_.get(), FRAG_NEXT_INDIRECT * 4);
+    {
+        PROFILE("WriteLeaf");
+        mpWriteLeaf_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+        mpWriteLeaf_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
+        mpWriteLeaf_["bufFragPosition"] = mpFragPositions_;
+        mpWriteLeaf_["texPackedAlbedo"] = mpPackedAlbedo_;
+        mpWriteLeaf_["texPackedNormal"] = mpPackedNormal_;
+        mpWriteLeaf_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
+        mpWriteLeaf_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
+        mpWriteLeaf_["texBrickAlbedo"] = mpBrickTextures_[BRICKPOOL_COLOR];
+        mpWriteLeaf_["texBrickNormal"] = mpBrickTextures_[BRICKPOOL_NORMAL];
+        mpWriteLeaf_["texBrickRadius"] = mpBrickTextures_[BRICKPOOL_IRRADIANCE];
+        mpWriteLeaf_->executeIndirect(pContext, mpAtomicAndIndirect_.get(), FRAG_NEXT_INDIRECT * 4);
+    }
 
 
+    {
+        PROFILE("SpreadLeaf");
+        uint3 threads = uint3(uint32_t(glm::pow(mSVOPerLevelNodeNum_[kVoxelizationMeta.TotalLevel - 1], 1.0f / 3.0f))) + uint3(1);
+        uint3 groupSize = div_round_up(threads, uint3(COMMON_THREAD_SIZE));
+        kVoxelizationMeta.CurLevel = kVoxelizationMeta.TotalLevel - 1;
+        mpSpreadNodeLeaf_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+        mpSpreadNodeLeaf_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
+        mpSpreadNodeLeaf_["bufLevelAddress"] = mpLevelAddressBuffer_;
+        mpSpreadNodeLeaf_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
+        mpSpreadNodeLeaf_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
+        mpSpreadNodeLeaf_->execute(pContext, threads);
 
-    uint3 threads = uint3(uint32_t(glm::pow(mSVOPerLevelNodeNum_[kVoxelizationMeta.TotalLevel - 1], 1.0f / 3.0f))) + uint3(1);
-    uint3 groupSize = div_round_up(threads, uint3(COMMON_THREAD_SIZE));
-    kVoxelizationMeta.CurLevel = kVoxelizationMeta.TotalLevel - 1;
-    mpSpreadNodeLeaf_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-    mpSpreadNodeLeaf_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
-    mpSpreadNodeLeaf_["bufLevelAddress"] = mpLevelAddressBuffer_;
-    mpSpreadNodeLeaf_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
-    mpSpreadNodeLeaf_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
-    mpSpreadNodeLeaf_->execute(pContext, threads);
-
-    mpSpreadNodeLeaf_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_NORMAL];
-    mpSpreadNodeLeaf_->execute(pContext, threads);
+        mpSpreadNodeLeaf_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_NORMAL];
+        mpSpreadNodeLeaf_->execute(pContext, threads);
+    }
 
 }
 
