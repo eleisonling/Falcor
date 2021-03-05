@@ -238,7 +238,7 @@ void border_transfer(uint3 DTid : SV_DispatchThreadID){
     uint32_t nodeAddress = levelStart + linearIndex;
     if(nodeAddress >= levelNextStart) return;
 
-    uint32_t neighbourAddress = bufNeighbourAddress.Load(nodeAddress * 4);
+    uint32_t neighbourAddress = get_child_index(bufNeighbourAddress.Load(nodeAddress * 4));
     if (neighbourAddress == 0) return; 
 
     uint3 brickAddr = uint_XYZ10_to_uint3(bufSvoNodeColor.Load(nodeAddress * 4));
