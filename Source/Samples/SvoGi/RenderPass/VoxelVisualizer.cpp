@@ -3,6 +3,7 @@
 namespace {
     static std::string kDebugVolProg = "Samples/SvoGi/Shaders/VoxelizationVisualRaster.slang";
     static std::string kDebugSvoProg = "Samples/SvoGi/Shaders/VoxelizationVisualTracing.ps.slang";
+    static std::string kSamplerDefine = "USE_SAMPLER";
 
     enum VisualType {
         VisualVoxel,
@@ -78,7 +79,7 @@ void VoxelVisualizer::create_visualize_resources() {
 }
 
 void VoxelVisualizer::do_visual_voxel(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
-    if (mUserTacing_) {
+    if (mUseTacing_) {
         mpVisualTracing_->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
         mpVisualTracing_->getVars()["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
         mpVisualTracing_->getVars()["texPackedAlbedo"] = mpVoxelTexture_;
@@ -100,7 +101,7 @@ void VoxelVisualizer::do_visual_voxel(RenderContext* pContext, const Fbo::Shared
 }
 
 void VoxelVisualizer::do_visual_brick(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
-    if (mUserTacing_) {
+    if (mUseTacing_) {
     }
     else {
         uint32_t instanceCount = mVoxelizationMeta_.CellDim.x * mVoxelizationMeta_.CellDim.y * mVoxelizationMeta_.CellDim.z;
@@ -138,7 +139,21 @@ VoxelVisualizer::SharedPtr VoxelVisualizer::create(const Scene::SharedPtr& pScen
 }
 
 void VoxelVisualizer::on_gui(Gui::Group& group) {
-    group.checkbox("Use Tracing Method", mUserTacing_);
+    group.checkbox("Use Tracing Method", mUseTacing_);
+
+    if (group.checkbox("Use Sampler", mUseSampler_)) {
+        if (mUseSampler_) {
+            mpVisualTracing_->addDefine(kSamplerDefine);
+            mpVisualR_[VisualVoxel]->getProgram()->addDefine(kSamplerDefine);
+            mpVisualR_[VisualBrick]->getProgram()->addDefine(kSamplerDefine);
+        }
+        else {
+            mpVisualTracing_->removeDefine(kSamplerDefine);
+            mpVisualR_[VisualVoxel]->getProgram()->removeDefine(kSamplerDefine);
+            mpVisualR_[VisualBrick]->getProgram()->removeDefine(kSamplerDefine);
+        }
+    }
+
     group.dropdown("Visual Type", kVisualType, mType_);
 }
 

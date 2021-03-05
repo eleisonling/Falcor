@@ -9,6 +9,7 @@ cbuffer CB {
 
 Texture3D<float4> texPackedAlbedo;
 RWByteAddressBuffer bufSvoNodeNext;
+SamplerState spTexture;
 
 struct vs_in {
     float3 pos                      : POSITION;
@@ -59,7 +60,12 @@ float4 ps_main(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
     cellIndex = extract_index_form_linear(leafPointer, bufVoxelMeta.CellDim);
 
     // load and uncompress
+#ifdef USE_SAMPLER
+    float3 posTex = float3(cellIndex) / float3(bufVoxelMeta.CellDim);
+    packedColor = texPackedAlbedo.SampleLevel(spTexture, posTex, 0);
+#else
     float4 packedColor = texPackedAlbedo[cellIndex];
+#endif
     finalColor = float4(packedColor.xyz, 1.0f);
 
     return finalColor;
@@ -86,7 +92,12 @@ float4 raster_brick(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGE
     uint3 brickCoords = uint_XYZ10_to_uint3(leafPointer);
 
     // load and uncompress
+#ifdef USE_SAMPLER 
+    float3 posTex = float3(brickCoords) / float3(bufVoxelMeta.BrickPoolResolution);
+    packedColor = texBrickTexValue.SampleLevel(spTexture, posTex, 0);
+#else
     float4 packedColor = texBrickTexValue[brickCoords];
+#endif
     if (packedColor.a == 0) discard; // every level may have empty nodes
     finalColor = float4(packedColor.xyz, 1.0f);
 
