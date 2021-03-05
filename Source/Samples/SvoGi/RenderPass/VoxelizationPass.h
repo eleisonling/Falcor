@@ -84,7 +84,7 @@ private:
     ComputePass::SharedPtr mpNodeIndirectArg_ = nullptr;
 
     // brick
-    const uint32_t mBrickPoolResolution_ = 70 * 3;
+    const uint32_t mBrickPoolResolution_ = 80 * 3;
     const uint32_t mBrickPoolNodeResolution_ = mBrickPoolResolution_ / 2;
     Texture::SharedPtr mpBrickTextures_[BRICKPOOL_ATTRIBUTES_ALL] = {};
     ComputePass::SharedPtr mpAllocBrick_ = nullptr;

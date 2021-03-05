@@ -82,11 +82,12 @@ float4 raster_brick(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGE
     uint32_t nodeNext = traverse_octree_simple(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, foundLevel);
     uint32_t leafPointer = bufSvoNodeColor.Load(nodeNext * 4);
 
-    if(foundLevel != bufVoxelMeta.TotalLevel) discard;
+    if(foundLevel != bufVoxelMeta.TotalLevel || leafPointer == 0) discard;
     uint3 brickCoords = uint_XYZ10_to_uint3(leafPointer);
 
     // load and uncompress
     float4 packedColor = texBrickTexValue[brickCoords];
+    if (packedColor.a == 0) discard; // every level may have empty nodes
     finalColor = float4(packedColor.xyz, 1.0f);
 
     return finalColor;

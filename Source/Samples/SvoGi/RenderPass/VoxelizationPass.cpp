@@ -133,15 +133,16 @@ void VoxelizationPass::do_build_brick(RenderContext* pContext) {
     mpNodeIndirectArg_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
     mpNodeIndirectArg_->execute(pContext, uint3(1));
 
-#ifdef _DEBUG
-    uint32_t* data = (uint32_t*)mpAtomicAndIndirect_->map(Buffer::MapType::Read);
-    mpAtomicAndIndirect_->unmap();
-#endif
-
     mpAllocBrick_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
     mpAllocBrick_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
     mpAllocBrick_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
     mpAllocBrick_->executeIndirect(pContext, mpAtomicAndIndirect_.get(), NODE_NEXT_INDIRECT * 4);
+
+#ifdef _DEBUG
+    uint32_t* data = (uint32_t*)mpAtomicAndIndirect_->map(Buffer::MapType::Read);
+    assert(data[ATOM_BRICK_NEXT] < pow(mBrickPoolResolution_ / 3, 3));
+    mpAtomicAndIndirect_->unmap();
+#endif
 
     mpWriteLeaf_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
     mpWriteLeaf_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
@@ -156,6 +157,7 @@ void VoxelizationPass::do_build_brick(RenderContext* pContext) {
     mpWriteLeaf_->executeIndirect(pContext, mpAtomicAndIndirect_.get(), FRAG_NEXT_INDIRECT * 4);
 
 
+    /*
     uint3 threads = uint3(uint32_t(glm::pow(mSVOPerLevelNodeNum_[kVoxelizationMeta.TotalLevel - 1], 1.0f / 3.0f))) + uint3(1);
     uint3 groupSize = div_round_up(threads, uint3(COMMON_THREAD_SIZE));
     kVoxelizationMeta.CurLevel = kVoxelizationMeta.TotalLevel - 1;
@@ -168,6 +170,7 @@ void VoxelizationPass::do_build_brick(RenderContext* pContext) {
 
     mpSpreadNodeLeaf_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_NORMAL];
     mpSpreadNodeLeaf_->execute(pContext, threads);
+    */
 }
 
 void VoxelizationPass::on_gui(Gui::Group& group) {}
@@ -358,6 +361,7 @@ void VoxelizationPass::do_clear(RenderContext* pContext) {
 
     std::vector<uint32_t> atomicInit;
     atomicInit.resize(BUFFER_COUNT, 0);
+    atomicInit[ATOM_NODE_NEXT] = 1;
     mpAtomicAndIndirect_->setBlob(atomicInit.data(), 0, sizeof(uint32_t) * BUFFER_COUNT);
 
     std::vector<uint32_t> levleAddressBufInit;
