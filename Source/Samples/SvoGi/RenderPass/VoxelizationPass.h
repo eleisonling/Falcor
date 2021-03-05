@@ -92,4 +92,5 @@ private:
     ComputePass::SharedPtr mpAllocBrick_ = nullptr;
     ComputePass::SharedPtr mpWriteLeaf_ = nullptr;
     ComputePass::SharedPtr mpSpreadNodeLeaf_ = nullptr;
+    ComputePass::SharedPtr mpBorderTransfer_ = nullptr;
 };
