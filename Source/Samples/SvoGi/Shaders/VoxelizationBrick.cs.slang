@@ -83,7 +83,7 @@ void write_leaf_brick(uint3 DTid : SV_DispatchThreadID){
 
 RWTexture3D<float4> texBrickValue;
 
-void load_brick_values(uint3 brickAddress, float4[8] brickValues) {
+void load_brick_values(uint3 brickAddress, out float4[8] brickValues) {
     for(int32_t i = 0; i < 8; ++i) {
         brickValues[i] = texBrickValue[brickAddress + 2 * childOffsets[i]];
     }
