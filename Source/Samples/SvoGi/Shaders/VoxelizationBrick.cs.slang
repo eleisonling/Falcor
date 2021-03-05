@@ -273,17 +273,17 @@ void border_transfer(uint3 DTid : SV_DispatchThreadID){
             }
         }
     } else if(iBorderTransferAxis == AXIS_Z) {
-            for (int x = 0; x <= 2; ++x) {
-                for (int y = 0; y <= 2; ++y) {
-                    uint3 offset = uint3(x,y,2);
-                    uint3 nOffset = uint3(x,y,0);
-                    float4 borderVal = texBrickValue[brickAddr + offset];
-                    float4 neighbourBorderVal = texBrickValue[nBrickAddr + nOffset];
-                    DeviceMemoryBarrier();
+        for (int x = 0; x <= 2; ++x) {
+            for (int y = 0; y <= 2; ++y) {
+                uint3 offset = uint3(x,y,2);
+                uint3 nOffset = uint3(x,y,0);
+                float4 borderVal = texBrickValue[brickAddr + offset];
+                float4 neighbourBorderVal = texBrickValue[nBrickAddr + nOffset];
+                DeviceMemoryBarrier();
 
-                    float4 finalVal = get_final_val(borderVal, neighbourBorderVal);
-                    texBrickValue[brickAddr + offset] = finalVal;
-                    texBrickValue[nBrickAddr + nOffset] = finalVal;        
+                float4 finalVal = get_final_val(borderVal, neighbourBorderVal);
+                texBrickValue[brickAddr + offset] = finalVal;
+                texBrickValue[nBrickAddr + nOffset] = finalVal;        
             }
         }
     }
