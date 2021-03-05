@@ -95,6 +95,7 @@ void VoxelVisualizer::do_visual_voxel(RenderContext* pContext, const Fbo::Shared
         mpVisualVarsR_[VisualVoxel]->setParameterBlock("gScene", mpScene_->getParameterBlock());
         mpVisualVarsR_[VisualVoxel]["texPackedAlbedo"] = mpVoxelTexture_;
         mpVisualVarsR_[VisualVoxel]["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
+        mpVisualVarsR_[VisualVoxel]["spTexture"] = mpSampler_;
         mpVisualVarsR_[VisualVoxel]["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
         pContext->drawIndexedInstanced(mpVisualR_[VisualVoxel].get(), mpVisualVarsR_[VisualVoxel].get(), (uint32_t)mpRasterMesh_->getIndices().size(), instanceCount, 0, 0, 0);
     }
@@ -111,6 +112,7 @@ void VoxelVisualizer::do_visual_brick(RenderContext* pContext, const Fbo::Shared
         mpVisualVarsR_[VisualBrick]["texBrickTexValue"] = mpBrickAlbedoTexture_;
         mpVisualVarsR_[VisualBrick]["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
         mpVisualVarsR_[VisualBrick]["bufSvoNodeColor"] = mpSVONodeColorBuffer_;
+        mpVisualVarsR_[VisualBrick]["spTexture"] = mpSampler_;
         mpVisualVarsR_[VisualBrick]["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
         pContext->drawIndexedInstanced(mpVisualR_[VisualBrick].get(), mpVisualVarsR_[VisualBrick].get(), (uint32_t)mpRasterMesh_->getIndices().size(), instanceCount, 0, 0, 0);
     }

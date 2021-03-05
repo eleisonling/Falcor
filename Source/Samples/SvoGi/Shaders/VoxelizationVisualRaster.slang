@@ -61,8 +61,8 @@ float4 ps_main(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
 
     // load and uncompress
 #ifdef USE_SAMPLER
-    float3 posTex = float3(cellIndex) / float3(bufVoxelMeta.CellDim);
-    packedColor = texPackedAlbedo.SampleLevel(spTexture, posTex, 0);
+    float3 cellTex = float3(cellIndex) / float3(bufVoxelMeta.CellDim);
+    float4 packedColor = texPackedAlbedo.SampleLevel(spTexture, cellTex, 0);
 #else
     float4 packedColor = texPackedAlbedo[cellIndex];
 #endif
@@ -93,8 +93,8 @@ float4 raster_brick(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGE
 
     // load and uncompress
 #ifdef USE_SAMPLER 
-    float3 posTex = float3(brickCoords) / float3(bufVoxelMeta.BrickPoolResolution);
-    packedColor = texBrickTexValue.SampleLevel(spTexture, posTex, 0);
+    float3 cellTex = float3(brickCoords) / float3(bufVoxelMeta.BrickPoolResolution);
+    float4 packedColor = texBrickTexValue.SampleLevel(spTexture, cellTex, 0);
 #else
     float4 packedColor = texBrickTexValue[brickCoords];
 #endif
