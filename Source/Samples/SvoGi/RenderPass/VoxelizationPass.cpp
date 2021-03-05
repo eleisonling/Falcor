@@ -75,7 +75,7 @@ void VoxelizationPass::on_render(RenderContext* pContext, const Fbo::SharedPtr& 
 
     do_build_svo(pContext);
     do_build_brick(pContext);
-    //mNeedRefresh_ = false;
+    mNeedRefresh_ = false;
 }
 
 void VoxelizationPass::do_build_svo(RenderContext* pContext) {
@@ -114,7 +114,7 @@ void VoxelizationPass::do_build_svo(RenderContext* pContext) {
     mpAtomicAndIndirect_->unmap();
 
     data = (uint32_t*)mpLevelAddressBuffer_->map(Buffer::MapType::Read);
-    for (uint32_t i = 0; i < kVoxelizationMeta.CurLevel; ++i) {
+    for (uint32_t i = 0; i < kVoxelizationMeta.TotalLevel + 1; ++i) {
         std::stringstream s;
         s <<  "Dump Address Buff(Level " << i << "): " << std::to_string(data[i]) << std::endl;
         logInfo(s.str());
@@ -155,7 +155,7 @@ void VoxelizationPass::do_build_brick(RenderContext* pContext) {
     mpWriteLeaf_->executeIndirect(pContext, mpAtomicAndIndirect_.get(), FRAG_NEXT_INDIRECT * 4);
 
 
-    /*
+
     uint3 threads = uint3(uint32_t(glm::pow(mSVOPerLevelNodeNum_[kVoxelizationMeta.TotalLevel - 1], 1.0f / 3.0f))) + uint3(1);
     uint3 groupSize = div_round_up(threads, uint3(COMMON_THREAD_SIZE));
     kVoxelizationMeta.CurLevel = kVoxelizationMeta.TotalLevel - 1;
@@ -168,7 +168,7 @@ void VoxelizationPass::do_build_brick(RenderContext* pContext) {
 
     mpSpreadNodeLeaf_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_NORMAL];
     mpSpreadNodeLeaf_->execute(pContext, threads);
-    */
+
 }
 
 void VoxelizationPass::on_gui(Gui::Group& group) {}

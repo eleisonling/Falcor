@@ -17,7 +17,7 @@ private:
 
     Scene::SharedPtr mpScene_ = nullptr;
     bool mUserTacing_ = false;
-    uint32_t mType_ = 0;
+    uint32_t mType_ = 1;
     VoxelizationMeta mVoxelizationMeta_ = {};
 
     Texture::SharedPtr mpVoxelTexture_ = nullptr;
