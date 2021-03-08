@@ -4,51 +4,51 @@ import Scene.Raytracing;
 
 
 inline float3 convert_world_to_svo_space(float3 worldPos, float3 cellMin, float3 cellMax) {
-    float3 worldExtent = cellMax - cellMin;  
-    float maxAxis = max(worldExtent.x, max(worldExtent.y, worldExtent.z));
-    float3 convertedPos = (worldPos - cellMin) / float3(2.0 * maxAxis) + float3(1.0);
-    return convertedPos;
+	float3 worldExtent = cellMax - cellMin;  
+	float maxAxis = max(worldExtent.x, max(worldExtent.y, worldExtent.z));
+	float3 convertedPos = (worldPos - cellMin) / float3(2.0 * maxAxis) + float3(1.0);
+	return convertedPos;
 }
 
 
 inline float copy_sign_32f(float newVal, float oldVal) {
-    uint32_t oldValSign = asuint(oldVal) & SIGN_BIT_32;
-    uint32_t clearSign = asuint(newVal) & (SIGN_BIT_32 - 1);
-    return asfloat(clearSign | oldValSign);
+	uint32_t oldValSign = asuint(oldVal) & SIGN_BIT_32;
+	uint32_t clearSign = asuint(newVal) & (SIGN_BIT_32 - 1);
+	return asfloat(clearSign | oldValSign);
 }
 
 inline void get_node_info(uint32_t parent, uint32_t shift, out uint32_t childNode, RWByteAddressBuffer svoNode) {
-    uint32_t childAddress = parent * 8 + shift;
-    childNode = svoNode.Load(childAddress * 4);
+	uint32_t childAddress = parent * 8 + shift;
+	childNode = svoNode.Load(childAddress * 4);
 }
 
 
 interface ITracingHitInfo {
-    [mutating]
-    bool deal_if_hitted(uint32_t parent, uint32_t childShift); 
+	[mutating]
+	bool deal_if_hitted(uint32_t parent, uint32_t childShift); 
 };
 
 void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddressBuffer svoNode, uint32_t leafLevel, uint3 cellDim, inout T hitInfo) {
 
-    const float epsilon = exp2(-MAX_LEVEL);
+	const float epsilon = exp2(-MAX_LEVEL);
 	int2 stack[MAX_LEVEL + 1] = {};
 
-    float3 p = ray.Origin;
-    float3 d = ray.Direction;
+	float3 p = ray.Origin;
+	float3 d = ray.Direction;
 
-    // get rid of small ray direction
-    if(abs(d.x) < epsilon) d.x = copy_sign_32f(epsilon, d.x);
-    if(abs(d.y) < epsilon) d.y = copy_sign_32f(epsilon, d.y);
-    if(abs(d.z) < epsilon) d.z = copy_sign_32f(epsilon, d.z);
+	// get rid of small ray direction
+	if(abs(d.x) < epsilon) d.x = copy_sign_32f(epsilon, d.x);
+	if(abs(d.y) < epsilon) d.y = copy_sign_32f(epsilon, d.y);
+	if(abs(d.z) < epsilon) d.z = copy_sign_32f(epsilon, d.z);
 
-    d = normalize(d);
+	d = normalize(d);
 
-    // change range to [1,2] means we can easy to handle positive and negtive ray directions 
-    // x = Px + t * dx ==> t = x/dx - Ox/dx 
+	// change range to [1,2] means we can easy to handle positive and negtive ray directions 
+	// x = Px + t * dx ==> t = x/dx - Ox/dx 
 	float3 t_coef = 1.0 / -abs(d);
 	float3 t_bias = t_coef * p;
 
-    // this means positive dir
+	// this means positive dir
 	uint32_t octant_mask = 0;
 	if (d.x > 0) octant_mask ^= 1, t_bias.x = 3.0 * t_coef.x - t_bias.x;
 	if (d.y > 0) octant_mask ^= 2, t_bias.y = 3.0 * t_coef.y - t_bias.y;
@@ -61,8 +61,8 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
 	float t_max = min(min(txyz.x, txyz.y), txyz.z);
 	float h = t_max;
 
-    // min should clamp to zero，max should not
-    t_min = max(t_min, 0.0);
+	// min should clamp to zero，max should not
+	t_min = max(t_min, 0.0);
 
 	uint32_t parent = 0;
 	uint32_t childNodeInParent = 0;
@@ -71,41 +71,41 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
 	int32_t scale = MAX_LEVEL - 1;
 	float scale_exp2 = 0.5;
 
-    // this meas the mid point's t > t_min
-    // e.g is x direction is positive, and mid min gt t_min, next child should choose child which x axis is left
+	// this meas the mid point's t > t_min
+	// e.g is x direction is positive, and mid min gt t_min, next child should choose child which x axis is left
 	if (1.5 * t_coef.x - t_bias.x > t_min) idx ^= 1, pos.x = 1.5;
 	if (1.5 * t_coef.y - t_bias.y > t_min) idx ^= 2, pos.y = 1.5;
 	if (1.5 * t_coef.z - t_bias.z > t_min) idx ^= 4, pos.z = 1.5;
 
 	while (scale < MAX_LEVEL) {
-        uint32_t child_shift = 0;
+		uint32_t child_shift = 0;
 		if (childNodeInParent == 0) {
 			child_shift = idx ^ octant_mask;
 			get_node_info(parent, child_shift, childNodeInParent, svoNode);
 		}
 
-        // determind the max-t value of the cube
-        // for the [1,2] range and the euqaltion: x = Px + t * dx ==> t = x/dx - Ox/dx 
-        // we can caculate the right t time now despite of the positive/negtive direction
-        // notice: pos may modified to 1.5
-        // corner means the middle point of t
+		// determind the max-t value of the cube
+		// for the [1,2] range and the euqaltion: x = Px + t * dx ==> t = x/dx - Ox/dx 
+		// we can caculate the right t time now despite of the positive/negtive direction
+		// notice: pos may modified to 1.5
+		// corner means the middle point of t
 		float3 t_corner = pos * t_coef - t_bias;
 		float tc_max = min(min(t_corner.x, t_corner.y), t_corner.z);
 		
-        if (is_leaf_node(childNodeInParent, scale, leafLevel)) {
-            bool hitted = hitInfo.deal_if_hitted(parent, child_shift);
-            if(hitted) return;
-	    }
+		if (is_leaf_node(childNodeInParent, scale, leafLevel)) {
+			bool hitted = hitInfo.deal_if_hitted(parent, child_shift);
+			if(hitted) return;
+		}
 
-        // check is child is a node
+		// check is child is a node
 		if (is_valid_node(childNodeInParent) && !is_leaf_node(childNodeInParent, scale, leafLevel) && t_min <= t_max) {
 			float tv_max = min(t_max, tc_max);
 			float half_scale = scale_exp2 * 0.5;
-            // center means is the center of min * corner
+			// center means is the center of min * corner
 			float3 t_center = half_scale * t_coef + t_corner;
 			
 			if (t_min <= tv_max) {
-                // push
+				// push
 				if (tc_max < h)
 					stack[scale] = int2(parent, asint(t_max));
 				h = tc_max;
@@ -125,10 +125,10 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
 			}
 		}
 
-        // advance
+		// advance
 		int32_t step_mask = 0;
-        // if t_corner is min than tc_max, we should choose the axis to next
-        // notice: in our [1,2] algorithm pos sub means advance, add means backword 
+		// if t_corner is min than tc_max, we should choose the axis to next
+		// notice: in our [1,2] algorithm pos sub means advance, add means backword 
 		if (t_corner.x <= tc_max) step_mask ^= 1, pos.x -= scale_exp2;
 		if (t_corner.y <= tc_max) step_mask ^= 2, pos.y -= scale_exp2;
 		if (t_corner.z <= tc_max) step_mask ^= 4, pos.z -= scale_exp2;
@@ -136,16 +136,16 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
 		t_min = tc_max;
 		idx ^= step_mask;
 
-        // pop
-        // index flip & direction is not same, need pop
+		// pop
+		// index flip & direction is not same, need pop
 		if ((idx & step_mask) != 0)
 		{
 			uint32_t differing_bits = 0;
 			if ((step_mask & 1) != 0) differing_bits |= asint(pos.x) ^ asint(pos.x + scale_exp2);
 			if ((step_mask & 2) != 0) differing_bits |= asint(pos.y) ^ asint(pos.y + scale_exp2);
 			if ((step_mask & 4) != 0) differing_bits |= asint(pos.z) ^ asint(pos.z + scale_exp2);
-            // for some number magic, we can decide parent scale
-            // also can decide the exp2
+			// for some number magic, we can decide parent scale
+			// also can decide the exp2
 			scale = (asint((float)differing_bits) >> 23) - 127;
 			scale_exp2 = asfloat((scale - MAX_LEVEL + 127) << 23);
 
@@ -168,43 +168,43 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
 }
 
 inline uint32_t traverse_octree_simple(uint3 cellIndex, uint3 cellDim, uint32_t numLevels, RWByteAddressBuffer svNodeNext, out uint32_t foundOnLevel) {
-    uint32_t childID = 0;
-    uint32_t curID = 0;
-    foundOnLevel = 0;
-    uint3 levelDim = uint3(0);
+	uint32_t childID = 0;
+	uint32_t curID = 0;
+	foundOnLevel = 0;
+	uint3 levelDim = uint3(0);
   
-    for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
-        foundOnLevel = iLevel;
-        levelDim = cellDim >> iLevel;
-        uint3 relative = step(levelDim, cellIndex);
-        curID = childID + (relative.x | relative.y << 1 | relative.z << 2);
-        uint32_t nodeNext = svNodeNext.Load(curID * 4);
-        childID = get_child_index(nodeNext) * 8;
-        if (!is_valid_node(nodeNext) || childID == 0U) {
-            break;
-        }
-        cellIndex -= levelDim * relative;
-    } // level-for
-    return curID;
+	for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
+		foundOnLevel = iLevel;
+		levelDim = cellDim >> iLevel;
+		uint3 relative = step(levelDim, cellIndex);
+		curID = childID + (relative.x | relative.y << 1 | relative.z << 2);
+		uint32_t nodeNext = svNodeNext.Load(curID * 4);
+		childID = get_child_index(nodeNext) * 8;
+		if (!is_valid_node(nodeNext) || childID == 0U) {
+			break;
+		}
+		cellIndex -= levelDim * relative;
+	} // level-for
+	return curID;
 }
 
 inline uint32_t traverse_octree_relative_out(uint3 cellIndex, uint3 cellDim, uint32_t numLevels, RWByteAddressBuffer svNodeNext, out uint32_t foundOnLevel, out uint3 relative) {
-    uint32_t childID = 0;
-    uint32_t curID = 0;
-    foundOnLevel = 0;
-    uint3 levelDim = uint3(0);
+	uint32_t childID = 0;
+	uint32_t curID = 0;
+	foundOnLevel = 0;
+	uint3 levelDim = uint3(0);
   
-    for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
-        foundOnLevel = iLevel;
-        levelDim = cellDim >> iLevel;
-        relative = step(levelDim, cellIndex);
-        curID = childID + (relative.x | relative.y << 1 | relative.z << 2);
-        uint32_t nodeNext = svNodeNext.Load(curID * 4);
-        childID = get_child_index(nodeNext) * 8;
-        if (!is_valid_node(nodeNext) || childID == 0U) {
-            break;
-        }
-        cellIndex -= levelDim * relative;
-    } // level-for
-    return curID;
+	for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
+		foundOnLevel = iLevel;
+		levelDim = cellDim >> iLevel;
+		relative = step(levelDim, cellIndex);
+		curID = childID + (relative.x | relative.y << 1 | relative.z << 2);
+		uint32_t nodeNext = svNodeNext.Load(curID * 4);
+		childID = get_child_index(nodeNext) * 8;
+		if (!is_valid_node(nodeNext) || childID == 0U) {
+			break;
+		}
+		cellIndex -= levelDim * relative;
+	} // level-for
+	return curID;
 }
