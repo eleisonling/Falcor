@@ -13,12 +13,29 @@ Texture3D<float4> texPackedAlbedo;
 SamplerState spTexSampler;
 RWByteAddressBuffer bufSvoNode;
 
-float4 main(float2 texC : TEXCOORD, float4 posS : SV_POSITION) : SV_TARGET {
+struct VoxelTracingHitInfo : ITracingHittedInfo {
+    float4 Color = {};
+
+    [mutating]
+    bool deal_hitted(uint32_t nodeData){
+        uint32_t linearAddress = get_child_index(nodeData);
+        uint3 cellIndex = extract_index_form_linear(linearAddress, bufVoxelMeta.CellDim);
+
+        // load and uncompress
+        Color = texPackedAlbedo[cellIndex];
+        bool hitted =  Color.w > 0.f;
+        return hitted;
+    }
+};
+
+
+float4 voxel_main(float2 texC : TEXCOORD, float4 posS : SV_POSITION) : SV_TARGET {
     uint2 launchIndex = uint2(texC.xy * fViewportDims);
     RayDesc ray = gScene.camera.computeRayPinhole(launchIndex.xy, fViewportDims).toRayDesc();
-    ray.Origin = convert_world_to_svo_space(ray.Origin, bufVoxelMeta.CellDim, bufVoxelMeta.Min, bufVoxelMeta.Max);
+    ray.Origin = convert_world_to_svo_space(ray.Origin, bufVoxelMeta.Min, bufVoxelMeta.Max);
 
-    tracing_result hitInfo = trace_sparse_voxel_ray(ray, texPackedAlbedo, bufSvoNode, bufVoxelMeta.TotalLevel, bufVoxelMeta.CellDim, spTexSampler);
+    VoxelTracingHitInfo hitInfo = {};
+    trace_sparse_voxel_ray(ray, bufSvoNode, bufVoxelMeta.TotalLevel, bufVoxelMeta.CellDim, hitInfo);
 
-    return hitInfo.Color;
+    return float4(hitInfo.Color.xyz, 1.0f);
 }

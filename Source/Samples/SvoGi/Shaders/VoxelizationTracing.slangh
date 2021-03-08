@@ -3,17 +3,13 @@ import Scene.Raytracing;
 #include "Samples/SvoGi/Shaders/VoxelizationMeta.slangh"
 
 
-inline float3 convert_world_to_svo_space(float3 worldPos, float3 cellDim, float3 cellMin, float3 cellMax) {
+inline float3 convert_world_to_svo_space(float3 worldPos, float3 cellMin, float3 cellMax) {
     float3 worldExtent = cellMax - cellMin;  
     float maxAxis = max(worldExtent.x, max(worldExtent.y, worldExtent.z));
-    float3 convertedPos = (worldPos - cellMin) / float3(maxAxis) + float3(1.0);
+    float3 convertedPos = (worldPos - cellMin) / float3(2.0 * maxAxis) + float3(1.0);
     return convertedPos;
 }
 
-struct tracing_result {
-    float4 Color;
-    bool IsMissing;
-};
 
 inline float copy_sign_32f(float newVal, float oldVal) {
     uint32_t oldValSign = asuint(oldVal) & SIGN_BIT_32;
@@ -27,22 +23,14 @@ inline void get_node_info(uint32_t parent, uint32_t shift, out uint32_t childNod
 }
 
 
-inline float4 get_data(uint32_t nodeData,  Texture3D<float4> packedData, SamplerState texSampler, uint3 dim, out bool hitted) {
-    uint32_t linearAddress = get_child_index(nodeData);
-    uint3 cellIndex = extract_index_form_linear(linearAddress, dim);
+interface ITracingHittedInfo {
+    [mutating]
+    bool deal_hitted(uint32_t nodeData); 
+};
 
-    // load and uncompress
-    float4 finalData = packedData[cellIndex];
-    hitted = finalData.w > 0.f;
-    finalData = float4(finalData.xyz, 1.0f);
-    return finalData;
-}
-
-tracing_result trace_sparse_voxel_ray(inout RayDesc ray, Texture3D<float4> packedData, RWByteAddressBuffer svoNode, uint32_t leafLevel,
-    uint3 cellDim, SamplerState texSampler) {
+void trace_sparse_voxel_ray<T : ITracingHittedInfo>(inout RayDesc ray, RWByteAddressBuffer svoNode, uint32_t leafLevel, uint3 cellDim, inout T hitInfo) {
 
     const float epsilon = exp2(-MAX_LEVEL);
-	tracing_result hitInfo = {};
 	int2 stack[MAX_LEVEL + 1] = {};
 
     float3 p = ray.Origin;
@@ -89,8 +77,6 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, Texture3D<float4> packe
 	if (1.5 * t_coef.y - t_bias.y > t_min) idx ^= 2, pos.y = 1.5;
 	if (1.5 * t_coef.z - t_bias.z > t_min) idx ^= 4, pos.z = 1.5;
 
-	hitInfo.IsMissing = true;
-
 	while (scale < MAX_LEVEL) {
 		if (childNodeInParent == 0) {
 			uint32_t child_shift = idx ^ octant_mask;
@@ -106,15 +92,8 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, Texture3D<float4> packe
 		float tc_max = min(min(t_corner.x, t_corner.y), t_corner.z);
 		
         if (is_leaf_node(childNodeInParent, scale, leafLevel)) {
-            bool hitted = 0;
-	        float4 color = get_data(childNodeInParent, packedData,texSampler, cellDim, hitted);
-            if(hitted) {
-                hitInfo.Color = color;
-                hitInfo.IsMissing = false;
-                ray.TMin = t_min;
-                ray.TMax = t_max;
-                return hitInfo;
-            }
+            bool hitted = hitInfo.deal_hitted(childNodeInParent);
+            if(hitted) return;
 	    }
 
         // check is child is a node
@@ -185,8 +164,6 @@ tracing_result trace_sparse_voxel_ray(inout RayDesc ray, Texture3D<float4> packe
 			childNodeInParent = 0;
 		}
 	}
-
-	return hitInfo;
 }
 
 inline uint32_t traverse_octree_simple(uint3 cellIndex, uint3 cellDim, uint32_t numLevels, RWByteAddressBuffer svNodeNext, out uint32_t foundOnLevel) {

@@ -57,7 +57,9 @@ void VoxelVisualizer::create_visualize_shaders(const Program::DefineList& progra
 
     // visual tracing
     {
-        mpVisualTracing_ = FullScreenPass::create(kDebugSvoProg, programDefines);
+        Program::Desc dVoxel;
+        dVoxel.addShaderLibrary(kDebugSvoProg).psEntry("voxel_main");
+        mpVisualTracing_ = FullScreenPass::create(dVoxel, programDefines);
     }
 }
 
