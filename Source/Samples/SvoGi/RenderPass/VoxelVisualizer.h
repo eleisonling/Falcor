@@ -17,7 +17,7 @@ private:
 
     Scene::SharedPtr mpScene_ = nullptr;
     bool mUseTacing_ = false;
-    bool mUseSampler_ = false;
+    bool mUseSampler_ = true;
     uint32_t mType_ = 1;
     VoxelizationMeta mVoxelizationMeta_ = {};
 
