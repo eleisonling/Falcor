@@ -56,9 +56,9 @@ void store_in_leaf(uint3 relative, uint32_t address, float4 voxelColor, float4 v
     uint3 brickCoords = uint_XYZ10_to_uint3(nodeColorU);
     uint32_t off = relative.x | relative.y << 1 | relative.z << 2;
 
-    texBrickAlbedo[brickCoords + 2 * childOffsets[off]] = voxelColor;
-    texBrickNormal[brickCoords + 2 * childOffsets[off]] = voxelNormal;
-    texBrickRadius[brickCoords + 2 * childOffsets[off]] = float4(0,0,0,1);
+    texBrickAlbedo[brickCoords] = voxelColor;
+    texBrickNormal[brickCoords] = voxelNormal;
+    texBrickRadius[brickCoords] = float4(0,0,0,1);
 }
 
 
@@ -245,46 +245,14 @@ void border_transfer(uint3 DTid : SV_DispatchThreadID){
     uint3 nBrickAddr = uint_XYZ10_to_uint3(bufSvoNodeColor.Load(neighbourAddress * 4));
 
     if(iBorderTransferAxis == AXIS_X) {
-        for (int32_t y = 0; y <= 2; ++y) {
-            for (int32_t z = 0; z <= 2; ++z) {
-                uint3 offset = uint3(2,y,z);
-                uint3 nOffset = uint3(0,y,z);
-                float4 borderVal = texBrickValue[brickAddr + offset];
-                float4 neighbourBorderVal = texBrickValue[nBrickAddr + nOffset];
-                DeviceMemoryBarrier();
-
-                float4 finalVal = get_final_val(borderVal, neighbourBorderVal);
-                texBrickValue[brickAddr + offset] = finalVal;
-                texBrickValue[nBrickAddr + nOffset] = finalVal;
-            }
-        }
+        texBrickValue[brickAddr + uint3(2,0,0)] = texBrickValue[nBrickAddr];
     } else if(iBorderTransferAxis == AXIS_Y) {
-        for (int32_t x = 0; x <= 2; ++x) {
-            for (int z = 0; z <= 2; ++z) {
-                uint3 offset = uint3(x,2,z);
-                uint3 nOffset = uint3(x,0,z);
-                float4 borderVal = texBrickValue[brickAddr + offset];
-                float4 neighbourBorderVal = texBrickValue[nBrickAddr + nOffset];
-                DeviceMemoryBarrier();
-
-                float4 finalVal = get_final_val(borderVal, neighbourBorderVal);
-                texBrickValue[brickAddr + offset] = finalVal;
-                texBrickValue[nBrickAddr + nOffset] = finalVal;
-            }
-        }
+        texBrickValue[brickAddr + uint3(0,2,0)] = texBrickValue[nBrickAddr + uint3(0,0,0)];
+        texBrickValue[brickAddr + uint3(2,2,0)] = texBrickValue[nBrickAddr + uint3(2,0,0)];
     } else if(iBorderTransferAxis == AXIS_Z) {
-        for (int x = 0; x <= 2; ++x) {
-            for (int y = 0; y <= 2; ++y) {
-                uint3 offset = uint3(x,y,2);
-                uint3 nOffset = uint3(x,y,0);
-                float4 borderVal = texBrickValue[brickAddr + offset];
-                float4 neighbourBorderVal = texBrickValue[nBrickAddr + nOffset];
-                DeviceMemoryBarrier();
-
-                float4 finalVal = get_final_val(borderVal, neighbourBorderVal);
-                texBrickValue[brickAddr + offset] = finalVal;
-                texBrickValue[nBrickAddr + nOffset] = finalVal;        
-            }
-        }
+        texBrickValue[brickAddr + uint3(0,0,2)] = texBrickValue[nBrickAddr + uint3(0,0,0)];
+        texBrickValue[brickAddr + uint3(2,0,2)] = texBrickValue[nBrickAddr + uint3(2,0,0)];
+        texBrickValue[brickAddr + uint3(0,2,2)] = texBrickValue[nBrickAddr + uint3(0,2,0)];
+        texBrickValue[brickAddr + uint3(2,2,2)] = texBrickValue[nBrickAddr + uint3(2,2,0)];
     }
 }
