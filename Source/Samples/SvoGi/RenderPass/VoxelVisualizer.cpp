@@ -59,7 +59,11 @@ void VoxelVisualizer::create_visualize_shaders(const Program::DefineList& progra
     {
         Program::Desc dVoxel;
         dVoxel.addShaderLibrary(kDebugSvoProg).psEntry("voxel_main");
-        mpVisualTracing_ = FullScreenPass::create(dVoxel, programDefines);
+        mpVisualTracing_[VisualVoxel] = FullScreenPass::create(dVoxel, programDefines);
+
+        Program::Desc dBrick;
+        dBrick.addShaderLibrary(kDebugSvoProg).psEntry("brick_main");
+        mpVisualTracing_[VisualBrick] = FullScreenPass::create(dBrick, programDefines);
     }
 }
 
@@ -82,13 +86,13 @@ void VoxelVisualizer::create_visualize_resources() {
 
 void VoxelVisualizer::do_visual_voxel(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
     if (mUseTacing_) {
-        mpVisualTracing_->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
-        mpVisualTracing_->getVars()["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
-        mpVisualTracing_->getVars()["texVoxelValue"] = mpVoxelTexture_;
-        mpVisualTracing_->getVars()["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
-        mpVisualTracing_->getVars()["spTexSampler"] = mpSampler_;
-        mpVisualTracing_->getVars()["CB"]["fViewportDims"] = float2{ pDstFbo->getWidth(), pDstFbo->getHeight() };
-        mpVisualTracing_->execute(pContext, pDstFbo);
+        mpVisualTracing_[VisualVoxel]->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
+        mpVisualTracing_[VisualVoxel]->getVars()["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
+        mpVisualTracing_[VisualVoxel]->getVars()["texVoxelValue"] = mpVoxelTexture_;
+        mpVisualTracing_[VisualVoxel]->getVars()["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
+        mpVisualTracing_[VisualVoxel]->getVars()["spTexSampler"] = mpSampler_;
+        mpVisualTracing_[VisualVoxel]->getVars()["CB"]["fViewportDims"] = float2{ pDstFbo->getWidth(), pDstFbo->getHeight() };
+        mpVisualTracing_[VisualVoxel]->execute(pContext, pDstFbo);
     }
     else {
         uint32_t instanceCount = mVoxelizationMeta_.CellDim.x * mVoxelizationMeta_.CellDim.y * mVoxelizationMeta_.CellDim.z;
@@ -105,6 +109,14 @@ void VoxelVisualizer::do_visual_voxel(RenderContext* pContext, const Fbo::Shared
 
 void VoxelVisualizer::do_visual_brick(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
     if (mUseTacing_) {
+        mpVisualTracing_[VisualBrick]->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
+        mpVisualTracing_[VisualBrick]->getVars()["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
+        mpVisualTracing_[VisualBrick]->getVars()["texBrickValue"] = mpBrickAlbedoTexture_;
+        mpVisualTracing_[VisualBrick]->getVars()["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
+        mpVisualTracing_[VisualBrick]->getVars()["bufSvoNodeColor"] = mpSVONodeColorBuffer_;
+        mpVisualTracing_[VisualBrick]->getVars()["spTexSampler"] = mpSampler_;
+        mpVisualTracing_[VisualBrick]->getVars()["CB"]["fViewportDims"] = float2{ pDstFbo->getWidth(), pDstFbo->getHeight() };
+        mpVisualTracing_[VisualBrick]->execute(pContext, pDstFbo);
     }
     else {
         uint32_t instanceCount = mVoxelizationMeta_.CellDim.x * mVoxelizationMeta_.CellDim.y * mVoxelizationMeta_.CellDim.z;
@@ -127,7 +139,8 @@ VoxelVisualizer::~VoxelVisualizer() {
     mpSampler_ = nullptr;
     mpSVONodeNextBuffer_ = nullptr;
     mpSVONodeColorBuffer_ = nullptr;
-    mpVisualTracing_ = nullptr;
+    mpVisualTracing_[VisualVoxel] = nullptr;
+    mpVisualTracing_[VisualBrick] = nullptr;
     mpVisualVarsR_[VisualVoxel] = nullptr;
     mpVisualVarsR_[VisualBrick] = nullptr;
     mpVisualR_[VisualVoxel] = nullptr;
@@ -148,12 +161,14 @@ void VoxelVisualizer::on_gui(Gui::Group& group) {
 
     if (group.checkbox("Use Sampler", mUseSampler_)) {
         if (mUseSampler_) {
-            mpVisualTracing_->addDefine(kSamplerDefine);
+            mpVisualTracing_[VisualVoxel]->addDefine(kSamplerDefine);
+            mpVisualTracing_[VisualBrick]->addDefine(kSamplerDefine);
             mpVisualR_[VisualVoxel]->getProgram()->addDefine(kSamplerDefine);
             mpVisualR_[VisualBrick]->getProgram()->addDefine(kSamplerDefine);
         }
         else {
-            mpVisualTracing_->removeDefine(kSamplerDefine);
+            mpVisualTracing_[VisualVoxel]->removeDefine(kSamplerDefine);
+            mpVisualTracing_[VisualBrick]->removeDefine(kSamplerDefine);
             mpVisualR_[VisualVoxel]->getProgram()->removeDefine(kSamplerDefine);
             mpVisualR_[VisualBrick]->getProgram()->removeDefine(kSamplerDefine);
         }

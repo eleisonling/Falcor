@@ -18,13 +18,13 @@ private:
     Scene::SharedPtr mpScene_ = nullptr;
     bool mUseTacing_ = true;
     bool mUseSampler_ = true;
-    uint32_t mType_ = 0;
+    uint32_t mType_ = 1;
     VoxelizationMeta mVoxelizationMeta_ = {};
 
     Texture::SharedPtr mpVoxelTexture_ = nullptr;
     Texture::SharedPtr mpBrickAlbedoTexture_ = nullptr;
     Sampler::SharedPtr mpSampler_ = nullptr;
-    FullScreenPass::SharedPtr mpVisualTracing_ = nullptr;
+    FullScreenPass::SharedPtr mpVisualTracing_[2] = {};
     Buffer::SharedPtr mpSVONodeNextBuffer_ = nullptr;
     Buffer::SharedPtr mpSVONodeColorBuffer_ = nullptr;
     

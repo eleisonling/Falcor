@@ -26,7 +26,12 @@ struct VoxelTracingHitInfo : ITracingHitInfo {
         uint3 cellIndex = extract_index_form_linear(linearAddress, bufVoxelMeta.CellDim);
 
         // load and uncompress
+#ifdef USE_SAMPLER 
+        float3 cellTex = float3(cellIndex) / float3(bufVoxelMeta.CellDim);
+        Color = texVoxelValue.SampleLevel(spTexSampler, cellTex, 0);
+#else
         Color = texVoxelValue[cellIndex];
+#endif
         bool hitted =  Color.w > 0.f;
         return hitted;
     }
@@ -55,7 +60,13 @@ struct BrickTracingHitInfo : ITracingHitInfo {
         uint3 brickCoords = uint_XYZ10_to_uint3(nodeData);
 
         // load and uncompress
+#ifdef USE_SAMPLER 
+        float3 cellTex = float3(brickCoords) / float3(bufVoxelMeta.BrickPoolResolution);
+        Color = texBrickValue.SampleLevel(spTexSampler, cellTex, 0);
+#else
+
         Color = texBrickValue[brickCoords];
+#endif
         bool hitted =  Color.w > 0.f;
         return hitted;
     }
