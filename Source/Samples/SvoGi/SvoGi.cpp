@@ -118,12 +118,8 @@ void SvoGi::onLoad(RenderContext* pRenderContext) {
     mpPostEffects_ = PostEffect::create();
 
     Sampler::Desc desc = {};
-    desc.setFilterMode(Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Filter::Point).setAddressingMode(Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp);
+    desc.setFilterMode(Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Filter::Linear).setAddressingMode(Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp);
     mpTextureSampler_ = Sampler::create(desc);
-
-    desc.setFilterMode(Sampler::Filter::Point, Sampler::Filter::Point, Sampler::Filter::Linear).setAddressingMode(Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp);
-    mpVoxelSampler_ = Sampler::create(desc);
-
 }
 
 void SvoGi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
@@ -164,7 +160,6 @@ void SvoGi::onShutdown() {
     mpHDRFbo_ = nullptr;
     mpPostEffects_ = nullptr;
     mpTextureSampler_ = nullptr;
-    mpVoxelSampler_ = nullptr;
 }
 
 bool SvoGi::onKeyEvent(const KeyboardEvent& keyEvent) {

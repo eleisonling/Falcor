@@ -63,5 +63,4 @@ private:
 
     uint32_t mFinalOutputType_ = 1;
     Sampler::SharedPtr mpTextureSampler_ = nullptr;
-    Sampler::SharedPtr mpVoxelSampler_ = nullptr;
 };
