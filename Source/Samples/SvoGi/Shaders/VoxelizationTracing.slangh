@@ -23,12 +23,12 @@ inline void get_node_info(uint32_t parent, uint32_t shift, out uint32_t childNod
 }
 
 
-interface ITracingHittedInfo {
+interface ITracingHitInfo {
     [mutating]
-    bool deal_hitted(uint32_t nodeData); 
+    bool deal_if_hitted(uint32_t parent, uint32_t childShift); 
 };
 
-void trace_sparse_voxel_ray<T : ITracingHittedInfo>(inout RayDesc ray, RWByteAddressBuffer svoNode, uint32_t leafLevel, uint3 cellDim, inout T hitInfo) {
+void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddressBuffer svoNode, uint32_t leafLevel, uint3 cellDim, inout T hitInfo) {
 
     const float epsilon = exp2(-MAX_LEVEL);
 	int2 stack[MAX_LEVEL + 1] = {};
@@ -78,8 +78,9 @@ void trace_sparse_voxel_ray<T : ITracingHittedInfo>(inout RayDesc ray, RWByteAdd
 	if (1.5 * t_coef.z - t_bias.z > t_min) idx ^= 4, pos.z = 1.5;
 
 	while (scale < MAX_LEVEL) {
+        uint32_t child_shift = 0;
 		if (childNodeInParent == 0) {
-			uint32_t child_shift = idx ^ octant_mask;
+			child_shift = idx ^ octant_mask;
 			get_node_info(parent, child_shift, childNodeInParent, svoNode);
 		}
 
@@ -92,7 +93,7 @@ void trace_sparse_voxel_ray<T : ITracingHittedInfo>(inout RayDesc ray, RWByteAdd
 		float tc_max = min(min(t_corner.x, t_corner.y), t_corner.z);
 		
         if (is_leaf_node(childNodeInParent, scale, leafLevel)) {
-            bool hitted = hitInfo.deal_hitted(childNodeInParent);
+            bool hitted = hitInfo.deal_if_hitted(parent, child_shift);
             if(hitted) return;
 	    }
 

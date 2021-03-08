@@ -84,8 +84,8 @@ void VoxelVisualizer::do_visual_voxel(RenderContext* pContext, const Fbo::Shared
     if (mUseTacing_) {
         mpVisualTracing_->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
         mpVisualTracing_->getVars()["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
-        mpVisualTracing_->getVars()["texPackedAlbedo"] = mpVoxelTexture_;
-        mpVisualTracing_->getVars()["bufSvoNode"] = mpSVONodeNextBuffer_;
+        mpVisualTracing_->getVars()["texVoxelValue"] = mpVoxelTexture_;
+        mpVisualTracing_->getVars()["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
         mpVisualTracing_->getVars()["spTexSampler"] = mpSampler_;
         mpVisualTracing_->getVars()["CB"]["fViewportDims"] = float2{ pDstFbo->getWidth(), pDstFbo->getHeight() };
         mpVisualTracing_->execute(pContext, pDstFbo);
