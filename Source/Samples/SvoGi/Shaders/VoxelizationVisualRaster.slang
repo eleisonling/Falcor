@@ -93,7 +93,7 @@ float4 raster_brick(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGE
 
     // load and uncompress
 #ifdef USE_SAMPLER 
-    float3 cellTex = float3(brickCoords) / float3(bufVoxelMeta.BrickPoolResolution);
+    float3 cellTex = float3(brickCoords + uint3(1)) / float3(bufVoxelMeta.BrickPoolResolution);
     float4 packedColor = texBrickTexValue.SampleLevel(spTexture, cellTex, 0);
 #else
     float4 packedColor = texBrickTexValue[brickCoords];
