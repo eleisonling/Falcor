@@ -185,7 +185,7 @@ void VoxelizationPass::do_build_brick(RenderContext* pContext) {
 
     {
         PROFILE("SpreadLeaf");
-        uint3 threads = uint3(uint32_t(glm::pow(mSVOPerLevelNodeNum_[kVoxelizationMeta.TotalLevel - 1], 1.0f / 3.0f))) + uint3(1);
+        uint3 threads = uint3(uint32_t(glm::pow(mSVOPerLevelNodeNum_[kVoxelizationMeta.TotalLevel - 1] / 8, 1.0f / 3.0f))) + uint3(1);
         uint3 groupSize = div_round_up(threads, uint3(COMMON_THREAD_SIZE));
         kVoxelizationMeta.CurLevel = kVoxelizationMeta.TotalLevel - 1;
         mpSpreadNodeLeaf_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);

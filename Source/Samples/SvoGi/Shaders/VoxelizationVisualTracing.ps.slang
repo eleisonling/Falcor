@@ -61,7 +61,7 @@ struct BrickTracingHitInfo : ITracingHitInfo {
 
         // load and uncompress
 #ifdef USE_SAMPLER 
-        float3 cellTex = (float3(brickCoords) + float3(1.0)) / float3(bufVoxelMeta.BrickPoolResolution);
+        float3 cellTex = float3(brickCoords + uint3(1)) / float3(bufVoxelMeta.BrickPoolResolution);
         Color = texBrickValue.SampleLevel(spTexSampler, cellTex, 0);
 #else
         Color = texBrickValue[brickCoords + 2 * childOffsets[childShift]];

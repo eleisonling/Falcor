@@ -107,3 +107,4 @@ static const uint3 childOffsets[8] = {
   uint3(1, 0, 1),
   uint3(0, 1, 1), 
   uint3(1, 1, 1)};
+
