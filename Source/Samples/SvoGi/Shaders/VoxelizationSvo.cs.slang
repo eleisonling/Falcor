@@ -48,15 +48,7 @@ void tag_node(uint3 DTid : SV_DispatchThreadID){
         curID = childID + (relative.x | relative.y << 1 | relative.z << 2);
         cellIndex -= svoCellDim * relative;
     }
-
-    if(bufVoxelMeta.CurLevel == bufVoxelMeta.TotalLevel - 1) {
-        // svo node is same as the pixel cell node count
-        cellIndex = uint_XYZ10_to_uint3(cellIndexU);
-        linearIndex = cellIndex.z * bufVoxelMeta.CellDim.x * bufVoxelMeta.CellDim.y + cellIndex.y * bufVoxelMeta.CellDim.x + cellIndex.x;
-        bufSvoNode.Store(curID * 4, set_child_index(linearIndex));
-    } else {
-        bufSvoNode.InterlockedOr(curID * 4, INTERNAL_FLAG); 
-    }
+    bufSvoNode.InterlockedOr(curID * 4, INTERNAL_FLAG); 
 }
 
 
