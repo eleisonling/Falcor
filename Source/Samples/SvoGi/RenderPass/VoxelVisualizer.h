@@ -9,15 +9,15 @@ using namespace Falcor;
 class VoxelVisualizer : public std::enable_shared_from_this<VoxelVisualizer> {
 private:
 
-    VoxelVisualizer(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines);
+    VoxelVisualizer(const Scene::SharedPtr& pScene, Program::DefineList& programDefines);
     void create_visualize_shaders(const Program::DefineList& programDefines);
     void create_visualize_resources();
     void do_visual_voxel(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
     void do_visual_brick(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
 
     Scene::SharedPtr mpScene_ = nullptr;
-    bool mUseTacing_ = false;
-    bool mUseSampler_ = true;
+    bool mUseTacing_ = true;
+    bool mUseSampler_ = false;
     uint32_t mType_ = 1;
     VoxelizationMeta mVoxelizationMeta_ = {};
 

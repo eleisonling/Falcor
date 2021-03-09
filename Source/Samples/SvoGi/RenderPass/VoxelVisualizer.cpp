@@ -20,8 +20,10 @@ namespace {
 
 }
 
-VoxelVisualizer::VoxelVisualizer(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines)
+VoxelVisualizer::VoxelVisualizer(const Scene::SharedPtr& pScene, Program::DefineList& programDefines)
     : mpScene_(pScene) {
+
+    if(mUseSampler_) programDefines.add(kSamplerDefine);
     create_visualize_shaders(programDefines);
     create_visualize_resources();
 }
@@ -152,7 +154,6 @@ VoxelVisualizer::~VoxelVisualizer() {
 VoxelVisualizer::SharedPtr VoxelVisualizer::create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines /*= Program::DefineList()*/) {
     Program::DefineList dl = programDefines;
     dl.add(pScene->getSceneDefines());
-    dl.add(kSamplerDefine);
     return VoxelVisualizer::SharedPtr(new VoxelVisualizer(pScene, dl));
 }
 
