@@ -85,18 +85,20 @@ float4 raster_brick(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGE
     uint3 cellIndex = uint3(floor(posTex * (bufVoxelMeta.CellDim - 1)));
 
     uint32_t foundLevel = 0;
-    uint32_t nodeNext = traverse_octree_simple(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, foundLevel);
+    uint3 relative = uint3(0);
+    uint32_t nodeNext = traverse_octree_relative_out(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, foundLevel, relative);
     uint32_t leafPointer = bufSvoNodeColor.Load(nodeNext * 4);
 
     if(foundLevel != (bufVoxelMeta.TotalLevel - 1) || leafPointer == 0) discard;
     uint3 brickCoords = uint_XYZ10_to_uint3(leafPointer);
+    uint32_t offset = relative.x | relative.y << 1 | relative.z << 2;
 
     // load and uncompress
 #ifdef USE_SAMPLER 
     float3 cellTex = float3(brickCoords + uint3(1)) / float3(bufVoxelMeta.BrickPoolResolution);
     float4 packedColor = texBrickTexValue.SampleLevel(spTexture, cellTex, 0);
 #else
-    float4 packedColor = texBrickTexValue[brickCoords];
+    float4 packedColor = texBrickTexValue[brickCoords + 2 * childOffsets[offset]];
 #endif
     if (packedColor.a == 0) discard; // every level may have empty nodes
     finalColor = float4(packedColor.xyz, 1.0f);
