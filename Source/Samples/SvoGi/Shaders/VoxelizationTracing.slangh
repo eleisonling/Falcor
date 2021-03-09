@@ -180,10 +180,10 @@ inline uint32_t traverse_octree_simple(uint3 cellIndex, uint3 cellDim, uint32_t 
 		curID = childID + (relative.x | relative.y << 1 | relative.z << 2);
 		uint32_t nodeNext = svNodeNext.Load(curID * 4);
 		childID = get_child_index(nodeNext) * 8;
+		cellIndex -= levelDim * relative;
 		if (!is_valid_node(nodeNext) || childID == 0U) {
 			break;
 		}
-		cellIndex -= levelDim * relative;
 	} // level-for
 	return curID;
 }
@@ -201,10 +201,10 @@ inline uint32_t traverse_octree_relative_out(uint3 cellIndex, uint3 cellDim, uin
 		curID = childID + (relative.x | relative.y << 1 | relative.z << 2);
 		uint32_t nodeNext = svNodeNext.Load(curID * 4);
 		childID = get_child_index(nodeNext) * 8;
+		cellIndex -= levelDim * relative;
 		if (!is_valid_node(nodeNext) || childID == 0U) {
 			break;
 		}
-		cellIndex -= levelDim * relative;
 	} // level-for
 	return curID;
 }

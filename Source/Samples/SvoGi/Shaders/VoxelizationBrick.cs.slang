@@ -51,11 +51,9 @@ void alloc_brick(uint3 DTid : SV_DispatchThreadID){
     }
 }
 
-void store_in_leaf(uint3 relative, uint32_t address, float4 voxelColor, float4 voxelNormal) {
+void store_in_leaf(uint32_t address, float4 voxelColor, float4 voxelNormal) {
     uint32_t nodeColorU = bufSvoNodeColor.Load(address * 4);
     uint3 brickCoords = uint_XYZ10_to_uint3(nodeColorU);
-    uint32_t off = relative.x | relative.y << 1 | relative.z << 2;
-
     texBrickAlbedo[brickCoords] = voxelColor;
     texBrickNormal[brickCoords] = voxelNormal;
     texBrickRadius[brickCoords] = float4(0,0,0,1);
@@ -78,7 +76,7 @@ void write_leaf_brick(uint3 DTid : SV_DispatchThreadID){
     uint32_t onLevel = 0;
     uint3 relative = uint3(0);
     uint32_t nodeAddress = traverse_octree_relative_out(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, onLevel, relative);
-    store_in_leaf(relative, nodeAddress, voxelColor, voxelNormal);
+    store_in_leaf(nodeAddress, voxelColor, voxelNormal);
 }
 
 RWTexture3D<float4> texBrickValue;
