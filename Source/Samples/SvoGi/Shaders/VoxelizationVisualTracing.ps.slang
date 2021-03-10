@@ -21,7 +21,6 @@ struct VoxelTracingHitInfo : ITracingHitInfo {
     [mutating]
     bool deal_if_hitted(uint32_t parent, uint32_t childShift){
         uint32_t nodeData = 0;
-        get_node_info(parent, childShift, nodeData, bufSvoNodeNext);
         uint32_t linearAddress = get_child_index(nodeData);
         uint3 cellIndex = extract_index_form_linear(linearAddress, bufVoxelMeta.CellDim);
 
@@ -54,9 +53,9 @@ struct BrickTracingHitInfo : ITracingHitInfo {
     float4 Color = {};
 
     [mutating]
-    bool deal_if_hitted(uint32_t parent, uint32_t childShift){
-        uint32_t nodeData = 0;
-        get_node_info(parent, childShift, nodeData, bufSvoNodeColor);
+    bool deal_if_hitted(uint32_t parentNode, uint32_t childShift){
+        uint32_t colorAddress = get_child_index(parentNode) * 8;
+        uint32_t nodeData = bufSvoNodeColor.Load(colorAddress * 4);
         uint3 brickCoords = uint_XYZ10_to_uint3(nodeData);
 
         // load and uncompress

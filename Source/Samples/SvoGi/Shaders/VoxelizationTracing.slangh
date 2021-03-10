@@ -6,7 +6,7 @@ import Scene.Raytracing;
 inline float3 convert_world_to_svo_space(float3 worldPos, float3 cellMin, float3 cellMax) {
     float3 worldExtent = cellMax - cellMin;  
     float maxAxis = max(worldExtent.x, max(worldExtent.y, worldExtent.z));
-    float3 convertedPos = (worldPos - cellMin) / float3(2.0 * maxAxis) + float3(1.0);
+    float3 convertedPos = (worldPos - cellMin) / float3(maxAxis) + float3(1.0);
     return convertedPos;
 }
 
@@ -15,11 +15,6 @@ inline float copy_sign_32f(float newVal, float oldVal) {
     uint32_t oldValSign = asuint(oldVal) & SIGN_BIT_32;
     uint32_t clearSign = asuint(newVal) & (SIGN_BIT_32 - 1);
     return asfloat(clearSign | oldValSign);
-}
-
-inline void get_node_info(uint32_t parent, uint32_t shift, out uint32_t childNode, RWByteAddressBuffer svoNode) {
-    uint32_t childAddress = parent * 8 + shift;
-    childNode = svoNode.Load(childAddress * 4);
 }
 
 
@@ -64,8 +59,7 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
     // min should clamp to zero，max should not
     t_min = max(t_min, 0.0);
 
-    uint32_t parent = 0;
-    uint32_t childNodeInParent = 0;
+    uint32_t parentAddress = 0;
     uint32_t idx = 0;
     float3 pos = float3(1.0, 1.0, 1.0);
     int32_t scale = MAX_LEVEL - 1;
@@ -78,10 +72,12 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
     if (1.5 * t_coef.z - t_bias.z > t_min) idx ^= 4, pos.z = 1.5;
 
     while (scale < MAX_LEVEL) {
-        uint32_t child_shift = 0;
-        if (childNodeInParent == 0) {
-            child_shift = idx ^ octant_mask;
-            get_node_info(parent, child_shift, childNodeInParent, svoNode);
+        uint32_t child_shift = idx ^ octant_mask;
+        uint32_t parentNode = svoNode.Load(parentAddress * 4);
+
+        if (is_leaf_node(parentNode, scale, leafLevel)) {
+            bool hitted = hitInfo.deal_if_hitted(parentNode, child_shift);
+            if(hitted) return;
         }
 
         // determind the max-t value of the cube
@@ -91,14 +87,10 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
         // corner means the middle point of t
         float3 t_corner = pos * t_coef - t_bias;
         float tc_max = min(min(t_corner.x, t_corner.y), t_corner.z);
-        
-        if (is_leaf_node(childNodeInParent, scale, leafLevel)) {
-            bool hitted = hitInfo.deal_if_hitted(parent, child_shift);
-            if(hitted) return;
-        }
 
         // check is child is a node
-        if (is_valid_node(childNodeInParent) && !is_leaf_node(childNodeInParent, scale, leafLevel) && t_min <= t_max) {
+        if (is_valid_node(parentNode) && !is_leaf_node(parentNode, scale, leafLevel) && t_min <= t_max) {
+            uint32_t childAddress = get_child_index(parentNode) * 8 + child_shift;
             float tv_max = min(t_max, tc_max);
             float half_scale = scale_exp2 * 0.5;
             // center means is the center of min * corner
@@ -107,9 +99,9 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
             if (t_min <= tv_max) {
                 // push
                 if (tc_max < h)
-                    stack[scale] = int2(parent, asint(t_max));
+                    stack[scale] = int2(parentAddress, asint(t_max));
                 h = tc_max;
-                parent = get_child_index(childNodeInParent);
+                parentAddress = childAddress;
 
                 idx = 0;
                 --scale;
@@ -120,7 +112,6 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
                 if (t_center.z > t_min) idx ^= 4, pos.z += scale_exp2;
 
                 t_max = tv_max;
-                childNodeInParent = 0;
                 continue;
             }
         }
@@ -150,7 +141,7 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
             scale_exp2 = asfloat((scale - MAX_LEVEL + 127) << 23);
 
             int2 stackEntry = stack[scale];
-            parent = stackEntry.x;
+            parentAddress = stackEntry.x;
             t_max = asfloat(stackEntry.y);
             
             int shx = asint(pos.x) >> scale;
@@ -160,9 +151,7 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
             pos.y = asfloat(shy << scale);
             pos.z = asfloat(shz << scale);
             idx = (shx & 1) | ((shy & 1) << 1) | ((shz & 1) << 2);
-
             h = 0.0;
-            childNodeInParent = 0;
         }
     }
 }
