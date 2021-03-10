@@ -104,8 +104,8 @@ void create_neighbours(uint3 DTid : SV_DispatchThreadID){
 
     uint32_t nodeLevel = 0;
     uint3 relative = uint3(0);
-    uint32_t nodeAddress = traverse_octree_relative_out(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNode, nodeLevel, relative);
-    uint32_t stepResolution = pow(2, bufVoxelMeta.TotalLevel - 1 - nodeLevel);
+    uint3 stepResolution = bufVoxelMeta.CellDim;
+    uint32_t nodeAddress = traverse_octree_cur_relative_dim_out(cellIndex, stepResolution, bufVoxelMeta.TotalLevel, bufSvoNode, nodeLevel, relative);
 
     uint32_t nX = 0;
     uint32_t nY = 0;
@@ -113,17 +113,17 @@ void create_neighbours(uint3 DTid : SV_DispatchThreadID){
 
     uint32_t neighbourLevel = 0;
     if(relative.x == 0) {
-        nX = traverse_octree_simple(cellIndex + uint3(stepResolution, 0, 0), bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNode, neighbourLevel);
+        nX = traverse_octree_simple(cellIndex + uint3(stepResolution.x, 0, 0), bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNode, neighbourLevel);
         if (nodeLevel != neighbourLevel) nX = 0;
     }
 
     if(relative.y == 0) {
-        nY = traverse_octree_simple(cellIndex + uint3(0, stepResolution, 0), bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNode, neighbourLevel);
+        nY = traverse_octree_simple(cellIndex + uint3(0, stepResolution.y, 0), bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNode, neighbourLevel);
         if (nodeLevel != neighbourLevel) nY = 0;
     }
 
     if(relative.z == 0) {
-        nZ = traverse_octree_simple(cellIndex + uint3(0, 0, stepResolution), bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNode, neighbourLevel);
+        nZ = traverse_octree_simple(cellIndex + uint3(0, 0, stepResolution.z), bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNode, neighbourLevel);
         if (nodeLevel != neighbourLevel) nZ = 0;
     }
 

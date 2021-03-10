@@ -163,12 +163,16 @@ inline uint32_t traverse_octree_simple(uint3 cellIndex, uint3 cellDim, uint32_t 
     uint3 levelDim = cellDim;
   
     for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
-        foundOnLevel = iLevel;
         // child relative
         levelDim >>= 1;
         uint3 relative = step(levelDim, cellIndex);
         uint32_t nodeNext = svNodeNext.Load(curID * 4);
-        if(!is_valid_node(nodeNext) || get_child_index(nodeNext) == 0) {
+        if(!is_valid_node(nodeNext)) {
+            foundOnLevel = iLevel - 1;
+            break;
+        }
+        if(get_child_index(nodeNext) == 0) {
+            foundOnLevel = iLevel;
             break;
         }
         cellIndex -= levelDim * relative;
@@ -182,14 +186,19 @@ inline uint32_t traverse_octree_relative_out(uint3 cellIndex, uint3 cellDim, uin
     uint32_t curID = 0;
     foundOnLevel = 0;
     uint3 levelDim = cellDim;
+    relative = uint3(0);
   
     for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
-        foundOnLevel = iLevel;
         // child relative
         levelDim >>= 1;
         relative = step(levelDim, cellIndex);
         uint32_t nodeNext = svNodeNext.Load(curID * 4);
-        if(!is_valid_node(nodeNext) || get_child_index(nodeNext) == 0) {
+        if(!is_valid_node(nodeNext)) {
+            foundOnLevel = iLevel - 1;
+            break;
+        }
+        if(get_child_index(nodeNext) == 0) {
+            foundOnLevel = iLevel;
             break;
         }
         cellIndex -= levelDim * relative;
@@ -197,3 +206,30 @@ inline uint32_t traverse_octree_relative_out(uint3 cellIndex, uint3 cellDim, uin
     } // level-for
     return curID;
 }
+
+
+inline uint32_t traverse_octree_cur_relative_dim_out(uint3 cellIndex, inout uint3 cellDim, uint32_t numLevels, RWByteAddressBuffer svNodeNext, out uint32_t foundOnLevel, out uint3 relative) {
+    uint32_t childID = 0;
+    uint32_t curID = 0;
+    foundOnLevel = 0;
+    relative = uint3(0);
+  
+    for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
+        uint32_t nodeNext = svNodeNext.Load(curID * 4);
+        if(!is_valid_node(nodeNext)) {
+            foundOnLevel = iLevel - 1;
+            break;
+        }
+        if(get_child_index(nodeNext) == 0) {
+            foundOnLevel = iLevel;
+            break;
+        }
+        // child relative
+        cellDim >>= 1;
+        relative = step(cellDim, cellIndex);
+        cellIndex -= cellDim * relative;
+        curID = get_child_index(nodeNext) * 8 + (relative.x | relative.y << 1 | relative.z << 2);
+    } // level-for
+    return curID;
+}
+
