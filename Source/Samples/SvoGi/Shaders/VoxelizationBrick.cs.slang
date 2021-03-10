@@ -232,17 +232,17 @@ float4 get_final_val(in float4 borderVal, in float4 neighbourBorderVal) {
 [numthreads(COMMON_THREAD_SIZE, COMMON_THREAD_SIZE, COMMON_THREAD_SIZE)]
 void border_transfer(uint3 DTid : SV_DispatchThreadID){
     uint32_t linearIndex = DTid.z * uDispathGroupSize.y * uDispathGroupSize.x + DTid.y * uDispathGroupSize.x + DTid.x;
-    uint32_t levelStart = bufLevelAddress.Load(bufVoxelMeta.CurLevel * 4);
-    uint32_t levelNextStart = bufVoxelMeta.CurLevel <= bufVoxelMeta.TotalLevel ? bufLevelAddress.Load((bufVoxelMeta.CurLevel + 1) * 4) : 0;
+    uint32_t levelStart = bufLevelAddress.Load((bufVoxelMeta.CurLevel) * 4);
+    uint32_t levelNextStart = bufVoxelMeta.CurLevel <= (bufVoxelMeta.TotalLevel) ? bufLevelAddress.Load((bufVoxelMeta.CurLevel + 1) * 4) : 0;
 
     uint32_t nodeAddress = levelStart + linearIndex;
     if(nodeAddress >= levelNextStart) return;
 
-    uint32_t neighbourAddress = get_child_index(bufNeighbourAddress.Load(nodeAddress * 4));
+    uint32_t neighbourAddress = get_child_index(bufNeighbourAddress.Load(nodeAddress * 4 * 8));
     if (neighbourAddress == 0) return; 
 
     uint3 brickAddr = uint_XYZ10_to_uint3(bufSvoNodeColor.Load(nodeAddress * 4 * 8));
-    uint3 nBrickAddr = uint_XYZ10_to_uint3(bufSvoNodeColor.Load(neighbourAddress * 4 * 8));
+    uint3 nBrickAddr = uint_XYZ10_to_uint3(bufSvoNodeColor.Load(neighbourAddress * 4));
 
     if(iBorderTransferAxis == AXIS_X) {
         for (int y = 0; y <= 2; ++y) {
