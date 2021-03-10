@@ -4,20 +4,6 @@ namespace {
     static std::string kDebugVolProg = "Samples/SvoGi/Shaders/VoxelizationVisualRaster.slang";
     static std::string kDebugSvoProg = "Samples/SvoGi/Shaders/VoxelizationVisualTracing.ps.slang";
     static std::string kSamplerDefine = "USE_SAMPLER";
-
-    enum VisualType {
-        VisualVoxel,
-        VisualBrick,
-
-        TypeNum
-    };
-
-
-    const Gui::DropdownList kVisualType = {
-        { (uint32_t)VisualType::VisualVoxel, "Voxel" },
-        { (uint32_t)VisualType::VisualBrick, "Brick" },
-    };
-
 }
 
 VoxelVisualizer::VoxelVisualizer(const Scene::SharedPtr& pScene, Program::DefineList& programDefines)
@@ -32,20 +18,11 @@ void VoxelVisualizer::create_visualize_shaders(const Program::DefineList& progra
     // visual raster
     {
         Program::Desc rasterVDesc;
-        rasterVDesc.addShaderLibrary(kDebugVolProg).vsEntry("vs_main").psEntry("ps_main");
-        auto pDebugProg = GraphicsProgram::create(rasterVDesc, programDefines);
-        mpVisualR_[VisualVoxel] = GraphicsState::create();
-        mpVisualR_[VisualVoxel]->setProgram(pDebugProg);
-        mpVisualVarsR_[VisualVoxel] = GraphicsVars::create(pDebugProg.get());
-    }
-
-    {
-        Program::Desc rasterVDesc;
         rasterVDesc.addShaderLibrary(kDebugVolProg).vsEntry("vs_main").psEntry("raster_brick");
         auto pDebugProg = GraphicsProgram::create(rasterVDesc, programDefines);
-        mpVisualR_[VisualBrick] = GraphicsState::create();
-        mpVisualR_[VisualBrick]->setProgram(pDebugProg);
-        mpVisualVarsR_[VisualBrick] = GraphicsVars::create(pDebugProg.get());
+        mpVisualR_ = GraphicsState::create();
+        mpVisualR_->setProgram(pDebugProg);
+        mpVisualVarsR_ = GraphicsVars::create(pDebugProg.get());
     }
 
 
@@ -53,19 +30,14 @@ void VoxelVisualizer::create_visualize_shaders(const Program::DefineList& progra
     RasterizerState::Desc rasterDesc{};
     rasterDesc.setFillMode(RasterizerState::FillMode::Wireframe).setCullMode(RasterizerState::CullMode::None);
     RasterizerState::SharedPtr rasterState = RasterizerState::create(rasterDesc);
-    mpVisualR_[VisualVoxel]->setRasterizerState(rasterState);
-    mpVisualR_[VisualBrick]->setRasterizerState(rasterState);
+    mpVisualR_->setRasterizerState(rasterState);
 
 
     // visual tracing
     {
-        Program::Desc dVoxel;
-        dVoxel.addShaderLibrary(kDebugSvoProg).psEntry("voxel_main");
-        mpVisualTracing_[VisualVoxel] = FullScreenPass::create(dVoxel, programDefines);
-
         Program::Desc dBrick;
         dBrick.addShaderLibrary(kDebugSvoProg).psEntry("brick_main");
-        mpVisualTracing_[VisualBrick] = FullScreenPass::create(dBrick, programDefines);
+        mpVisualTracing_ = FullScreenPass::create(dBrick, programDefines);
     }
 }
 
@@ -86,67 +58,40 @@ void VoxelVisualizer::create_visualize_resources() {
     mpRasterVao_->getIndexBuffer()->setBlob(mpRasterMesh_->getIndices().data(), 0, sizeof(uint32_t) * mpRasterMesh_->getIndices().size());
 }
 
-void VoxelVisualizer::do_visual_voxel(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
-    if (mUseTacing_) {
-        mpVisualTracing_[VisualVoxel]->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
-        mpVisualTracing_[VisualVoxel]->getVars()["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
-        mpVisualTracing_[VisualVoxel]->getVars()["texVoxelValue"] = mpVoxelTexture_;
-        mpVisualTracing_[VisualVoxel]->getVars()["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
-        mpVisualTracing_[VisualVoxel]->getVars()["spTexSampler"] = mpSampler_;
-        mpVisualTracing_[VisualVoxel]->getVars()["CB"]["fViewportDims"] = float2{ pDstFbo->getWidth(), pDstFbo->getHeight() };
-        mpVisualTracing_[VisualVoxel]->execute(pContext, pDstFbo);
-    }
-    else {
-        uint32_t instanceCount = mVoxelizationMeta_.CellDim.x * mVoxelizationMeta_.CellDim.y * mVoxelizationMeta_.CellDim.z;
-        mpVisualR_[VisualVoxel]->setFbo(pDstFbo);
-        mpVisualR_[VisualVoxel]->setVao(mpRasterVao_);
-        mpVisualVarsR_[VisualVoxel]->setParameterBlock("gScene", mpScene_->getParameterBlock());
-        mpVisualVarsR_[VisualVoxel]["texPackedAlbedo"] = mpVoxelTexture_;
-        mpVisualVarsR_[VisualVoxel]["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
-        mpVisualVarsR_[VisualVoxel]["spTexture"] = mpSampler_;
-        mpVisualVarsR_[VisualVoxel]["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
-        pContext->drawIndexedInstanced(mpVisualR_[VisualVoxel].get(), mpVisualVarsR_[VisualVoxel].get(), (uint32_t)mpRasterMesh_->getIndices().size(), instanceCount, 0, 0, 0);
-    }
-}
-
 void VoxelVisualizer::do_visual_brick(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
     if (mUseTacing_) {
-        mpVisualTracing_[VisualBrick]->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
-        mpVisualTracing_[VisualBrick]->getVars()["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
-        mpVisualTracing_[VisualBrick]->getVars()["texBrickValue"] = mpBrickAlbedoTexture_;
-        mpVisualTracing_[VisualBrick]->getVars()["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
-        mpVisualTracing_[VisualBrick]->getVars()["bufSvoNodeColor"] = mpSVONodeColorBuffer_;
-        mpVisualTracing_[VisualBrick]->getVars()["spTexSampler"] = mpSampler_;
-        mpVisualTracing_[VisualBrick]->getVars()["CB"]["fViewportDims"] = float2{ pDstFbo->getWidth(), pDstFbo->getHeight() };
-        mpVisualTracing_[VisualBrick]->execute(pContext, pDstFbo);
+        mpVisualTracing_->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
+        mpVisualTracing_["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
+        mpVisualTracing_["texBrickValue"] = mpBrickAlbedoTexture_;
+        mpVisualTracing_["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
+        mpVisualTracing_["bufSvoNodeColor"] = mpSVONodeColorBuffer_;
+        mpVisualTracing_["spTexSampler"] = mpSampler_;
+        mpVisualTracing_["CB"]["fViewportDims"] = float2{ pDstFbo->getWidth(), pDstFbo->getHeight() };
+        mpVisualTracing_->execute(pContext, pDstFbo);
     }
     else {
         uint32_t instanceCount = mVoxelizationMeta_.CellDim.x * mVoxelizationMeta_.CellDim.y * mVoxelizationMeta_.CellDim.z;
-        mpVisualR_[VisualBrick]->setFbo(pDstFbo);
-        mpVisualR_[VisualBrick]->setVao(mpRasterVao_);
-        mpVisualVarsR_[VisualBrick]->setParameterBlock("gScene", mpScene_->getParameterBlock());
-        mpVisualVarsR_[VisualBrick]["texBrickTexValue"] = mpBrickAlbedoTexture_;
-        mpVisualVarsR_[VisualBrick]["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
-        mpVisualVarsR_[VisualBrick]["bufSvoNodeColor"] = mpSVONodeColorBuffer_;
-        mpVisualVarsR_[VisualBrick]["spTexture"] = mpSampler_;
-        mpVisualVarsR_[VisualBrick]["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
-        pContext->drawIndexedInstanced(mpVisualR_[VisualBrick].get(), mpVisualVarsR_[VisualBrick].get(), (uint32_t)mpRasterMesh_->getIndices().size(), instanceCount, 0, 0, 0);
+        mpVisualR_->setFbo(pDstFbo);
+        mpVisualR_->setVao(mpRasterVao_);
+        mpVisualVarsR_->setParameterBlock("gScene", mpScene_->getParameterBlock());
+        mpVisualVarsR_["texBrickTexValue"] = mpBrickAlbedoTexture_;
+        mpVisualVarsR_["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
+        mpVisualVarsR_["bufSvoNodeColor"] = mpSVONodeColorBuffer_;
+        mpVisualVarsR_["spTexture"] = mpSampler_;
+        mpVisualVarsR_["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
+        pContext->drawIndexedInstanced(mpVisualR_.get(), mpVisualVarsR_.get(), (uint32_t)mpRasterMesh_->getIndices().size(), instanceCount, 0, 0, 0);
     }
 }
 
 VoxelVisualizer::~VoxelVisualizer() {
     mpScene_ = nullptr;
-    mpVoxelTexture_ = nullptr;
     mpBrickAlbedoTexture_ = nullptr;
     mpSampler_ = nullptr;
     mpSVONodeNextBuffer_ = nullptr;
     mpSVONodeColorBuffer_ = nullptr;
-    mpVisualTracing_[VisualVoxel] = nullptr;
-    mpVisualTracing_[VisualBrick] = nullptr;
-    mpVisualVarsR_[VisualVoxel] = nullptr;
-    mpVisualVarsR_[VisualBrick] = nullptr;
-    mpVisualR_[VisualVoxel] = nullptr;
-    mpVisualR_[VisualBrick] = nullptr;
+    mpVisualTracing_ = nullptr;
+    mpVisualVarsR_ = nullptr;
+    mpVisualR_ = nullptr;
     mpRasterMesh_ = nullptr;
     mpRasterVao_ = nullptr;
 }
@@ -162,36 +107,17 @@ void VoxelVisualizer::on_gui(Gui::Group& group) {
 
     if (group.checkbox("Use Sampler", mUseSampler_)) {
         if (mUseSampler_) {
-            mpVisualTracing_[VisualVoxel]->addDefine(kSamplerDefine);
-            mpVisualTracing_[VisualBrick]->addDefine(kSamplerDefine);
-            mpVisualR_[VisualVoxel]->getProgram()->addDefine(kSamplerDefine);
-            mpVisualR_[VisualBrick]->getProgram()->addDefine(kSamplerDefine);
+            mpVisualTracing_->addDefine(kSamplerDefine);
+            mpVisualR_->getProgram()->addDefine(kSamplerDefine);
         }
         else {
-            mpVisualTracing_[VisualVoxel]->removeDefine(kSamplerDefine);
-            mpVisualTracing_[VisualBrick]->removeDefine(kSamplerDefine);
-            mpVisualR_[VisualVoxel]->getProgram()->removeDefine(kSamplerDefine);
-            mpVisualR_[VisualBrick]->getProgram()->removeDefine(kSamplerDefine);
+            mpVisualTracing_->removeDefine(kSamplerDefine);
+            mpVisualR_->getProgram()->removeDefine(kSamplerDefine);
         }
     }
-
-    group.dropdown("Visual Type", kVisualType, mType_);
 }
 
 void VoxelVisualizer::on_render(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
     PROFILE("Visualize");
-
-    switch (mType_)
-    {
-    case VisualType::VisualVoxel:
-        do_visual_voxel(pContext, pDstFbo);
-        break;
-    case VisualType::VisualBrick:
-        do_visual_brick(pContext, pDstFbo);
-        break;
-    case VisualType::TypeNum:
-        break;
-    default:
-        break;
-    }
+    do_visual_brick(pContext, pDstFbo);
 }

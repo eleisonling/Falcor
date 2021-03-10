@@ -80,7 +80,7 @@ void VoxelizationPass::on_render(RenderContext* pContext, const Fbo::SharedPtr& 
 
     do_build_svo(pContext);
     do_build_brick(pContext);
-    //mNeedRefresh_ = false;
+    mNeedRefresh_ = false;
 }
 
 void VoxelizationPass::do_build_svo(RenderContext* pContext) {
@@ -433,6 +433,6 @@ void VoxelizationPass::do_clear(RenderContext* pContext) {
 
     std::vector<uint32_t> levleAddressBufInit;
     levleAddressBufInit.resize(kVoxelizationMeta.TotalLevel + 1u, std::numeric_limits<uint32_t>::max());
-    levleAddressBufInit[0] = 0;
+    levleAddressBufInit[kVoxelizationMeta.TotalLevel] = 0;
     mpLevelAddressBuffer_->setBlob(levleAddressBufInit.data(), 0, sizeof(uint32_t) * (kVoxelizationMeta.TotalLevel + 1u));
 }

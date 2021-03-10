@@ -81,7 +81,10 @@ void sub_divide_node(uint3 DTid : SV_DispatchThreadID){
         bufDivideIndirectArg.InterlockedAdd(g_curNodeNum, 1, nodeNum);
         bufAtomicAndIndirect.InterlockedAdd(ATOM_NODE_NEXT * 4, 1);
         bufSvoNode.Store(index * 4, set_child_index(nodeNum));
-        bufLevelAddress.InterlockedMin((bufVoxelMeta.CurLevel + 1) * 4, nodeNum);
+        bufLevelAddress.InterlockedMin(bufVoxelMeta.CurLevel * 4, nodeNum);
+        if (bufVoxelMeta.CurLevel == bufVoxelMeta.TotalLevel - 1) {
+             bufLevelAddress.InterlockedMax((bufVoxelMeta.CurLevel + 1) * 4, (nodeNum + 1));
+        }
     }
 }
 

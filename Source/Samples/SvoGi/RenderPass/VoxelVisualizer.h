@@ -12,24 +12,21 @@ private:
     VoxelVisualizer(const Scene::SharedPtr& pScene, Program::DefineList& programDefines);
     void create_visualize_shaders(const Program::DefineList& programDefines);
     void create_visualize_resources();
-    void do_visual_voxel(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
     void do_visual_brick(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
 
     Scene::SharedPtr mpScene_ = nullptr;
     bool mUseTacing_ = true;
     bool mUseSampler_ = false;
-    uint32_t mType_ = 1;
     VoxelizationMeta mVoxelizationMeta_ = {};
 
-    Texture::SharedPtr mpVoxelTexture_ = nullptr;
     Texture::SharedPtr mpBrickAlbedoTexture_ = nullptr;
     Sampler::SharedPtr mpSampler_ = nullptr;
-    FullScreenPass::SharedPtr mpVisualTracing_[2] = {};
+    FullScreenPass::SharedPtr mpVisualTracing_ = nullptr;
     Buffer::SharedPtr mpSVONodeNextBuffer_ = nullptr;
     Buffer::SharedPtr mpSVONodeColorBuffer_ = nullptr;
     
-    GraphicsVars::SharedPtr mpVisualVarsR_[2] = {};
-    GraphicsState::SharedPtr mpVisualR_[2] = {};
+    GraphicsVars::SharedPtr mpVisualVarsR_ = nullptr;
+    GraphicsState::SharedPtr mpVisualR_ = nullptr;
 
     TriangleMesh::SharedPtr mpRasterMesh_ = nullptr;
     Vao::SharedPtr mpRasterVao_ = nullptr;
@@ -43,7 +40,6 @@ public:
     void on_render(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
 
     void set_voxelization_meta(const VoxelizationMeta& meta) { mVoxelizationMeta_ = meta; }
-    void set_voxel_texture(Texture::SharedPtr pTex) { mpVoxelTexture_ = pTex; }
     void set_brick_albedo_texture(Texture::SharedPtr pTex) { mpBrickAlbedoTexture_ = pTex; }
     void set_svo_node_next_buffer(Buffer::SharedPtr pBuffer) { mpSVONodeNextBuffer_ = pBuffer; }
     void set_svo_node_color_buffer(Buffer::SharedPtr pBuffer) { mpSVONodeColorBuffer_ = pBuffer; }
