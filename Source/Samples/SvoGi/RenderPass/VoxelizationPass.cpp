@@ -80,7 +80,7 @@ void VoxelizationPass::on_render(RenderContext* pContext, const Fbo::SharedPtr& 
 
     do_build_svo(pContext);
     do_build_brick(pContext);
-    mNeedRefresh_ = false;
+    //mNeedRefresh_ = false;
 }
 
 void VoxelizationPass::do_build_svo(RenderContext* pContext) {
@@ -183,51 +183,51 @@ void VoxelizationPass::do_build_brick(RenderContext* pContext) {
         mpWriteLeaf_->executeIndirect(pContext, mpAtomicAndIndirect_.get(), FRAG_NEXT_INDIRECT * 4);
     }
 
-    {
-        PROFILE("SpreadLeaf");
-        uint3 threads = uint3(uint32_t(glm::pow(mSVOPerLevelNodeNum_[kVoxelizationMeta.TotalLevel - 1], 1.0f / 3.0f))) + uint3(1);
-        uint3 groupSize = div_round_up(threads, uint3(COMMON_THREAD_SIZE));
-        kVoxelizationMeta.CurLevel = kVoxelizationMeta.TotalLevel - 1;
-        mpSpreadNodeLeaf_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-        mpSpreadNodeLeaf_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
-        mpSpreadNodeLeaf_["bufLevelAddress"] = mpLevelAddressBuffer_;
-        mpSpreadNodeLeaf_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
-        mpSpreadNodeLeaf_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
-        mpSpreadNodeLeaf_->execute(pContext, threads);
-        mpSpreadNodeLeaf_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_NORMAL];
-        mpSpreadNodeLeaf_->execute(pContext, threads);
-    }
+    //{
+    //    PROFILE("SpreadLeaf");
+    //    uint3 threads = uint3(uint32_t(glm::pow(mSVOPerLevelNodeNum_[kVoxelizationMeta.TotalLevel - 1], 1.0f / 3.0f))) + uint3(1);
+    //    uint3 groupSize = div_round_up(threads, uint3(COMMON_THREAD_SIZE));
+    //    kVoxelizationMeta.CurLevel = kVoxelizationMeta.TotalLevel - 1;
+    //    mpSpreadNodeLeaf_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+    //    mpSpreadNodeLeaf_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
+    //    mpSpreadNodeLeaf_["bufLevelAddress"] = mpLevelAddressBuffer_;
+    //    mpSpreadNodeLeaf_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
+    //    mpSpreadNodeLeaf_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
+    //    mpSpreadNodeLeaf_->execute(pContext, threads);
+    //    mpSpreadNodeLeaf_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_NORMAL];
+    //    mpSpreadNodeLeaf_->execute(pContext, threads);
+    //}
 
-    {
-        PROFILE("BorderTransfer");
-        uint3 threads = uint3(uint32_t(glm::pow(mSVOPerLevelNodeNum_[kVoxelizationMeta.TotalLevel - 1], 1.0f / 3.0f))) + uint3(1);
-        uint3 groupSize = div_round_up(threads, uint3(COMMON_THREAD_SIZE));
-        kVoxelizationMeta.CurLevel = kVoxelizationMeta.TotalLevel - 1;
-        mpBorderTransfer_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-        mpBorderTransfer_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
-        mpBorderTransfer_["CB"]["iBorderTransferAxis"] = AXIS_X;
-        mpBorderTransfer_["bufLevelAddress"] = mpLevelAddressBuffer_;
-        mpBorderTransfer_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
-        mpBorderTransfer_["bufNeighbourAddress"] = mpSVONeighbourBuffer_[AXIS_X];
-        mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
-        mpBorderTransfer_->execute(pContext, threads);
-        mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_NORMAL];
-        mpBorderTransfer_->execute(pContext, threads);
+    //{
+    //    PROFILE("BorderTransfer");
+    //    uint3 threads = uint3(uint32_t(glm::pow(mSVOPerLevelNodeNum_[kVoxelizationMeta.TotalLevel - 1], 1.0f / 3.0f))) + uint3(1);
+    //    uint3 groupSize = div_round_up(threads, uint3(COMMON_THREAD_SIZE));
+    //    kVoxelizationMeta.CurLevel = kVoxelizationMeta.TotalLevel - 1;
+    //    mpBorderTransfer_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+    //    mpBorderTransfer_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
+    //    mpBorderTransfer_["CB"]["iBorderTransferAxis"] = AXIS_X;
+    //    mpBorderTransfer_["bufLevelAddress"] = mpLevelAddressBuffer_;
+    //    mpBorderTransfer_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
+    //    mpBorderTransfer_["bufNeighbourAddress"] = mpSVONeighbourBuffer_[AXIS_X];
+    //    mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
+    //    mpBorderTransfer_->execute(pContext, threads);
+    //    mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_NORMAL];
+    //    mpBorderTransfer_->execute(pContext, threads);
 
-        mpBorderTransfer_["CB"]["iBorderTransferAxis"] = AXIS_Y;
-        mpBorderTransfer_["bufNeighbourAddress"] = mpSVONeighbourBuffer_[AXIS_Y];
-        mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
-        mpBorderTransfer_->execute(pContext, threads);
-        mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_NORMAL];
-        mpBorderTransfer_->execute(pContext, threads);
+    //    mpBorderTransfer_["CB"]["iBorderTransferAxis"] = AXIS_Y;
+    //    mpBorderTransfer_["bufNeighbourAddress"] = mpSVONeighbourBuffer_[AXIS_Y];
+    //    mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
+    //    mpBorderTransfer_->execute(pContext, threads);
+    //    mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_NORMAL];
+    //    mpBorderTransfer_->execute(pContext, threads);
 
-        mpBorderTransfer_["CB"]["iBorderTransferAxis"] = AXIS_Z;
-        mpBorderTransfer_["bufNeighbourAddress"] = mpSVONeighbourBuffer_[AXIS_Z];
-        mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
-        mpBorderTransfer_->execute(pContext, threads);
-        mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_NORMAL];
-        mpBorderTransfer_->execute(pContext, threads);
-    }
+    //    mpBorderTransfer_["CB"]["iBorderTransferAxis"] = AXIS_Z;
+    //    mpBorderTransfer_["bufNeighbourAddress"] = mpSVONeighbourBuffer_[AXIS_Z];
+    //    mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
+    //    mpBorderTransfer_->execute(pContext, threads);
+    //    mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_NORMAL];
+    //    mpBorderTransfer_->execute(pContext, threads);
+    //}
 }
 
 void VoxelizationPass::on_gui(Gui::Group& group) {}
@@ -365,7 +365,7 @@ void VoxelizationPass::do_rebuild_svo_buffers() {
     mpSVONeighbourBuffer_[AXIS_Z] = Buffer::create(mSVONodeNum_ * sizeof(uint32_t));
 
     mpIndirectArgBuffer_ = Buffer::create(7 * sizeof(uint32_t));
-    mpLevelAddressBuffer_ = Buffer::create((kVoxelizationMeta.TotalLevel + 1) * sizeof(uint32_t));
+    mpLevelAddressBuffer_ = Buffer::create((kVoxelizationMeta.TotalLevel + 1u) * sizeof(uint32_t));
 }
 
 void VoxelizationPass::do_rebuild_brick_buffers() {
@@ -432,7 +432,7 @@ void VoxelizationPass::do_clear(RenderContext* pContext) {
     mpAtomicAndIndirect_->setBlob(atomicInit.data(), 0, sizeof(uint32_t) * BUFFER_COUNT);
 
     std::vector<uint32_t> levleAddressBufInit;
-    levleAddressBufInit.resize(kVoxelizationMeta.TotalLevel + 1, std::numeric_limits<uint32_t>::max());
+    levleAddressBufInit.resize(kVoxelizationMeta.TotalLevel + 1u, std::numeric_limits<uint32_t>::max());
     levleAddressBufInit[0] = 0;
-    mpLevelAddressBuffer_->setBlob(levleAddressBufInit.data(), 0, sizeof(uint32_t) * (kVoxelizationMeta.TotalLevel + 1));
+    mpLevelAddressBuffer_->setBlob(levleAddressBufInit.data(), 0, sizeof(uint32_t) * (kVoxelizationMeta.TotalLevel + 1u));
 }
