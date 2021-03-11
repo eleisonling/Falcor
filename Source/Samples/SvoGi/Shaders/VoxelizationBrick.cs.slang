@@ -77,7 +77,7 @@ void write_leaf_brick(uint3 DTid : SV_DispatchThreadID){
 
     uint32_t onLevel = 0;
     uint3 relative = uint3(0);
-    uint32_t nodeAddress = traverse_octree_relative_out(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, onLevel, relative);
+    uint32_t nodeAddress = traverse_return_child_relative(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, onLevel, relative);
     store_in_leaf(relative, nodeAddress, voxelColor, voxelNormal);
 }
 

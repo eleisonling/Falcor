@@ -80,7 +80,7 @@ void VoxelizationPass::on_render(RenderContext* pContext, const Fbo::SharedPtr& 
 
     do_build_svo(pContext);
     do_build_brick(pContext);
-    mNeedRefresh_ = false;
+    //mNeedRefresh_ = false;
 }
 
 void VoxelizationPass::do_build_svo(RenderContext* pContext) {
@@ -100,18 +100,6 @@ void VoxelizationPass::do_build_svo(RenderContext* pContext) {
 
         // calculate indirect
         if (i > 0) {
-
-            {
-                PROFILE("Build Neighbour");
-                mpBuildNeighbours_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-                mpBuildNeighbours_["bufSvoNode"] = mpSVONodeBufferNext_;
-                mpBuildNeighbours_["bufNeighbour_X"] = mpSVONeighbourBuffer_[AXIS_X];
-                mpBuildNeighbours_["bufNeighbour_Y"] = mpSVONeighbourBuffer_[AXIS_Y];
-                mpBuildNeighbours_["bufNeighbour_Z"] = mpSVONeighbourBuffer_[AXIS_Z];
-                mpBuildNeighbours_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
-                mpBuildNeighbours_["bufFragPosition"] = mpFragPositions_;
-                mpBuildNeighbours_->executeIndirect(pContext, mpAtomicAndIndirect_.get(), FRAG_NEXT_INDIRECT * 4);
-            }
             {
                 mpCaculateIndirectArgVars_["bufDivideIndirectArg"] = mpIndirectArgBuffer_;
                 pContext->dispatch(mpCaculateIndirectArg_.get(), mpCaculateIndirectArgVars_.get(), uint3{ 1 ,1 ,1 });
@@ -127,6 +115,19 @@ void VoxelizationPass::do_build_svo(RenderContext* pContext) {
             mpDivideSubNode_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
             mpDivideSubNode_["bufLevelAddress"] = mpLevelAddressBuffer_;
             i > 0 ? mpDivideSubNode_->executeIndirect(pContext, mpIndirectArgBuffer_.get()) : mpDivideSubNode_->execute(pContext, uint3(1));
+        }
+
+        if (i > 0)
+        {
+            PROFILE("Build Neighbour");
+            mpBuildNeighbours_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+            mpBuildNeighbours_["bufSvoNode"] = mpSVONodeBufferNext_;
+            mpBuildNeighbours_["bufNeighbour_X"] = mpSVONeighbourBuffer_[AXIS_X];
+            mpBuildNeighbours_["bufNeighbour_Y"] = mpSVONeighbourBuffer_[AXIS_Y];
+            mpBuildNeighbours_["bufNeighbour_Z"] = mpSVONeighbourBuffer_[AXIS_Z];
+            mpBuildNeighbours_["bufAtomicAndIndirect"] = mpAtomicAndIndirect_;
+            mpBuildNeighbours_["bufFragPosition"] = mpFragPositions_;
+            mpBuildNeighbours_->executeIndirect(pContext, mpAtomicAndIndirect_.get(), FRAG_NEXT_INDIRECT * 4);
         }
     }
 

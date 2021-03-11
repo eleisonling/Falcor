@@ -57,7 +57,7 @@ float4 raster_brick(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGE
 
     uint32_t foundLevel = 0;
     uint3 relative = uint3(0);
-    uint32_t nodeNext = traverse_octree_relative_out(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, foundLevel, relative);
+    uint32_t nodeNext = traverse_return_child_relative(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, foundLevel, relative);
     uint32_t leafPointer = bufSvoNodeColor.Load(nodeNext * 4);
 
     if((foundLevel != bufVoxelMeta.TotalLevel - 1 ) || (leafPointer == 0)) discard;
