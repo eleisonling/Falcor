@@ -225,13 +225,13 @@ inline uint32_t traverse_return_child_relative(uint3 cellIndex, uint3 curCellDim
 }
 
 
-inline uint32_t traverse_return_cur(uint3 cellIndex, inout uint3 curCellDim, uint32_t numLevels, RWByteAddressBuffer svNodeNext, out uint32_t foundOnLevel, out uint3 curRelative) {
-    uint3 childRelative = uint3(0);
-    uint3 childDim = curCellDim;
+inline uint32_t traverse_return_child_relative_dim(uint3 cellIndex, inout uint3 childDim, uint32_t numLevels, RWByteAddressBuffer svNodeNext, out uint32_t foundOnLevel, out uint3 childRelative) {
+    childRelative = uint3(0);
 
+    uint3 curCellDim = uint3(0);
     uint32_t curID = 0;
     foundOnLevel = 0;
-    curRelative = uint3(0);
+    uint3 curRelative = uint3(0);
   
     for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
         foundOnLevel = iLevel;
