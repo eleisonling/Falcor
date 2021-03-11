@@ -165,6 +165,7 @@ inline uint32_t traverse_simple(uint3 cellIndex, uint3 curCellDim, uint32_t numL
     uint3 curRelative = uint3(0);
   
     for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
+        foundOnLevel = iLevel;
         uint32_t curNodeData = svNodeNext.Load(curID * 4);
 
         if(!is_valid_node(curNodeData)) {
@@ -180,7 +181,6 @@ inline uint32_t traverse_simple(uint3 cellIndex, uint3 curCellDim, uint32_t numL
         cellIndex -= childDim * childRelative;
 
         if(get_child_index(curNodeData) == 0) {
-            foundOnLevel = iLevel;
             break;
         }
 
@@ -199,6 +199,7 @@ inline uint32_t traverse_return_child_relative(uint3 cellIndex, uint3 curCellDim
     uint3 curRelative = uint3(0);
   
     for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
+        foundOnLevel = iLevel;
         uint32_t curNodeData = svNodeNext.Load(curID * 4);
 
         if(!is_valid_node(curNodeData)) {
@@ -214,7 +215,6 @@ inline uint32_t traverse_return_child_relative(uint3 cellIndex, uint3 curCellDim
         cellIndex -= childDim * childRelative;
 
         if(get_child_index(curNodeData) == 0) {
-            foundOnLevel = iLevel;
             break;
         }
 
@@ -234,6 +234,7 @@ inline uint32_t traverse_return_cur(uint3 cellIndex, inout uint3 curCellDim, uin
     curRelative = uint3(0);
   
     for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
+        foundOnLevel = iLevel;
         uint32_t curNodeData = svNodeNext.Load(curID * 4);
 
         if(!is_valid_node(curNodeData)) {
@@ -249,7 +250,6 @@ inline uint32_t traverse_return_cur(uint3 cellIndex, inout uint3 curCellDim, uin
         cellIndex -= childDim * childRelative;
 
         if(get_child_index(curNodeData) == 0) {
-            foundOnLevel = iLevel;
             break;
         }
 
