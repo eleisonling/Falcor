@@ -157,7 +157,6 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
 }
 
 inline uint32_t traverse_simple(uint3 cellIndex, uint3 curCellDim, uint32_t numLevels, RWByteAddressBuffer svNodeNext, out uint32_t foundOnLevel) {
-    uint32_t childID = 0;
     uint3 childRelative = uint3(0);
     uint3 childDim = curCellDim;
 
@@ -166,13 +165,13 @@ inline uint32_t traverse_simple(uint3 cellIndex, uint3 curCellDim, uint32_t numL
     uint3 curRelative = uint3(0);
   
     for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
-        uint32_t nodeNext = svNodeNext.Load(childID * 4);
-        if(!is_valid_node(nodeNext)) {
+        uint32_t curNodeData = svNodeNext.Load(curID * 4);
+
+        if(!is_valid_node(curNodeData)) {
             foundOnLevel = iLevel - 1;
             break;
         }
 
-        curID = childID;
         curCellDim = childDim;
         curRelative = childRelative;
 
@@ -180,19 +179,18 @@ inline uint32_t traverse_simple(uint3 cellIndex, uint3 curCellDim, uint32_t numL
         childRelative = step(childDim, cellIndex);
         cellIndex -= childDim * childRelative;
 
-        if(get_child_index(nodeNext) == 0) {
+        if(get_child_index(curNodeData) == 0) {
             foundOnLevel = iLevel;
             break;
         }
 
-        childID = get_child_index(nodeNext) * 8 + (childRelative.x | childRelative.y << 1 | childRelative.z << 2);
+        curID = get_child_index(curNodeData) * 8 + (childRelative.x | childRelative.y << 1 | childRelative.z << 2);
 
     } // level-for
     return curID;
 }
 
 inline uint32_t traverse_return_child_relative(uint3 cellIndex, uint3 curCellDim, uint32_t numLevels, RWByteAddressBuffer svNodeNext, out uint32_t foundOnLevel, out uint3 childRelative) {
-    uint32_t childID = 0;
     childRelative = uint3(0);
     uint3 childDim = curCellDim;
 
@@ -201,13 +199,13 @@ inline uint32_t traverse_return_child_relative(uint3 cellIndex, uint3 curCellDim
     uint3 curRelative = uint3(0);
   
     for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
-        uint32_t nodeNext = svNodeNext.Load(childID * 4);
-        if(!is_valid_node(nodeNext)) {
+        uint32_t curNodeData = svNodeNext.Load(curID * 4);
+
+        if(!is_valid_node(curNodeData)) {
             foundOnLevel = iLevel - 1;
             break;
         }
 
-        curID = childID;
         curCellDim = childDim;
         curRelative = childRelative;
 
@@ -215,12 +213,12 @@ inline uint32_t traverse_return_child_relative(uint3 cellIndex, uint3 curCellDim
         childRelative = step(childDim, cellIndex);
         cellIndex -= childDim * childRelative;
 
-        if(get_child_index(nodeNext) == 0) {
+        if(get_child_index(curNodeData) == 0) {
             foundOnLevel = iLevel;
             break;
         }
 
-        childID = get_child_index(nodeNext) * 8 + (childRelative.x | childRelative.y << 1 | childRelative.z << 2);
+        curID = get_child_index(curNodeData) * 8 + (childRelative.x | childRelative.y << 1 | childRelative.z << 2);
 
     } // level-for
     return curID;
@@ -228,7 +226,6 @@ inline uint32_t traverse_return_child_relative(uint3 cellIndex, uint3 curCellDim
 
 
 inline uint32_t traverse_return_cur(uint3 cellIndex, inout uint3 curCellDim, uint32_t numLevels, RWByteAddressBuffer svNodeNext, out uint32_t foundOnLevel, out uint3 curRelative) {
-    uint32_t childID = 0;
     uint3 childRelative = uint3(0);
     uint3 childDim = curCellDim;
 
@@ -237,14 +234,13 @@ inline uint32_t traverse_return_cur(uint3 cellIndex, inout uint3 curCellDim, uin
     curRelative = uint3(0);
   
     for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
+        uint32_t curNodeData = svNodeNext.Load(curID * 4);
 
-        uint32_t nodeNext = svNodeNext.Load(childID * 4);
-        if(!is_valid_node(nodeNext)) {
+        if(!is_valid_node(curNodeData)) {
             foundOnLevel = iLevel - 1;
             break;
         }
 
-        curID = childID;
         curCellDim = childDim;
         curRelative = childRelative;
 
@@ -252,12 +248,12 @@ inline uint32_t traverse_return_cur(uint3 cellIndex, inout uint3 curCellDim, uin
         childRelative = step(childDim, cellIndex);
         cellIndex -= childDim * childRelative;
 
-
-        if(get_child_index(nodeNext) == 0) {
+        if(get_child_index(curNodeData) == 0) {
             foundOnLevel = iLevel;
             break;
         }
-        childID = get_child_index(nodeNext) * 8 + (childRelative.x | childRelative.y << 1 | childRelative.z << 2);
+
+        curID = get_child_index(curNodeData) * 8 + (childRelative.x | childRelative.y << 1 | childRelative.z << 2);
 
     } // level-for
     return curID;
