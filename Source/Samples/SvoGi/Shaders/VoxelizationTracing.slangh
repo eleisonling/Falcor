@@ -98,8 +98,7 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
             
             if (t_min <= tv_max) {
                 // push
-                if (tc_max < h)
-                    stack[scale] = int2(parentAddress, asint(t_max));
+                stack[scale] = int2(parentAddress, asint(t_max));
                 h = tc_max;
                 parentAddress = childAddress;
 
