@@ -17,15 +17,24 @@ RWByteAddressBuffer bufSvoNodeColor;
 
 struct BrickTracingHitInfo : ITracingHitInfo {
     float4 Color = {};
+    RayDesc Ray = {};
 
     [mutating]
-    bool deal_if_hitted(uint32_t parentNode, uint32_t childShift){
+    bool deal_if_hitted(uint32_t parentNode, uint32_t childShift, int32_t scale, Stack stack, float childScale, float t){
         uint32_t colorAddress = get_child_index(parentNode) * 8;
         uint32_t nodeData = bufSvoNodeColor.Load(colorAddress * 4);
         uint3 brickCoords = uint_XYZ10_to_uint3(nodeData);
 
         // load and uncompress
 #ifdef USE_SAMPLER 
+
+        float3 minPos = { 0 };
+        float3 maxPos = { 0 };
+
+        get_voxel_spatital_info(stack, scale, childShift, childScale, minPos, maxPos);
+        float3 p = Ray.Origin + Ray.Direction * t;
+        float3 posTex = p - 1.0f;
+
         float3 cellTex = float3(brickCoords + uint3(1)) / float3(bufVoxelMeta.BrickPoolResolution);
         Color = texBrickValue.SampleLevel(spTexSampler, cellTex, 0);
 #else
@@ -43,6 +52,7 @@ float4 brick_main(float2 texC : TEXCOORD, float4 posS : SV_POSITION) : SV_TARGET
     ray.Origin = convert_world_to_svo_space(ray.Origin, bufVoxelMeta.Min, bufVoxelMeta.Max);
     
     BrickTracingHitInfo hitInfo = {};
+    hitInfo.Ray = ray;
     trace_sparse_voxel_ray(ray, bufSvoNodeNext, bufVoxelMeta.TotalLevel, bufVoxelMeta.CellDim, hitInfo);
 
     return float4(hitInfo.Color.xyz, 1.0f);

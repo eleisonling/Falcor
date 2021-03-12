@@ -18,15 +18,33 @@ inline float copy_sign_32f(float newVal, float oldVal) {
 }
 
 
+struct Stack {
+    int4 StackData[MAX_LEVEL + 1] = {};
+};
+
+
+inline void get_voxel_spatital_info(in Stack stack, int32_t scale, uint32_t childShift, float childScale, out float3 minPos, out float3 maxPos) {
+    minPos = float3(0);
+    maxPos = float3(0);
+
+    for(int32_t i = MAX_LEVEL - 1; i >= scale; --i) {
+        minPos += asfloat(stack.StackData[i].z) * childOffsets[stack.StackData[i].w];
+    }
+
+    minPos += childOffsets[childShift] * childScale;
+    maxPos = minPos + childScale;
+}
+
+
 interface ITracingHitInfo {
     [mutating]
-    bool deal_if_hitted(uint32_t parent, uint32_t childShift); 
+    bool deal_if_hitted(uint32_t parent, uint32_t childShift, int32_t scale, Stack stack, float expScale, float t); 
 };
 
 void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddressBuffer svoNode, uint32_t leafLevel, uint3 cellDim, inout T hitInfo) {
 
     const float epsilon = exp2(-MAX_LEVEL);
-    int2 stack[MAX_LEVEL + 1] = {};
+    Stack stack = {};
 
     float3 p = ray.Origin;
     float3 d = ray.Direction;
@@ -76,7 +94,7 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
         uint32_t parentNode = svoNode.Load(parentAddress * 4);
 
         if (is_leaf_node(parentNode, scale, leafLevel)) {
-            bool hitted = hitInfo.deal_if_hitted(parentNode, child_shift);
+            bool hitted = hitInfo.deal_if_hitted(parentNode, child_shift, scale, stack, scale_exp2, t_min);
             if(hitted) return;
         }
 
@@ -98,7 +116,7 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
             
             if (t_min <= tv_max) {
                 // push
-                stack[scale] = int2(parentAddress, asint(t_max));
+                stack.StackData[scale] = int4(parentAddress, asint(t_max), asint(scale_exp2), child_shift);
                 h = tc_max;
                 parentAddress = childAddress;
 
@@ -139,7 +157,7 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
             scale = (asint((float)differing_bits) >> 23) - 127;
             scale_exp2 = asfloat((scale - MAX_LEVEL + 127) << 23);
 
-            int2 stackEntry = stack[scale];
+            int4 stackEntry = stack.StackData[scale];
             parentAddress = stackEntry.x;
             t_max = asfloat(stackEntry.y);
             
