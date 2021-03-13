@@ -22,6 +22,61 @@ struct Stack {
     int4 StackData[MAX_LEVEL + 1] = {};
 };
 
+inline bool intersect_ray_with_AABB(in RayDesc ray, float3 posMin, float3 posMax, out float tEnter, out float tLeave) {
+    float3 tempMin = (posMin - ray.Origin) / ray.Direction;
+    float3 tempMax = (posMax - ray.Origin) / ray.Direction;
+
+    float3 tMax = max(tempMax, tempMin);
+    float3 tMin = min(tempMax, tempMin);
+    
+    tLeave = min(tMax.x, min(tMax.y, tMax.z));
+    tEnter = max(tMin.x, max(tMin.y, tMin.z));
+
+    return tLeave > tEnter;
+}
+
+inline void correct_alpha(inout float4 color, in float alphaCorrection) {
+    const float oldColA = color.a;
+    color.a = 1.0f - pow((1.0f - color.a), alphaCorrection);
+    color.xyz *= color.a / clamp(oldColA, 0.0001, 10000.0);
+}
+
+
+inline float4 ray_cast(uint3 brickCoords, float3 enter, float3 leave, float3 dir, uint32_t level, float nodeScale, VoxelizationMeta meta,
+    in Texture3D<float4> texBrick, SamplerState spTexture) {
+
+    float voxelStep = 1.0f / meta.BrickPoolResolution;
+    float4 color = {0};
+
+    float3 brickAddressUVW = float3(brickCoords) / meta.BrickPoolResolution + float3(voxelStep / 2.0f);
+    float3 enterUVW = brickAddressUVW + enter * (2 * voxelStep);
+    float3 leaveUVW = brickAddressUVW + leave * (2 * voxelStep);
+
+    const float stepLength = length(leaveUVW - enterUVW);
+    const float samplingRate = 3.0f;
+    const float stepSize = voxelStep / samplingRate;
+    const float fSampleCount = stepLength / stepSize;
+    const int32_t iSampleCount = int32_t(ceil(fSampleCount));
+
+    float alphaCorrection = float(g_Pow2[meta.TotalLevel]) / (float(g_Pow2[level + 1]) * samplingRate);
+
+    for(int32_t i = 0; i < iSampleCount; ++i) {
+        float3 samplePos = enterUVW + dir * stepSize * float(i);
+        float4 newCol = texBrick.SampleLevel(spTexture, samplePos, 0);
+
+        if(i == iSampleCount - 1) {
+            alphaCorrection *= frac(fSampleCount);
+        }
+        correct_alpha(newCol, alphaCorrection);
+        color += (1 - color.a) * newCol;
+
+        if(color.a > 0.99) {
+            break;
+        }
+    }
+
+    return color;
+}
 
 inline void get_voxel_spatital_info(in Stack stack, int32_t scale, uint32_t childShift, float childScale, out float3 minPos, out float3 maxPos) {
     minPos = float3(0);
@@ -31,7 +86,7 @@ inline void get_voxel_spatital_info(in Stack stack, int32_t scale, uint32_t chil
         minPos += asfloat(stack.StackData[i].z) * childOffsets[stack.StackData[i].w];
     }
 
-    minPos += childOffsets[childShift] * childScale;
+    minPos += childOffsets[childShift] * childScale + float3(1.0f);
     maxPos = minPos + childScale;
 }
 

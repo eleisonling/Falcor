@@ -32,11 +32,15 @@ struct BrickTracingHitInfo : ITracingHitInfo {
         float3 maxPos = { 0 };
 
         get_voxel_spatital_info(stack, scale, childShift, childScale, minPos, maxPos);
-        float3 p = Ray.Origin + Ray.Direction * t;
-        float3 posTex = p - 1.0f;
+        float3 posTex = Ray.Origin + Ray.Direction * t;
 
-        float3 cellTex = float3(brickCoords + uint3(1)) / float3(bufVoxelMeta.BrickPoolResolution);
-        Color = texBrickValue.SampleLevel(spTexSampler, cellTex, 0);
+        float tEnter = 0.f;
+        float tLeave = 0.f;
+        intersect_ray_with_AABB(Ray, minPos, maxPos, tEnter, tLeave);
+
+        float3 childEnter = (posTex - minPos) / childScale;
+        float3 childLeave = ((posTex + Ray.Direction * tLeave) - minPos) / childScale;
+        Color = ray_cast(brickCoords, childEnter, childLeave, Ray.Direction, MAX_LEVEL - scale, childScale, bufVoxelMeta, texBrickValue, spTexSampler);
 #else
         Color = texBrickValue[brickCoords + 2 * childOffsets[childShift]];
 #endif
