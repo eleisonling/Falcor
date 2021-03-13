@@ -42,8 +42,8 @@ inline void correct_alpha(inout float4 color, in float alphaCorrection) {
 }
 
 
-inline float4 ray_cast(uint3 brickCoords, float3 enter, float3 leave, float3 dir, uint32_t level, float nodeScale, VoxelizationMeta meta,
-    in Texture3D<float4> texBrick, SamplerState spTexture) {
+inline float4 ray_cast(in uint3 brickCoords, in float3 enter, in float3 leave, in float3 dir, in uint32_t level, in float nodeScale, in VoxelizationMeta meta,
+    in Texture3D<float4> texBrick, in SamplerState spTexture) {
 
     float voxelStep = 1.0f / meta.BrickPoolResolution;
     float4 color = {0};
