@@ -39,7 +39,7 @@ struct BrickTracingHitInfo : ITracingHitInfo {
         intersect_ray_with_AABB(Ray, minPos, maxPos, tEnter, tLeave);
 
         float3 childEnter = (posTex - minPos) / childScale;
-        float3 childLeave = ((posTex + Ray.Direction * tLeave) - minPos) / childScale;
+        float3 childLeave = ((posTex + Ray.Direction * (tLeave - tEnter)) - minPos) / childScale;
         Color = ray_cast(brickCoords, childEnter, childLeave, Ray.Direction, MAX_LEVEL - scale, childScale, bufVoxelMeta, texBrickValue, spTexSampler);
 #else
         Color = texBrickValue[brickCoords + 2 * childOffsets[childShift]];
