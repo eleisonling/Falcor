@@ -40,11 +40,12 @@ struct BrickTracingHitInfo : ITracingHitInfo {
 
         float3 childEnter = (posTex - minPos) / childScale;
         float3 childLeave = ((posTex + Ray.Direction * (tLeave - tEnter)) - minPos) / childScale;
-        Color = ray_cast(brickCoords, childEnter, childLeave, Ray.Direction, MAX_LEVEL - scale, childScale, bufVoxelMeta, texBrickValue, spTexSampler);
+        Color = ray_cast(Color, brickCoords, childEnter, childLeave, Ray.Direction, MAX_LEVEL - scale, childScale, bufVoxelMeta, texBrickValue, spTexSampler);
+        bool hitted =  Color.w > 0.99f;
 #else
         Color = texBrickValue[brickCoords + 2 * childOffsets[childShift]];
-#endif
         bool hitted =  Color.w > 0.f;
+#endif
         return hitted;
     }
 }
