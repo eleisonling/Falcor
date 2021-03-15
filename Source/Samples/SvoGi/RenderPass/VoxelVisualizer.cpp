@@ -33,11 +33,17 @@ void VoxelVisualizer::create_visualize_shaders(const Program::DefineList& progra
     mpVisualR_->setRasterizerState(rasterState);
 
 
+    BlendState::Desc blendDesc{};
+    blendDesc.setRtBlend(0, true).setRtParams(0, BlendState::BlendOp::Add, BlendState::BlendOp::Add, BlendState::BlendFunc::SrcAlpha, BlendState::BlendFunc::OneMinusSrcAlpha, BlendState::BlendFunc::SrcAlpha, BlendState::BlendFunc::Zero);
+    BlendState::SharedPtr blendState = BlendState::create(blendDesc);
+
+
     // visual tracing
     {
         Program::Desc dBrick;
         dBrick.addShaderLibrary(kDebugSvoProg).psEntry("brick_main");
         mpVisualTracing_ = FullScreenPass::create(dBrick, programDefines);
+        mpVisualTracing_->getState()->setBlendState(blendState);
     }
 }
 

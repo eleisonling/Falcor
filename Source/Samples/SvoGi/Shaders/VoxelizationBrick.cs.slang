@@ -58,7 +58,7 @@ void store_in_leaf(uint3 relative, uint32_t address, float4 voxelColor, float4 v
     uint32_t off = relative.x | relative.y << 1 | relative.z << 2;
     texBrickAlbedo[brickCoords + 2 * childOffsets[off]] = voxelColor;
     texBrickNormal[brickCoords + 2 * childOffsets[off]] = voxelNormal;
-    texBrickRadius[brickCoords + 2 * childOffsets[off]] = float4(0,0,0,1);
+    texBrickRadius[brickCoords + 2 * childOffsets[off]] = float4(0,0,0,0);
 }
 
 

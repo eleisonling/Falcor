@@ -123,7 +123,7 @@ void SvoGi::onLoad(RenderContext* pRenderContext) {
 }
 
 void SvoGi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
-    const float4 clearColor(0.f, 0.f, 0.f, 1);
+    const float4 clearColor(0.f, 0.f, 0.f, 0.f);
     pRenderContext->clearFbo(pTargetFbo.get(), clearColor, 1.0f, 0, FboAttachmentType::All);
     pRenderContext->clearFbo(mpHDRFbo_.get(), clearColor, 1.0f, 0, FboAttachmentType::All);
 
