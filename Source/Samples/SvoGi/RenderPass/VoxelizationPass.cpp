@@ -342,6 +342,9 @@ void VoxelizationPass::do_create_shaders(Program::DefineList& programDefines) {
 
     {
         mpMipmapCenter_ = ComputePass::create(kBuildMipmapProg, "mipmap_center", programDefines);
+        mpMipmapFaces_ = ComputePass::create(kBuildMipmapProg, "mipmap_faces", programDefines);
+        mpMipmapEdges_ = ComputePass::create(kBuildMipmapProg, "mipmap_edges", programDefines);
+        mpMipmapCorners_ = ComputePass::create(kBuildMipmapProg, "mipmap_corners", programDefines);
     }
 }
 
