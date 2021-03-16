@@ -41,6 +41,7 @@
     <ShaderSource Include="Shaders\VoxelizationClear.cs.slang" />
     <ShaderSource Include="Shaders\VoxelizationDispatch.cs.slang" />
     <ShaderSource Include="Shaders\VoxelizationMeta.slangh" />
+    <ShaderSource Include="Shaders\VoxelizationMipmap.cs.slang" />
     <ShaderSource Include="Shaders\VoxelizationSvo.cs.slang" />
     <ShaderSource Include="Shaders\VoxelizationTracing.slangh" />
     <ShaderSource Include="Shaders\VoxelizationVisualRaster.slang" />

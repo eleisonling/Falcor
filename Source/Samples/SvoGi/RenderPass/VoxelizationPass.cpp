@@ -6,6 +6,7 @@ namespace {
     static std::string kVolumetricProg = "Samples/SvoGi/Shaders/Voxelization.slang";
     static std::string kBuildSVOProg = "Samples/SvoGi/Shaders/VoxelizationSvo.cs.slang";
     static std::string kBuildBrickProg = "Samples/SvoGi/Shaders/VoxelizationBrick.cs.slang";
+    static std::string kBuildMipmapProg = "Samples/SvoGi/Shaders/VoxelizationMipmap.cs.slang";
     static VoxelizationMeta kVoxelizationMeta{};
 }
 
@@ -35,6 +36,11 @@ VoxelizationPass::~VoxelizationPass() {
     mpAllocBrick_ = nullptr;
     mpWriteLeaf_ = nullptr;
     mpBorderTransfer_ = nullptr;
+
+    mpMipmapCenter_ = nullptr;
+    mpMipmapFaces_ = nullptr;
+    mpMipmapCorners_ = nullptr;
+    mpMipmapEdges_ = nullptr;
 }
 
 VoxelizationPass::SharedPtr VoxelizationPass::create(const Scene::SharedPtr& pScene, const Program::DefineList& programDefines /*= Program::DefineList()*/) {
@@ -80,6 +86,7 @@ void VoxelizationPass::on_render(RenderContext* pContext, const Fbo::SharedPtr& 
 
     do_build_svo(pContext);
     do_build_brick(pContext);
+    do_build_mip(pContext);
     mNeedRefresh_ = false;
 }
 
@@ -231,6 +238,12 @@ void VoxelizationPass::do_build_brick(RenderContext* pContext) {
     }
 }
 
+void VoxelizationPass::do_build_mip(RenderContext* pContext) {
+
+    for (int32_t i = kVoxelizationMeta.TotalLevel - 2; i >= 0; --i) {
+    }
+}
+
 void VoxelizationPass::on_gui(Gui::Group& group) {}
 
 const VoxelizationMeta& VoxelizationPass::get_voxelization_meta() const {
@@ -325,6 +338,10 @@ void VoxelizationPass::do_create_shaders(Program::DefineList& programDefines) {
         mpWriteLeaf_ = ComputePass::create(kBuildBrickProg, "write_leaf_brick", programDefines);
         mpSpreadNodeLeaf_ = ComputePass::create(kBuildBrickProg, "spread_leaf_node", programDefines);
         mpBorderTransfer_ = ComputePass::create(kBuildBrickProg, "border_transfer", programDefines);
+    }
+
+    {
+        mpMipmapCenter_ = ComputePass::create(kBuildMipmapProg, "mipmap_center", programDefines);
     }
 }
 

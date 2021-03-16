@@ -49,6 +49,7 @@ private:
     void do_clear(RenderContext* pContext);
     void do_build_svo(RenderContext* pContext);
     void do_build_brick(RenderContext* pContext);
+    void do_build_mip(RenderContext* pContext);
 
     // clear
     ComputePass::SharedPtr mpClearTexture3D_ = nullptr;
@@ -93,4 +94,10 @@ private:
     ComputePass::SharedPtr mpWriteLeaf_ = nullptr;
     ComputePass::SharedPtr mpSpreadNodeLeaf_ = nullptr;
     ComputePass::SharedPtr mpBorderTransfer_ = nullptr;
+
+    // mip
+    ComputePass::SharedPtr mpMipmapCenter_ = nullptr;
+    ComputePass::SharedPtr mpMipmapFaces_ = nullptr;
+    ComputePass::SharedPtr mpMipmapCorners_ = nullptr;
+    ComputePass::SharedPtr mpMipmapEdges_ = nullptr;
 };
