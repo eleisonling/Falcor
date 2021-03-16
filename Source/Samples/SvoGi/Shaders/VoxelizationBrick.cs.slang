@@ -56,8 +56,8 @@ void store_in_leaf(uint3 relative, uint32_t address, float4 voxelColor, float4 v
     uint32_t nodeColorU = bufSvoNodeColor.Load(address * 4);
     uint3 brickCoords = uint_XYZ10_to_uint3(nodeColorU);
     uint32_t off = relative.x | relative.y << 1 | relative.z << 2;
-    texBrickAlbedo[brickCoords + 2 * childOffsets[off]] = voxelColor;
-    texBrickNormal[brickCoords + 2 * childOffsets[off]] = voxelNormal;
+    texBrickAlbedo[brickCoords + 2 * childOffsets[off]] = float4(voxelColor.xyz, 1.0f);
+    texBrickNormal[brickCoords + 2 * childOffsets[off]] = float4(voxelNormal.xyz, 1.0f);
     texBrickRadius[brickCoords + 2 * childOffsets[off]] = float4(0,0,0,0);
 }
 
