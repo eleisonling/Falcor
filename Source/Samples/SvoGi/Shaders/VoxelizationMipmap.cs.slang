@@ -17,8 +17,8 @@ RWByteAddressBuffer bufSvoNodeColor;
 RWTexture3D<float4> texBrickValue;
 
 
-static uint32_t childNext[8] = {};
-static uint32_t childColor[8] = {};
+static uint32_t childNext[8];
+static uint32_t childColor[8];
 
 void load_child_tile(in uint32_t tileAddress) {
     for(int32_t i = 0; i < 8; ++i) {

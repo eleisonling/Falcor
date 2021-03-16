@@ -239,8 +239,43 @@ void VoxelizationPass::do_build_brick(RenderContext* pContext) {
 }
 
 void VoxelizationPass::do_build_mip(RenderContext* pContext) {
-
+    PROFILE("BuildMip");
     for (int32_t i = kVoxelizationMeta.TotalLevel - 2; i >= 0; --i) {
+        uint3 threads = uint3(uint32_t(glm::pow(mSVOPerLevelNodeNum_[i], 1.0f / 3.0f))) + uint3(1);
+        uint3 groupSize = div_round_up(threads, uint3(COMMON_THREAD_SIZE));
+        kVoxelizationMeta.CurLevel = i;
+
+        mpMipmapCenter_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+        mpMipmapCenter_["CB"]["uDispathGroupSize"] = groupSize;
+        mpMipmapCenter_["bufLevelAddress"] = mpLevelAddressBuffer_;
+        mpMipmapCenter_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
+        mpMipmapCenter_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
+        mpMipmapCenter_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
+        mpMipmapCenter_->execute(pContext, threads);
+
+        mpMipmapFaces_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+        mpMipmapFaces_["CB"]["uDispathGroupSize"] = groupSize;
+        mpMipmapFaces_["bufLevelAddress"] = mpLevelAddressBuffer_;
+        mpMipmapFaces_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
+        mpMipmapFaces_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
+        mpMipmapFaces_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
+        mpMipmapFaces_->execute(pContext, threads);
+
+        mpMipmapEdges_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+        mpMipmapEdges_["CB"]["uDispathGroupSize"] = groupSize;
+        mpMipmapEdges_["bufLevelAddress"] = mpLevelAddressBuffer_;
+        mpMipmapEdges_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
+        mpMipmapEdges_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
+        mpMipmapEdges_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
+        mpMipmapEdges_->execute(pContext, threads);
+
+        mpMipmapCorners_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+        mpMipmapCorners_["CB"]["uDispathGroupSize"] = groupSize;
+        mpMipmapCorners_["bufLevelAddress"] = mpLevelAddressBuffer_;
+        mpMipmapCorners_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
+        mpMipmapCorners_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
+        mpMipmapCorners_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
+        mpMipmapCorners_->execute(pContext, threads);
     }
 }
 
