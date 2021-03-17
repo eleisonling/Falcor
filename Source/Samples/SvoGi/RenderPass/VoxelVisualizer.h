@@ -16,7 +16,7 @@ private:
 
     Scene::SharedPtr mpScene_ = nullptr;
     bool mUseTacing_ = true;
-    bool mUseSampler_ = true;
+    bool mUseSampler_ = false;
     VoxelizationMeta mVoxelizationMeta_ = {};
 
     Texture::SharedPtr mpBrickAlbedoTexture_ = nullptr;

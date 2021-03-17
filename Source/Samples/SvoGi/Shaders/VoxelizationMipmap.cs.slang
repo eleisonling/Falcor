@@ -17,12 +17,10 @@ RWByteAddressBuffer bufSvoNodeColor;
 RWTexture3D<float4> texBrickValue;
 
 
-static uint32_t childNext[8];
 static uint32_t childColor[8];
 
 void load_child_tile(in uint32_t tileAddress) {
     for(int32_t i = 0; i < 8; ++i) {
-        childNext[i] = bufSvoNodeNext.Load((tileAddress + i) * 4);
         childColor[i] = bufSvoNodeColor.Load((tileAddress + i) * 4);
     } 
 }
@@ -76,7 +74,7 @@ void mipmap_center(uint3 DTid : SV_DispatchThreadID){
     uint3 brickAddress = uint_XYZ10_to_uint3(brickAddressU);
 
     uint32_t childAddress = get_child_index(nodeNextU);
-    load_child_tile(childAddress);
+    load_child_tile(childAddress * 8);
 
     float4 color = mipmap_isotropic(int3(2,2,2));
     DeviceMemoryBarrier();
@@ -101,7 +99,7 @@ void mipmap_faces(uint3 DTid : SV_DispatchThreadID){
     uint3 brickAddress = uint_XYZ10_to_uint3(brickAddressU);
 
     uint32_t childAddress = get_child_index(nodeNextU);
-    load_child_tile(childAddress);
+    load_child_tile(childAddress * 8);
 
     float4 left = mipmap_isotropic(int3(0,2,2));
     float4 right = mipmap_isotropic(int3(4,2,2));
@@ -137,7 +135,7 @@ void mipmap_edges(uint3 DTid : SV_DispatchThreadID){
     uint3 brickAddress = uint_XYZ10_to_uint3(brickAddressU);
 
     uint32_t childAddress = get_child_index(nodeNextU);
-    load_child_tile(childAddress);
+    load_child_tile(childAddress * 8);
 
     float4 nearBottom = mipmap_isotropic(int3(2, 0, 0));
     float4 nearRight = mipmap_isotropic(int3(4, 2, 0));
@@ -185,7 +183,7 @@ void mipmap_corners(uint3 DTid : SV_DispatchThreadID){
     uint3 brickAddress = uint_XYZ10_to_uint3(brickAddressU);
 
     uint32_t childAddress = get_child_index(nodeNextU);
-    load_child_tile(childAddress);
+    load_child_tile(childAddress * 8);
 
 
     float4 nearRightTop = mipmap_isotropic(int3(4, 4, 0));
