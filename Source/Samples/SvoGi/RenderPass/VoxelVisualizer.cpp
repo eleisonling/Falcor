@@ -65,6 +65,7 @@ void VoxelVisualizer::create_visualize_resources() {
 }
 
 void VoxelVisualizer::do_visual_brick(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
+    mVoxelizationMeta_.CurLevel = mLevel_;
     if (mUseTacing_) {
         mpVisualTracing_->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
         mpVisualTracing_["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
@@ -110,6 +111,7 @@ VoxelVisualizer::SharedPtr VoxelVisualizer::create(const Scene::SharedPtr& pScen
 
 void VoxelVisualizer::on_gui(Gui::Group& group) {
     group.checkbox("Use Tracing Method", mUseTacing_);
+    group.var("Level", mLevel_, 1u, 8u);
 
     if (group.checkbox("Use Sampler", mUseSampler_)) {
         if (mUseSampler_) {

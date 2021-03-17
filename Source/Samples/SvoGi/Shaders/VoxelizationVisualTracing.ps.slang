@@ -58,7 +58,7 @@ float4 brick_main(float2 texC : TEXCOORD, float4 posS : SV_POSITION) : SV_TARGET
     
     BrickTracingHitInfo hitInfo = {};
     hitInfo.Ray = ray;
-    trace_sparse_voxel_ray(ray, bufSvoNodeNext, bufVoxelMeta.TotalLevel, bufVoxelMeta.CellDim, hitInfo);
+    trace_sparse_voxel_ray(ray, bufSvoNodeNext, bufVoxelMeta.CurLevel, bufVoxelMeta.CellDim, hitInfo);
 
     return float4(hitInfo.Color.xyz, 1.0f);
 
