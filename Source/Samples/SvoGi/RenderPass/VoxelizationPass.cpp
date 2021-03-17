@@ -246,7 +246,7 @@ void VoxelizationPass::do_build_mip(RenderContext* pContext) {
         kVoxelizationMeta.CurLevel = i;
 
         mpMipmapCenter_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-        mpMipmapCenter_["CB"]["uDispathGroupSize"] = groupSize;
+        mpMipmapCenter_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
         mpMipmapCenter_["bufLevelAddress"] = mpLevelAddressBuffer_;
         mpMipmapCenter_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
         mpMipmapCenter_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
@@ -254,7 +254,7 @@ void VoxelizationPass::do_build_mip(RenderContext* pContext) {
         mpMipmapCenter_->execute(pContext, threads);
 
         mpMipmapFaces_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-        mpMipmapFaces_["CB"]["uDispathGroupSize"] = groupSize;
+        mpMipmapFaces_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
         mpMipmapFaces_["bufLevelAddress"] = mpLevelAddressBuffer_;
         mpMipmapFaces_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
         mpMipmapFaces_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
@@ -262,7 +262,7 @@ void VoxelizationPass::do_build_mip(RenderContext* pContext) {
         mpMipmapFaces_->execute(pContext, threads);
 
         mpMipmapEdges_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-        mpMipmapEdges_["CB"]["uDispathGroupSize"] = groupSize;
+        mpMipmapEdges_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
         mpMipmapEdges_["bufLevelAddress"] = mpLevelAddressBuffer_;
         mpMipmapEdges_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
         mpMipmapEdges_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
@@ -270,7 +270,7 @@ void VoxelizationPass::do_build_mip(RenderContext* pContext) {
         mpMipmapEdges_->execute(pContext, threads);
 
         mpMipmapCorners_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-        mpMipmapCorners_["CB"]["uDispathGroupSize"] = groupSize;
+        mpMipmapCorners_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
         mpMipmapCorners_["bufLevelAddress"] = mpLevelAddressBuffer_;
         mpMipmapCorners_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
         mpMipmapCorners_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
