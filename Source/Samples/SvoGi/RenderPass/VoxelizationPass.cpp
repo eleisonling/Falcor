@@ -484,6 +484,7 @@ void VoxelizationPass::do_clear(RenderContext* pContext) {
 
     std::vector<uint32_t> atomicInit;
     atomicInit.resize(BUFFER_COUNT, 0);
+    atomicInit[ATOM_NODE_NEXT] = 1;
     mpAtomicAndIndirect_->setBlob(atomicInit.data(), 0, sizeof(uint32_t) * BUFFER_COUNT);
 
     std::vector<uint32_t> levleAddressBufInit;
