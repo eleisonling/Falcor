@@ -108,10 +108,8 @@ void create_neighbours(uint3 DTid : SV_DispatchThreadID){
     uint32_t nodeLevel = bufVoxelMeta.CurLevel;
     uint3 relative = uint3(0);
     uint3 stepResolution = bufVoxelMeta.CellDim;
-    uint32_t nodeAddress = traverse_return_child_relative_dim(cellIndex, stepResolution, bufVoxelMeta.CurLevel, bufSvoNode, nodeLevel, relative);
-    uint32_t nodeData = bufSvoNode.Load(nodeAddress * 4);
-    if(!is_valid_node(nodeData)) return;
-    uint32_t neighbourAddress = get_child_index(nodeData);
+    uint32_t nodeAddress = traverse_return_cur_relative_dim(cellIndex, stepResolution, bufVoxelMeta.CurLevel + 1, bufSvoNode, nodeLevel, relative);
+    uint32_t neighbourAddress = get_child_index(bufSvoNode.Load(nodeAddress * 4));
 
     uint32_t nX = 0;
     uint32_t nY = 0;
@@ -119,7 +117,8 @@ void create_neighbours(uint3 DTid : SV_DispatchThreadID){
 
     uint32_t neighbourLevel = bufVoxelMeta.CurLevel;
     if(relative.x == 0) {
-        uint32_t neighbourXAddr = traverse_simple(cellIndex + uint3(stepResolution.x, 0, 0), bufVoxelMeta.CellDim, bufVoxelMeta.CurLevel, bufSvoNode, neighbourLevel);
+        uint32_t neighbourXAddr = traverse_simple(cellIndex + uint3(stepResolution.x, 0, 0), bufVoxelMeta.CellDim, bufVoxelMeta.CurLevel + 1, bufSvoNode, neighbourLevel);
+
         if (nodeLevel != neighbourLevel) {
             nX = 0;
         } else  {
@@ -129,7 +128,7 @@ void create_neighbours(uint3 DTid : SV_DispatchThreadID){
 
     neighbourLevel = bufVoxelMeta.CurLevel;
     if(relative.y == 0) {
-        uint32_t neighbourYAddr = traverse_simple(cellIndex + uint3(0, stepResolution.y, 0), bufVoxelMeta.CellDim, bufVoxelMeta.CurLevel, bufSvoNode, neighbourLevel);
+        uint32_t neighbourYAddr = traverse_simple(cellIndex + uint3(0, stepResolution.y, 0), bufVoxelMeta.CellDim, bufVoxelMeta.CurLevel + 1, bufSvoNode, neighbourLevel);
         if (nodeLevel != neighbourLevel) {
             nY = 0;
         } else {
@@ -139,7 +138,7 @@ void create_neighbours(uint3 DTid : SV_DispatchThreadID){
 
     neighbourLevel = bufVoxelMeta.CurLevel;
     if(relative.z == 0) {
-        uint32_t neighbourZAddr = traverse_simple(cellIndex + uint3(0, 0, stepResolution.z), bufVoxelMeta.CellDim, bufVoxelMeta.CurLevel, bufSvoNode, neighbourLevel);
+        uint32_t neighbourZAddr = traverse_simple(cellIndex + uint3(0, 0, stepResolution.z), bufVoxelMeta.CellDim, bufVoxelMeta.CurLevel + 1, bufSvoNode, neighbourLevel);
         if (nodeLevel != neighbourLevel) {
             nZ = 0;
         } else {
