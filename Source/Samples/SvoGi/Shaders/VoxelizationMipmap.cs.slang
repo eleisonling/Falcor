@@ -43,7 +43,7 @@ float4 mipmap_isotropic(in int3 pos) {
         for(int32_t y = -1; y <= 1; ++y) {
             for(int32_t z = -1; z <= 1; ++z) {
                 const int3 lookupPos = pos + int3(x,y,z);
-                if (lookupPos.x >= 0 && lookupPos.y >= 0 && lookupPos.z >= 0 && lookupPos.x <= 4 && lookupPos.y <= 4 && lookupPos.z <= 4) {
+                if (all(lookupPos >= 0 && lookupPos <= 4)) {
                     const int32_t manhattanDist = abs(x) + abs(y) + abs(z);
                     const float weight = gaussianWeight[manhattanDist];
                     const float4 lookupColor = get_color(lookupPos);
