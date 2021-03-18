@@ -241,7 +241,7 @@ inline uint32_t traverse_simple(uint3 cellIndex, uint3 curCellDim, uint32_t numL
         uint32_t curNodeData = svNodeNext.Load(childID * 4);
 
         if(!is_valid_node(curNodeData)) {
-            foundOnLevel = iLevel - 1;
+            foundOnLevel--;
             break;
         }
 
@@ -277,7 +277,7 @@ inline uint32_t traverse_return_child_relative(uint3 cellIndex, uint3 curCellDim
         uint32_t curNodeData = svNodeNext.Load(childID * 4);
 
         if(!is_valid_node(curNodeData)) {
-            foundOnLevel = iLevel - 1;
+            foundOnLevel--;
             break;
         }
         curID = childID;
@@ -313,7 +313,7 @@ inline uint32_t traverse_return_cur_relative_dim(uint3 cellIndex, inout uint3 cu
         uint32_t curNodeData = svNodeNext.Load(childID * 4);
 
         if(!is_valid_node(curNodeData)) {
-            foundOnLevel = iLevel - 1;
+            foundOnLevel--;
             break;
         }
 
