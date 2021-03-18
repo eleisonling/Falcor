@@ -263,6 +263,7 @@ inline uint32_t traverse_simple(uint3 cellIndex, uint3 curCellDim, uint32_t numL
 
 inline uint32_t traverse_return_child_relative(uint3 cellIndex, uint3 curCellDim, uint32_t numLevels, RWByteAddressBuffer svNodeNext, out uint32_t foundOnLevel, out uint3 childRelative) {
     childRelative = uint3(0);
+    uint32_t childID = 0;
     uint3 childDim = curCellDim;
 
     uint32_t curID = 0;
@@ -271,6 +272,7 @@ inline uint32_t traverse_return_child_relative(uint3 cellIndex, uint3 curCellDim
   
     for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
         foundOnLevel = iLevel;
+        curID = childID;
         uint32_t curNodeData = svNodeNext.Load(curID * 4);
 
         if(!is_valid_node(curNodeData)) {
@@ -289,7 +291,7 @@ inline uint32_t traverse_return_child_relative(uint3 cellIndex, uint3 curCellDim
             break;
         }
 
-        curID = get_child_index(curNodeData) * 8 + (childRelative.x | childRelative.y << 1 | childRelative.z << 2);
+        childID = get_child_index(curNodeData) * 8 + (childRelative.x | childRelative.y << 1 | childRelative.z << 2);
 
     } // level-for
     return curID;

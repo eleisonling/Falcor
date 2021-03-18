@@ -78,7 +78,9 @@ void write_leaf_brick(uint3 DTid : SV_DispatchThreadID){
     uint32_t onLevel = 0;
     uint3 relative = uint3(0);
     uint32_t nodeAddress = traverse_return_child_relative(cellIndex, bufVoxelMeta.CellDim, bufVoxelMeta.TotalLevel, bufSvoNodeNext, onLevel, relative);
-    store_in_leaf(relative, nodeAddress, voxelColor, voxelNormal);
+    uint32_t nodeData = bufSvoNodeNext.Load(nodeAddress * 4);
+    if(!is_valid_node(nodeData)) return;
+    store_in_leaf(relative, get_child_index(nodeData) * 8, voxelColor, voxelNormal);
 }
 
 RWTexture3D<float4> texBrickValue;
