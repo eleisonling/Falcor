@@ -245,37 +245,81 @@ void VoxelizationPass::do_build_mip(RenderContext* pContext) {
         uint3 groupSize = div_round_up(threads, uint3(COMMON_THREAD_SIZE));
         kVoxelizationMeta.CurLevel = i;
 
-        mpMipmapCenter_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-        mpMipmapCenter_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
-        mpMipmapCenter_["bufLevelAddress"] = mpLevelAddressBuffer_;
-        mpMipmapCenter_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
-        mpMipmapCenter_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
-        mpMipmapCenter_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
-        mpMipmapCenter_->execute(pContext, threads);
+        {
+            PROFILE("Center");
+            mpMipmapCenter_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+            mpMipmapCenter_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
+            mpMipmapCenter_["bufLevelAddress"] = mpLevelAddressBuffer_;
+            mpMipmapCenter_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
+            mpMipmapCenter_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
+            mpMipmapCenter_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
+            mpMipmapCenter_->execute(pContext, threads);
+        }
 
-        mpMipmapFaces_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-        mpMipmapFaces_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
-        mpMipmapFaces_["bufLevelAddress"] = mpLevelAddressBuffer_;
-        mpMipmapFaces_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
-        mpMipmapFaces_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
-        mpMipmapFaces_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
-        mpMipmapFaces_->execute(pContext, threads);
+        {
+            PROFILE("Face");
+            mpMipmapFaces_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+            mpMipmapFaces_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
+            mpMipmapFaces_["bufLevelAddress"] = mpLevelAddressBuffer_;
+            mpMipmapFaces_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
+            mpMipmapFaces_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
+            mpMipmapFaces_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
+            mpMipmapFaces_->execute(pContext, threads);
+        }
 
-        mpMipmapEdges_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-        mpMipmapEdges_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
-        mpMipmapEdges_["bufLevelAddress"] = mpLevelAddressBuffer_;
-        mpMipmapEdges_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
-        mpMipmapEdges_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
-        mpMipmapEdges_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
-        mpMipmapEdges_->execute(pContext, threads);
+        {
+            PROFILE("Edge");
+            mpMipmapEdges_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+            mpMipmapEdges_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
+            mpMipmapEdges_["bufLevelAddress"] = mpLevelAddressBuffer_;
+            mpMipmapEdges_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
+            mpMipmapEdges_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
+            mpMipmapEdges_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
+            mpMipmapEdges_->execute(pContext, threads);
+        }
 
-        mpMipmapCorners_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
-        mpMipmapCorners_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
-        mpMipmapCorners_["bufLevelAddress"] = mpLevelAddressBuffer_;
-        mpMipmapCorners_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
-        mpMipmapCorners_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
-        mpMipmapCorners_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
-        mpMipmapCorners_->execute(pContext, threads);
+        {
+            PROFILE("Corner");
+            mpMipmapCorners_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+            mpMipmapCorners_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
+            mpMipmapCorners_["bufLevelAddress"] = mpLevelAddressBuffer_;
+            mpMipmapCorners_["bufSvoNodeNext"] = mpSVONodeBufferNext_;
+            mpMipmapCorners_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
+            mpMipmapCorners_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
+            mpMipmapCorners_->execute(pContext, threads);
+        }
+
+        if (i > 0) {
+            {
+                PROFILE("BorderTransfer");
+                uint3 threads = uint3(uint32_t(glm::pow(mSVOPerLevelNodeNum_[i], 1.0f / 3.0f))) + uint3(1);
+                uint3 groupSize = div_round_up(threads, uint3(COMMON_THREAD_SIZE));
+                mpBorderTransfer_["CB"]["bufVoxelMeta"].setBlob(kVoxelizationMeta);
+                mpBorderTransfer_["CB"]["uDispathGroupSize"] = groupSize * uint3(COMMON_THREAD_SIZE);
+                mpBorderTransfer_["CB"]["iBorderTransferAxis"] = AXIS_X;
+                mpBorderTransfer_["bufLevelAddress"] = mpLevelAddressBuffer_;
+                mpBorderTransfer_["bufSvoNodeColor"] = mpSVONodeBufferColor_;
+                mpBorderTransfer_["bufNeighbourAddress"] = mpSVONeighbourBuffer_[AXIS_X];
+                mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
+                mpBorderTransfer_->execute(pContext, threads);
+                mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_NORMAL];
+                mpBorderTransfer_->execute(pContext, threads);
+
+                mpBorderTransfer_["CB"]["iBorderTransferAxis"] = AXIS_Y;
+                mpBorderTransfer_["bufNeighbourAddress"] = mpSVONeighbourBuffer_[AXIS_Y];
+                mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
+                mpBorderTransfer_->execute(pContext, threads);
+                mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_NORMAL];
+                mpBorderTransfer_->execute(pContext, threads);
+
+                mpBorderTransfer_["CB"]["iBorderTransferAxis"] = AXIS_Z;
+                mpBorderTransfer_["bufNeighbourAddress"] = mpSVONeighbourBuffer_[AXIS_Z];
+                mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_COLOR];
+                mpBorderTransfer_->execute(pContext, threads);
+                mpBorderTransfer_["texBrickValue"] = mpBrickTextures_[BRICKPOOL_NORMAL];
+                mpBorderTransfer_->execute(pContext, threads);
+            }
+        }
     }
 }
 
