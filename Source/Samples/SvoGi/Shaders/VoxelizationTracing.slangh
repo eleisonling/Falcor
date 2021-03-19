@@ -143,7 +143,7 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
     if (1.5 * t_coef.y - t_bias.y > t_min) idx ^= 2, pos.y = 1.5;
     if (1.5 * t_coef.z - t_bias.z > t_min) idx ^= 4, pos.z = 1.5;
 
-    while (scale < MAX_LEVEL) {
+    while (scale < MAX_LEVEL && t_min <= t_max) {
         uint32_t child_shift = idx ^ octant_mask;
         uint32_t parentNode = svoNode.Load(parentAddress * 4);
 
@@ -161,7 +161,7 @@ void trace_sparse_voxel_ray<T : ITracingHitInfo>(inout RayDesc ray, RWByteAddres
         float tc_max = min(min(t_corner.x, t_corner.y), t_corner.z);
 
         // check is child is a node
-        if (is_valid_node(parentNode) && !is_leaf_node(parentNode, scale, leafLevel) && t_min <= t_max) {
+        if (is_valid_node(parentNode) && !is_leaf_node(parentNode, scale, leafLevel)) {
             uint32_t childAddress = get_child_index(parentNode) * 8 + child_shift;
             float tv_max = min(t_max, tc_max);
             float half_scale = scale_exp2 * 0.5;
