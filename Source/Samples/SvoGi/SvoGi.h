@@ -49,6 +49,7 @@ private:
 
     void load_scene(const std::string& filename, const Fbo* pTargetFbo);
     void normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo);
+    void vxao_render(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo);
 
     Scene::SharedPtr mpScene_ = nullptr;
     Camera::SharedPtr mpMainCam_ = nullptr;

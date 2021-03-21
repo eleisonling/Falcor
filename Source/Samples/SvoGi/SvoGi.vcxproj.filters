@@ -87,5 +87,8 @@
     <ShaderSource Include="Shaders\VoxelizationMipmap.cs.slang">
       <Filter>Shaders</Filter>
     </ShaderSource>
+    <ShaderSource Include="Shaders\VCT.slangh">
+      <Filter>Shaders</Filter>
+    </ShaderSource>
   </ItemGroup>
 </Project>

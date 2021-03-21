@@ -38,13 +38,15 @@ namespace {
     enum class FinalType {
         Defulat,
         Volumetric,
+        VXAO,
 
-        max_count,
+        MAX_COUNT,
     };
 
     const Gui::DropdownList kFinalOutputType = {
-        { (uint32_t)FinalType::Defulat, "Defulat" },
-        { (uint32_t)FinalType::Volumetric, "Volumetric" },
+        { (uint32_t)FinalType::Defulat,     "Defulat" },
+        { (uint32_t)FinalType::Volumetric,  "Volumetric" },
+        { (uint32_t)FinalType::VXAO,        "VXAO" },
     };
 
 }
@@ -109,6 +111,10 @@ void SvoGi::normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& p
     mpPostEffects_->on_render(pRenderContext, pTargetFbo, mpTextureSampler_);
 }
 
+void SvoGi::vxao_render(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
+
+}
+
 void SvoGi::onLoad(RenderContext* pRenderContext) {
     load_scene(kDefaultScene, gpFramework->getTargetFbo().get());
     mpFinalShading_ = RasterScenePass::create(mpScene_, kRasterProg, "", "main");
@@ -144,6 +150,8 @@ void SvoGi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& p
         mpVoxelVisualizer_->set_svo_node_color_buffer(mpVoxelizationPass_->get_svo_node_color_buffer());
         mpVoxelVisualizer_->on_render(pRenderContext, pTargetFbo);
         break;
+    case FinalType::VXAO:
+        vxao_render(pRenderContext, pTargetFbo);
     case FinalType::Defulat:
     default:
         normal_render(pRenderContext, pTargetFbo);

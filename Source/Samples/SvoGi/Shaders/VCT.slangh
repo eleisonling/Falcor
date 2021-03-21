@@ -1,0 +1,9 @@
+#pragma once
+#include "Samples/SvoGi/Shaders/VoxelizationTracing.slangh"
+
+
+float4 cone_tracing(RayDesc ray, float3 aperture) {
+   float4 finalColor = {};
+
+   return finalColor;
+}
