@@ -338,6 +338,7 @@ inline uint32_t traverse_return_cur_relative_dim(uint3 cellIndex, inout uint3 cu
 
 #define DIFFUSE_CONE_COUNT      8
 #define DIFFUSE_CONE_APETURE    0.872665
+#define TRACING_EPSILON         0.00001   
 
 static const float3 DIFFUSE_CONE_DIRECTIONS[DIFFUSE_CONE_COUNT] = {
     float3(0.57735, 0.57735, 0.57735),

@@ -1,9 +1,37 @@
 #pragma once
 #include "Samples/SvoGi/Shaders/VoxelizationTracing.slangh"
 
+struct VCTHitInfo : ITracingHitInfo {
+    float4 Color = {};
+    RayDesc Ray = {};
+    float tMax = 0.0f;
+    float tCur = 0.0f;
 
-float4 cone_tracing(RayDesc ray, float3 aperture) {
-   float4 finalColor = {};
+    [mutating]
+    bool deal_if_hitted(uint32_t parentNode, uint32_t childShift, int32_t scale, Stack stack, float childScale, float t){
+        return false;
+    }
+}
 
-   return finalColor;
+
+float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufVoxelMeta) {
+    float4 finalColor = {};
+
+    float tEnter = 0.0f;
+    float tLeave = 0.0f;
+    if (!intersect_ray_with_AABB(ray.Origin, ray.Direction, vec3(1.0), vec3(2.0), tEnter, tLeave)) {
+        return returnColor;
+    }
+
+    int32_t curLevel = bufVoxelMeta.CurLevel;
+
+    VCTHitInfo hitInfo = {};
+    hitInfo.Ray = ray;
+
+    while(ray.tCur < tLeave && t.Color.a < 1.0f) {
+        hitInfo.Ray.Origin = ray.Origin + ray.Direction * t;
+        hitInfo.tMax = t + g_NodeSizes[curLevel];
+        trace_sparse_voxel_ray(ray, bufSvoNodeNext, curLevel, bufVoxelMeta.CellDim, hitInfo);
+    }
+    return finalColor;
 }
