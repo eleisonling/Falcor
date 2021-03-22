@@ -4,7 +4,6 @@
 struct VCTHitInfo : ITracingHitInfo {
     float4 Color = {};
     RayDesc Ray = {};
-    float tMax = 0.0f;
     float tCur = 0.0f;
 
     [mutating]
@@ -28,10 +27,11 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
     VCTHitInfo hitInfo = {};
     hitInfo.Ray = ray;
 
-    while(ray.tCur < tLeave && t.Color.a < 1.0f) {
-        hitInfo.Ray.Origin = ray.Origin + ray.Direction * t;
-        hitInfo.tMax = t + g_NodeSizes[curLevel];
+    while(htInfo.tCur < tLeave && t.Color.a < 0.99f) {
+        hitInfo.Ray.Origin = hitInfo.Ray.Origin + ray.Direction * htInfo.tCur;
+        hitInfo.Ray.TMax = hitInfo.tCur + g_NodeSteps[curLevel];
         trace_sparse_voxel_ray(ray, bufSvoNodeNext, curLevel, bufVoxelMeta.CellDim, hitInfo);
+        curLevel = std::max(--curLevel, 0);
     }
     return finalColor;
 }

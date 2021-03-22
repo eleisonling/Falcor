@@ -3,6 +3,35 @@ import Scene.Raytracing;
 #include "Samples/SvoGi/Shaders/VoxelizationMeta.slangh"
 
 
+#define DIFFUSE_CONE_COUNT      8
+#define DIFFUSE_CONE_APETURE    0.872665
+#define TRACING_EPSILON         0.00001   
+
+static const float3 DIFFUSE_CONE_DIRECTIONS[DIFFUSE_CONE_COUNT] = {
+    float3(0.57735, 0.57735, 0.57735),
+    float3(-0.57735, -0.57735, 0.57735),
+    float3(-0.903007, 0.182696, 0.388844),
+    float3(0.903007, -0.182696, 0.388844),
+    float3(0.388844, -0.903007, 0.182696),
+    float3(-0.388844, 0.903007, 0.182696),
+    float3(-0.182696, 0.388844, 0.903007),
+    float3(0.182696, -0.388844, 0.903007)
+};
+
+
+inline float3 local_to_world(in float3 v, in float3 ns, in float3 ts, in float3 bs) {
+    return float3(
+        ts.x * v.x + bs.x * v.y + ns.x * v.z,
+        ts.y * v.x + bs.y * v.y + ns.y * v.z,
+        ts.z * v.x + bs.z * v.y + ns.z * v.z
+    );
+}
+
+static const uint32_t g_Pow2[] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
+static const float g_NodeSizes[] = {1, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625, 0.0078125, 0.00390625, 0.001953125, 0.0009765625};
+
+
+
 inline float3 convert_world_to_svo_space(float3 worldPos, float3 cellMin, float3 cellMax) {
     float3 worldExtent = cellMax - cellMin;  
     float maxAxis = max(worldExtent.x, max(worldExtent.y, worldExtent.z));
@@ -333,29 +362,4 @@ inline uint32_t traverse_return_cur_relative_dim(uint3 cellIndex, inout uint3 cu
 
     } // level-for
     return curID;
-}
-
-
-#define DIFFUSE_CONE_COUNT      8
-#define DIFFUSE_CONE_APETURE    0.872665
-#define TRACING_EPSILON         0.00001   
-
-static const float3 DIFFUSE_CONE_DIRECTIONS[DIFFUSE_CONE_COUNT] = {
-    float3(0.57735, 0.57735, 0.57735),
-    float3(-0.57735, -0.57735, 0.57735),
-    float3(-0.903007, 0.182696, 0.388844),
-    float3(0.903007, -0.182696, 0.388844),
-    float3(0.388844, -0.903007, 0.182696),
-    float3(-0.388844, 0.903007, 0.182696),
-    float3(-0.182696, 0.388844, 0.903007),
-    float3(0.182696, -0.388844, 0.903007)
-};
-
-
-inline float3 local_to_world(in float3 v, in float3 ns, in float3 ts, in float3 bs) {
-    return float3(
-        ts.x * v.x + bs.x * v.y + ns.x * v.z,
-        ts.y * v.x + bs.y * v.y + ns.y * v.z,
-        ts.z * v.x + bs.z * v.y + ns.z * v.z
-    );
 }

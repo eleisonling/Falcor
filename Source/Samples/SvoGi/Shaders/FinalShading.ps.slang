@@ -42,7 +42,7 @@ float4 main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
     for(int32_t i = 0; i < DIFFUSE_CONE_COUNT; i++) {
         RayDesc ray = {};
         ray.Origin = convert_world_to_svo_space(vOut.posW, bufVoxelMeta.Min, bufVoxelMeta.Max);
-        ray.Direction = local_to_world(DIFFUSE_CONE_DIRECTIONS[i], sd.N, sd.T, sd.B);
+        ray.Direction = normalize(local_to_world(DIFFUSE_CONE_DIRECTIONS[i], sd.N, sd.T, sd.B));
         tracingColor += cone_tracing(ray, DIFFUSE_CONE_APETURE);
     }
     tracingColor /= DIFFUSE_CONE_COUNT;
