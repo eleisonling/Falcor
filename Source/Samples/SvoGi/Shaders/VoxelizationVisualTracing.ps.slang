@@ -18,12 +18,15 @@ RWByteAddressBuffer bufSvoNodeColor;
 struct BrickTracingHitInfo : ITracingHitInfo {
     float4 Color = {};
     RayDesc Ray = {};
+    float TLast = 0.0f;
 
     [mutating]
     bool deal_if_hitted(uint32_t parentNode, uint32_t childShift, int32_t scale, Stack stack, float childScale, float t){
         uint32_t colorAddress = get_child_index(parentNode) * 8;
         uint32_t nodeData = bufSvoNodeColor.Load(colorAddress * 4);
         uint3 brickCoords = uint_XYZ10_to_uint3(nodeData);
+        float segmentLength = t - TLast;
+        TLast = t;
 
         // load and uncompress
 #ifdef USE_SAMPLER 
@@ -40,7 +43,8 @@ struct BrickTracingHitInfo : ITracingHitInfo {
 
         float3 childEnter = (posTex - minPos) / childScale;
         float3 childLeave = ((posTex + Ray.Direction * (tLeave - tEnter)) - minPos) / childScale;
-        Color = ray_cast(Color, brickCoords, childEnter, childLeave, Ray.Direction, MAX_LEVEL - scale, childScale, bufVoxelMeta, texBrickValue, spTexSampler);
+        Color = ray_cast(Color, brickCoords, childEnter, childLeave, Ray.Direction, MAX_LEVEL - scale, childScale,
+            bufVoxelMeta, texBrickValue, spTexSampler, segmentLength);
         bool hitted =  Color.w > 0.99f;
 #else
         Color = texBrickValue[brickCoords + 2 * childOffsets[childShift]];

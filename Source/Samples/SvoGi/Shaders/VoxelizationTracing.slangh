@@ -29,7 +29,6 @@ inline float3 local_to_world(in float3 v, in float3 ns, in float3 ts, in float3 
     );
 }
 
-static const uint32_t g_Pow2[] = {1, 2, 4, 8, 16, 32, 64, 128, 256};
 static const float g_NodeSizes[] = {1, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625, 0.0078125, 0.00390625};
 
 
@@ -73,8 +72,8 @@ inline void correct_alpha(inout float4 color, in float alphaCorrection) {
 }
 
 
-inline float4 ray_cast(in float4 color, in uint3 brickCoords, in float3 enter, in float3 leave, in float3 dir, in uint32_t level, in float nodeScale, in VoxelizationMeta meta,
-    in Texture3D<float4> texBrick, in SamplerState spTexture) {
+inline float4 ray_cast(in float4 color, in uint3 brickCoords, in float3 enter, in float3 leave, in float3 dir, in uint32_t level, in float nodeScale,
+    in VoxelizationMeta meta, in Texture3D<float4> texBrick, in SamplerState spTexture, in float startT) {
 
     float voxelStep = 1.0f / meta.BrickPoolResolution;
 
@@ -88,9 +87,12 @@ inline float4 ray_cast(in float4 color, in uint3 brickCoords, in float3 enter, i
     const float fSampleCount = stepLength / stepSize;
     const int32_t iSampleCount = int32_t(ceil(fSampleCount));
 
-    float alphaCorrection = float(g_Pow2[meta.TotalLevel]) / (float(g_Pow2[level]) * samplingRate);
+    float stepT = float(g_NodeSizes[level]) / samplingRate;
 
     for(int32_t i = 0; i < iSampleCount; ++i) {
+        float alphaCorrection = (startT + stepT) / g_NodeSizes[level];
+        startT = 0.0f;
+
         float3 samplePos = enterUVW + dir * stepSize * float(i);
         float4 newCol = texBrick.SampleLevel(spTexture, samplePos, 0);
 
