@@ -1,19 +1,12 @@
 #pragma once
 #include "Samples/SvoGi/Shaders/VoxelizationTracing.slangh"
 
-struct VCTHitInfo : ITracingHitInfo {
-    float4 Color = {};
-    RayDesc Ray = {};
-    float tCur = 0.0f;
-
-    [mutating]
-    bool deal_if_hitted(uint32_t parentNode, uint32_t childShift, int32_t scale, Stack stack, float childScale, float t){
-        return false;
-    }
+int32_t get_lod_level(float t) {
+    float d = max(g_NodeSizes[bufVoxelMeta.TotalLevel], tCur * CONE_COEffICIENT2);
+    return max(bufVoxelMeta.TotalLevel - ceil(log2(d / g_NodeSizes[bufVoxelMeta.TotalLevel])), 0);
 }
 
-
-float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufVoxelMeta) {
+float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufVoxelMeta, in RWByteAddressBuffer svNodeNext, out float4 occlusion) {
     float4 finalColor = {};
 
     float tEnter = 0.0f;
@@ -22,16 +15,26 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         return returnColor;
     }
 
-    int32_t curLevel = bufVoxelMeta.CurLevel;
+    float tCur = max(tEnter, 0.0f);
 
-    VCTHitInfo hitInfo = {};
-    hitInfo.Ray = ray;
+    // first step
+    tCur += g_NodeSizes[curLevel] * CONE_COEffICIENT1;
 
-    while(htInfo.tCur < tLeave && t.Color.a < 0.99f) {
-        hitInfo.Ray.Origin = hitInfo.Ray.Origin + ray.Direction * htInfo.tCur;
-        hitInfo.Ray.TMax = hitInfo.tCur + g_NodeSteps[curLevel];
-        trace_sparse_voxel_ray(ray, bufSvoNodeNext, curLevel, bufVoxelMeta.CellDim, hitInfo);
-        curLevel = std::max(--curLevel, 0);
+    while(tCur < tLeave && finalColor.a < 0.99f) {
+        float3 posTex = ray.Origin + ray.Direction * tCur;
+        curLevel = get_lod_level(tCur);
+        tCur += g_NodeSizes[curLevel] * CONE_COEffICIENT1;
+
+        uint3 posCell = (posTex - float3(1.0f)) * bufVoxelMeta.CellDim;
+
+        uint32_t pNodeAddress = 0;
+        float3 cMin = {};
+        float3 cMax = {};
+        float3 pMin = {};
+        float3 pMax = {};
+
+        uint32_t cNodeAddress = traverse_level(posCell, bufVoxelMeta.CellDim, curLevel, svNodeNext, pNodeAddress, pMin, pMax, cMin, cMax);
+
     }
     return finalColor;
 }

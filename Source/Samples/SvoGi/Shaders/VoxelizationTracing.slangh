@@ -5,6 +5,8 @@ import Scene.Raytracing;
 
 #define DIFFUSE_CONE_COUNT      8
 #define DIFFUSE_CONE_APETURE    0.872665
+#define CONE_COEffICIENT1       1.072252936752942   // size -> t
+#define CONE_COEffICIENT2       0.9326157716371078  // t -> size
 #define TRACING_EPSILON         0.00001   
 
 static const float3 DIFFUSE_CONE_DIRECTIONS[DIFFUSE_CONE_COUNT] = {
@@ -27,8 +29,8 @@ inline float3 local_to_world(in float3 v, in float3 ns, in float3 ts, in float3 
     );
 }
 
-static const uint32_t g_Pow2[] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
-static const float g_NodeSizes[] = {1, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625, 0.0078125, 0.00390625, 0.001953125, 0.0009765625};
+static const uint32_t g_Pow2[] = {1, 2, 4, 8, 16, 32, 64, 128, 256};
+static const float g_NodeSizes[] = {1, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625, 0.0078125, 0.00390625};
 
 
 
@@ -362,4 +364,11 @@ inline uint32_t traverse_return_cur_relative_dim(uint3 cellIndex, inout uint3 cu
 
     } // level-for
     return curID;
+}
+
+
+inline uint32_t traverse_level(uint3 cellIndex, uint3 curCellDim, uint32_t numLevels, RWByteAddressBuffer svNodeNext,
+    out uint32_t pNode, out float3 pMin, out float3 pMax, out float3 cMin, out float3 cMax) {
+
+    return 0;
 }
