@@ -3,7 +3,7 @@
 
 int32_t get_lod_level(float t) {
     float d = max(g_NodeSizes[bufVoxelMeta.TotalLevel], t * CONE_COEffICIENT2);
-    return max(bufVoxelMeta.TotalLevel - ceil(log2(d / g_NodeSizes[bufVoxelMeta.TotalLevel])), 0);
+    return max(bufVoxelMeta.TotalLevel - ceil(log2(d / g_NodeSizes[bufVoxelMeta.TotalLevel])), 1);
 }
 
 float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufVoxelMeta, in RWByteAddressBuffer svNodeNext, out float occlusion) {
@@ -33,8 +33,10 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         float3 cMax = {};
         float3 pMin = {};
         float3 pMax = {};
+        uint32_t onLevel = 0;
+        uint3 childRelative = {};
 
-        uint32_t cNodeAddress = traverse_level(posCell, bufVoxelMeta.CellDim, curLevel, svNodeNext, pNodeAddress, pMin, pMax, cMin, cMax);
+        uint32_t cNodeAddress = traverse_level(posCell, bufVoxelMeta.CellDim, curLevel, svNodeNext, onLevel, childRelative, pNodeAddress, pMin, pMax, cMin, cMax);
 
     }
     return finalColor;
