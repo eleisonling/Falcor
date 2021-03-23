@@ -16,6 +16,12 @@ cbuffer PerFrameCB : register(b0) {
 Texture2D<float>  texShadowMap;
 SamplerComparisonState spPcfSampler;
 
+RWByteAddressBuffer bufSvoNodeNext;
+RWByteAddressBuffer bufSvoNodeColor;
+Texture3D<float4> texBrickValue;
+
+
+
 float fixed_size_pcf(float2 texC, float depthRef) {
 
     float2 pixelSize = 1.0 / float2(iShadowMapDimension.xy);
@@ -44,7 +50,7 @@ float4 main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
         RayDesc ray = {};
         ray.Origin = convert_world_to_svo_space(vOut.posW, bufVoxelMeta.Min, bufVoxelMeta.Max);
         ray.Direction = normalize(local_to_world(DIFFUSE_CONE_DIRECTIONS[i], sd.N, sd.T, sd.B));
-        tracingColor += cone_tracing(ray, DIFFUSE_CONE_APETURE, tracingOcclusion);
+        tracingColor += cone_tracing(ray, DIFFUSE_CONE_APETURE, bufVoxelMeta, bufSvoNodeNext, tracingOcclusion);
     }
     tracingColor /= DIFFUSE_CONE_COUNT;
 

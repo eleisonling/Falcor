@@ -102,17 +102,17 @@ void SvoGi::load_scene(const std::string& filename, const Fbo* pTargetFbo) {
 void SvoGi::normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
     mpFinalShading_->getVars()["texShadowMap"] = mpShadowMap_->get_shadow_map();
     mpFinalShading_->getVars()["spPcfSampler"] = mpShadowMap_->get_shadow_sampler();
+    mpFinalShading_->getVars()["bufSvoNodeNext"] = mpVoxelizationPass_->get_svo_node_next_buffer();
+    mpFinalShading_->getVars()["bufSvoNodeColor"] = mpVoxelizationPass_->get_svo_node_color_buffer();
+    mpFinalShading_->getVars()["texBrickValue"] = mpVoxelizationPass_->get_albedo_brick_texture();
     mpFinalShading_->getVars()["PerFrameCB"]["matShadowMatrix"] = mpShadowMap_->get_shadow_matrix();
     mpFinalShading_->getVars()["PerFrameCB"]["iPcfKernel"] = mpShadowMap_->get_pcf_kernel();
     mpFinalShading_->getVars()["PerFrameCB"]["iShadowMapDimension"] = mpShadowMap_->get_shadow_map_dimension();
+    mpFinalShading_->getVars()["PerFrameCB"]["bufVoxelMeta"].setBlob(mpVoxelizationPass_->get_voxelization_meta());
     mpFinalShading_->renderScene(pRenderContext, mpHDRFbo_);
 
     mpPostEffects_->set_input(mpHDRFbo_->getColorTexture(0)->getSRV());
     mpPostEffects_->on_render(pRenderContext, pTargetFbo, mpTextureSampler_);
-}
-
-void SvoGi::vxao_render(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
-
 }
 
 void SvoGi::onLoad(RenderContext* pRenderContext) {
@@ -151,7 +151,6 @@ void SvoGi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& p
         mpVoxelVisualizer_->on_render(pRenderContext, pTargetFbo);
         break;
     case FinalType::VXAO:
-        vxao_render(pRenderContext, pTargetFbo);
     case FinalType::Defulat:
     default:
         normal_render(pRenderContext, pTargetFbo);

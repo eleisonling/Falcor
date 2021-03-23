@@ -88,7 +88,7 @@ inline float4 ray_cast(in float4 color, in uint3 brickCoords, in float3 enter, i
     const float fSampleCount = stepLength / stepSize;
     const int32_t iSampleCount = int32_t(ceil(fSampleCount));
 
-    float alphaCorrection = float(g_Pow2[meta.TotalLevel]) / (float(g_Pow2[level + 1]) * samplingRate);
+    float alphaCorrection = float(g_Pow2[meta.TotalLevel]) / (float(g_Pow2[level]) * samplingRate);
 
     for(int32_t i = 0; i < iSampleCount; ++i) {
         float3 samplePos = enterUVW + dir * stepSize * float(i);

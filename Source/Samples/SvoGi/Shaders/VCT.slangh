@@ -2,20 +2,21 @@
 #include "Samples/SvoGi/Shaders/VoxelizationTracing.slangh"
 
 int32_t get_lod_level(float t) {
-    float d = max(g_NodeSizes[bufVoxelMeta.TotalLevel], tCur * CONE_COEffICIENT2);
+    float d = max(g_NodeSizes[bufVoxelMeta.TotalLevel], t * CONE_COEffICIENT2);
     return max(bufVoxelMeta.TotalLevel - ceil(log2(d / g_NodeSizes[bufVoxelMeta.TotalLevel])), 0);
 }
 
-float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufVoxelMeta, in RWByteAddressBuffer svNodeNext, out float4 occlusion) {
+float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufVoxelMeta, in RWByteAddressBuffer svNodeNext, out float occlusion) {
     float4 finalColor = {};
 
     float tEnter = 0.0f;
     float tLeave = 0.0f;
-    if (!intersect_ray_with_AABB(ray.Origin, ray.Direction, vec3(1.0), vec3(2.0), tEnter, tLeave)) {
-        return returnColor;
+    if (!intersect_ray_with_AABB(ray, float3(1.0), float3(2.0), tEnter, tLeave)) {
+        return finalColor;
     }
 
     float tCur = max(tEnter, 0.0f);
+    int32_t curLevel = get_lod_level(tCur);
 
     // first step
     tCur += g_NodeSizes[curLevel] * CONE_COEffICIENT1;
