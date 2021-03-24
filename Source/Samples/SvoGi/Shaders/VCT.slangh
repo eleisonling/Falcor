@@ -9,10 +9,12 @@ int32_t get_lod_level(float t, out float cScale) {
 }
 
 float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufVoxelMeta, in RWByteAddressBuffer svoNodeNext,
-    in RWByteAddressBuffer svoNodeColor, in Texture3D<float4> texBrickVal, in SamplerState spTexSampler, out float occlusion) {
+    in RWByteAddressBuffer svoNodeColor, in Texture3D<float4> texBrickVal, in SamplerState spTexSampler,float fOcclusionDecay, out float occlusion) {
+
     float4 curColor = {};
     float4 childColor = {};
     float4 finalColor = {};
+    occlusion = 0.0f;
 
     float tEnter = 0.0f;
     float tLeave = 0.0f;
@@ -62,8 +64,9 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         intersect_ray_with_AABB(ray, curMin, curMax, tCurEnter, tCurLeave);
         float3 curEnter = (posTex - curMin) / curScale;
         float3 curLeave = ((posTex + ray.Direction * (tCurLeave - tCurEnter)) - curMin) / curScale;
+        float curOpacity = 0.0f;
         curColor = ray_cast(finalColor, curBrickCoords, curEnter, curLeave, ray.Direction, curLevel - 1, curScale,
-            bufVoxelMeta, texBrickValue, spTexSampler, segmentLength);
+            bufVoxelMeta, texBrickValue, spTexSampler, segmentLength, curOpacity);
 
 
         leafPointer = bufSvoNodeColor.Load(get_child_index(cNodeData) * 8 * 4);
@@ -73,11 +76,13 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         intersect_ray_with_AABB(ray, childMin, childMax, tChildEnter, tChildLeave);
         float3 childEnter = (posTex - childMin) / curScale;
         float3 childLeave = ((posTex + ray.Direction * (tChildLeave - tChildEnter)) - childMin) / childScale;
+        float childOpacity = 0.0f;
         childColor = ray_cast(finalColor, childBrickCoords, childEnter, childLeave, ray.Direction, curLevel, childScale,
-            bufVoxelMeta, texBrickValue, spTexSampler, segmentLength);
+            bufVoxelMeta, texBrickValue, spTexSampler, segmentLength, childOpacity);
 
         finalColor = lerp(curColor, childColor, cScale);
-
+        float composOpacity = lerp(curOpacity, childOpacity, cScale);
+        occlusion += (1.0f - occlusion) * composOpacity / (1.0f + (tCur + g_NodeSizes[curLevel]) * fOcclusionDecay);
     }
     return finalColor;
 }

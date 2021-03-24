@@ -34,6 +34,7 @@ uint32_t mSampleGuiPositionY = 40;
 namespace {
     static const std::string kDefaultScene = "Arcade/Arcade.pyscene";
     static const std::string kRasterProg = "Samples/SvoGi/Shaders/FinalShading.ps.slang";
+    static const std::string kDumpAO = "DUMP_AO";
 
     enum class FinalType {
         Defulat,
@@ -80,7 +81,9 @@ void SvoGi::onGuiRender(Gui* pGui) {
     // final output
     auto finalOutputGroup = Gui::Group(pGui, "Final Output");
     if (finalOutputGroup.open()) {
-        finalOutputGroup.dropdown("Output Type", kFinalOutputType, mFinalOutputType_);
+        if (finalOutputGroup.dropdown("Output Type", kFinalOutputType, mFinalOutputType_)) {
+            refresh_shader_macros();
+        }
     }
 }
 
@@ -110,10 +113,20 @@ void SvoGi::normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& p
     mpFinalShading_->getVars()["PerFrameCB"]["iPcfKernel"] = mpShadowMap_->get_pcf_kernel();
     mpFinalShading_->getVars()["PerFrameCB"]["iShadowMapDimension"] = mpShadowMap_->get_shadow_map_dimension();
     mpFinalShading_->getVars()["PerFrameCB"]["bufVoxelMeta"].setBlob(mpVoxelizationPass_->get_voxelization_meta());
+    mpFinalShading_->getVars()["PerFrameCB"]["fOcclusionDecay"] = 5.0f;
     mpFinalShading_->renderScene(pRenderContext, mpHDRFbo_);
 
     mpPostEffects_->set_input(mpHDRFbo_->getColorTexture(0)->getSRV());
     mpPostEffects_->on_render(pRenderContext, pTargetFbo, mpTextureSampler_);
+}
+
+void SvoGi::refresh_shader_macros() {
+
+    mpFinalShading_->getProgram()->removeDefine(kDumpAO);
+
+    if (mFinalOutputType_ == (uint32_t)FinalType::VXAO) {
+        mpFinalShading_->getProgram()->addDefine(kDumpAO);
+    }
 }
 
 void SvoGi::onLoad(RenderContext* pRenderContext) {
@@ -127,6 +140,8 @@ void SvoGi::onLoad(RenderContext* pRenderContext) {
     Sampler::Desc desc = {};
     desc.setFilterMode(Sampler::Filter::Linear, Sampler::Filter::Linear, Sampler::Filter::Linear).setAddressingMode(Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp, Sampler::AddressMode::Clamp);
     mpTextureSampler_ = Sampler::create(desc);
+
+    refresh_shader_macros();
 }
 
 void SvoGi::onFrameRender(RenderContext* pRenderContext, const Fbo::SharedPtr& pTargetFbo) {
