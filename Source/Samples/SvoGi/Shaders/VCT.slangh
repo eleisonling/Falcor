@@ -6,7 +6,7 @@ int32_t get_lod_level(float t) {
     return max(bufVoxelMeta.TotalLevel - ceil(log2(d / g_NodeSizes[bufVoxelMeta.TotalLevel])), 1);
 }
 
-float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufVoxelMeta, in RWByteAddressBuffer svNodeNext, out float occlusion) {
+float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufVoxelMeta, in RWByteAddressBuffer svNodeNext, in RWByteAddressBuffer svNodeColor, in Texture3D<float4> texBrickVal, out float occlusion) {
     float4 finalColor = {};
 
     float tEnter = 0.0f;
@@ -29,14 +29,16 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         uint3 posCell = (posTex - float3(1.0f)) * bufVoxelMeta.CellDim;
 
         uint32_t pNodeAddress = 0;
-        float3 cMin = {};
-        float3 cMax = {};
-        float3 pMin = {};
-        float3 pMax = {};
+        float3 curMin = {};
+        float3 curMax = {};
+        float3 childMin = {};
+        float3 childMax = {};
         uint32_t onLevel = 0;
         uint3 childRelative = {};
+        float childScale = 1.0f;
 
-        uint32_t cNodeAddress = traverse_level(posCell, bufVoxelMeta.CellDim, curLevel, svNodeNext, onLevel, childRelative, pNodeAddress, pMin, pMax, cMin, cMax);
+        uint32_t cNodeAddress = traverse_level(posCell, bufVoxelMeta.CellDim, curLevel, svNodeNext, onLevel, childRelative, pNodeAddress, curMin, curMax, childMin, childMax, childScale);
+        if(onLevel != curLevel - 1) continue;
 
     }
     return finalColor;

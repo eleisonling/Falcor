@@ -370,7 +370,7 @@ inline uint32_t traverse_return_cur_relative_dim(uint3 cellIndex, inout uint3 cu
 
 
 inline uint32_t traverse_level(uint3 cellIndex, uint3 curCellDim, uint32_t numLevels, RWByteAddressBuffer svNodeNext,
-    out uint32_t foundOnLevel, out uint3 childRelative, out uint32_t pNode, out float3 pMin, out float3 pMax, out float3 cMin, out float3 cMax) {
+    out uint32_t foundOnLevel, out uint3 childRelative, out uint32_t pID, out float3 curMin, out float3 curMax, out float3 childMin, out float3 childMax, out float childScale) {
 
     childRelative = uint3(0);
     uint3 childDim = curCellDim;
@@ -379,6 +379,14 @@ inline uint32_t traverse_level(uint3 cellIndex, uint3 curCellDim, uint32_t numLe
     uint32_t curID = 0;
     foundOnLevel = 0;
     uint3 curRelative = uint3(0);
+
+    pID = 0;
+    curMin = {};
+    curMax = {};
+    childMin = {};
+    childMax = {};
+
+    childScale = 1.0f;
   
     for (uint iLevel = 0; iLevel < numLevels; ++iLevel) {
         foundOnLevel = iLevel;
@@ -389,22 +397,30 @@ inline uint32_t traverse_level(uint3 cellIndex, uint3 curCellDim, uint32_t numLe
             break;
         }
 
+        pID = curID;
         curID = childID;
         curCellDim = childDim;
         curRelative = childRelative;
+        curMin = childMin;
 
         childDim >>= 1;
         childRelative = step(childDim, cellIndex);
         cellIndex -= childDim * childRelative;
+        childScale *= 0.5f;
+        uint32_t offset = childRelative.x | childRelative.y << 1 | childRelative.z << 4;
+        childMin += childScale * childOffsets[offset];
 
         if(get_child_index(curNodeData) == 0) {
             break;
         }
 
-        childID = get_child_index(curNodeData) * 8 + (childRelative.x | childRelative.y << 1 | childRelative.z << 2);
+        childID = get_child_index(curNodeData) * 8 + offset;
 
     } // level-for
+
+    childMax  = childMin + float3(childScale);
+    curMax = curMin + float3(childScale * 2.0f);
+
     return curID;
 
-    return 0;
 }
