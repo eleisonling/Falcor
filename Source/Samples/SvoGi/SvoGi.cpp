@@ -105,6 +105,7 @@ void SvoGi::normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& p
     mpFinalShading_->getVars()["bufSvoNodeNext"] = mpVoxelizationPass_->get_svo_node_next_buffer();
     mpFinalShading_->getVars()["bufSvoNodeColor"] = mpVoxelizationPass_->get_svo_node_color_buffer();
     mpFinalShading_->getVars()["texBrickValue"] = mpVoxelizationPass_->get_albedo_brick_texture();
+    mpFinalShading_->getVars()["spTexSampler"] = mpTextureSampler_;
     mpFinalShading_->getVars()["PerFrameCB"]["matShadowMatrix"] = mpShadowMap_->get_shadow_matrix();
     mpFinalShading_->getVars()["PerFrameCB"]["iPcfKernel"] = mpShadowMap_->get_pcf_kernel();
     mpFinalShading_->getVars()["PerFrameCB"]["iShadowMapDimension"] = mpShadowMap_->get_shadow_map_dimension();
