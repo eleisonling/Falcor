@@ -74,7 +74,7 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         float tChildEnter = 0.f;
         float tChildLeave = 0.f;
         intersect_ray_with_AABB(ray, childMin, childMax, tChildEnter, tChildLeave);
-        float3 childEnter = (posTex - childMin) / curScale;
+        float3 childEnter = (posTex - childMin) / childScale;
         float3 childLeave = ((posTex + ray.Direction * (tChildLeave - tChildEnter)) - childMin) / childScale;
         float childOpacity = 0.0f;
         childColor = ray_cast(finalColor, childBrickCoords, childEnter, childLeave, ray.Direction, curLevel, childScale,
