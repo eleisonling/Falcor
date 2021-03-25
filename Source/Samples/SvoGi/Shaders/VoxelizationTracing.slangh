@@ -80,6 +80,7 @@ inline float4 ray_cast(in float4 color, in uint3 brickCoords, in float3 enter, i
     float3 brickAddressUVW = float3(brickCoords) / meta.BrickPoolResolution + float3(voxelStep / 2.0f);
     float3 enterUVW = brickAddressUVW + enter * (2 * voxelStep);
     float3 leaveUVW = brickAddressUVW + leave * (2 * voxelStep);
+    opacity = 0.f;
 
     const float stepLength = length(leaveUVW - enterUVW);
     const float samplingRate = 3.0f;
@@ -100,7 +101,7 @@ inline float4 ray_cast(in float4 color, in uint3 brickCoords, in float3 enter, i
             alphaCorrection *= frac(fSampleCount);
         }
         correct_alpha(newCol, alphaCorrection);
-        opacity = newCol.a;
+        opacity += newCol.a;
         color += (1 - color.a) * newCol;
 
         if(color.a > 0.99) {
