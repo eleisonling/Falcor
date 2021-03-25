@@ -62,6 +62,6 @@ private:
     VoxelizationPass::SharedPtr mpVoxelizationPass_ = nullptr;
     VoxelVisualizer::SharedPtr mpVoxelVisualizer_ = nullptr;
 
-    uint32_t mFinalOutputType_ = 1;
+    uint32_t mFinalOutputType_ = 2;
     Sampler::SharedPtr mpTextureSampler_ = nullptr;
 };

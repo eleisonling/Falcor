@@ -69,7 +69,7 @@ float4 main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
     directColor = lerp(float4(0,0,0,1), directColor, factor);
 
 #ifdef DUMP_AO 
-    fianlColor = lerp(float4(0,0,0,1), float4(1,1,1,1), tracingOcclusion)
+    finalColor = lerp(float4(0,0,0,1), float4(1,1,1,1), tracingOcclusion);
 #else
     finalColor = directColor;
 #endif
