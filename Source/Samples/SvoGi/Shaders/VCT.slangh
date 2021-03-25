@@ -53,27 +53,27 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         uint32_t pNodeData = svoNodeNext.Load(pNodeAddress * 4);
         uint32_t cNodeData = svoNodeNext.Load(cNodeAddress * 4);
 
-        if(onLevel != curLevel - 1 || (!is_valid_node(pNodeData) && !is_valid_node(cNodeData))) continue;
+        if(onLevel != curLevel - 1) continue;
 
         float curScale = childScale * 2.0f;
         float segmentLength = tCur - tLast;
         tLast = tCur;
 
-        uint32_t leafPointer = bufSvoNodeColor.Load(get_child_index(pNodeData) * 8 * 4);
-        uint3 curBrickCoords = uint_XYZ10_to_uint3(leafPointer);
         float tCurEnter = 0.f;
         float tCurLeave = 0.f;
-        intersect_ray_with_AABB(ray, curMin, curMax, tCurEnter, tCurLeave);
-        float3 curEnter = (posTex - curMin) / curScale;
-        float3 curLeave = ((posTex + ray.Direction * (tCurLeave - tCurEnter)) - curMin) / curScale;
-        curColor = ray_cast(finalColor, curBrickCoords, curEnter, curLeave, ray.Direction, curLevel - 1, bufVoxelMeta, texBrickValue, spTexSampler, segmentLength, curOpacity);
+        if(is_valid_node(pNodeData) && intersect_ray_with_AABB(ray, curMin, curMax, tCurEnter, tCurLeave)) {
+            uint32_t leafPointer = bufSvoNodeColor.Load(get_child_index(pNodeData) * 8 * 4);
+            uint3 curBrickCoords = uint_XYZ10_to_uint3(leafPointer);
+            float3 curEnter = (posTex - curMin) / curScale;
+            float3 curLeave = ((posTex + ray.Direction * (tCurLeave - tCurEnter)) - curMin) / curScale;
+            curColor = ray_cast(finalColor, curBrickCoords, curEnter, curLeave, ray.Direction, curLevel - 1, bufVoxelMeta, texBrickValue, spTexSampler, segmentLength, curOpacity);
+        }
 
-        if(is_valid_node(cNodeData)) {
-            leafPointer = bufSvoNodeColor.Load(get_child_index(cNodeData) * 8 * 4);
+        float tChildEnter = 0.f;
+        float tChildLeave = 0.f;
+        if(is_valid_node(cNodeData) && intersect_ray_with_AABB(ray, childMin, childMax, tChildEnter, tChildLeave)) {
+            uint32_t leafPointer = bufSvoNodeColor.Load(get_child_index(cNodeData) * 8 * 4);
             uint3 childBrickCoords = uint_XYZ10_to_uint3(leafPointer);
-            float tChildEnter = 0.f;
-            float tChildLeave = 0.f;
-            intersect_ray_with_AABB(ray, childMin, childMax, tChildEnter, tChildLeave);
             float3 childEnter = (posTex - childMin) / childScale;
             float3 childLeave = ((posTex + ray.Direction * (tChildLeave - tChildEnter)) - childMin) / childScale;
             childColor = ray_cast(finalColor, childBrickCoords, childEnter, childLeave, ray.Direction, curLevel, bufVoxelMeta, texBrickValue, spTexSampler, segmentLength, childOpacity);
