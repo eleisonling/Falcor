@@ -383,9 +383,9 @@ inline uint32_t traverse_level(uint3 cellIndex, uint3 curCellDim, uint32_t numLe
     uint3 curRelative = uint3(0);
 
     pID = 0;
-    curMin = float3(0);
+    curMin = float3(1.0f);
     curMax = float3(0);
-    childMin = float3(0);
+    childMin = float3(1.0f);
     childMax = float3(0);
 
     childScale = 1.0f;
