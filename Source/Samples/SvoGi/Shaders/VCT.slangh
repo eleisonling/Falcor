@@ -65,8 +65,7 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         float3 curEnter = (posTex - curMin) / curScale;
         float3 curLeave = ((posTex + ray.Direction * (tCurLeave - tCurEnter)) - curMin) / curScale;
         float curOpacity = 0.0f;
-        curColor = ray_cast(finalColor, curBrickCoords, curEnter, curLeave, ray.Direction, curLevel - 1, curScale,
-            bufVoxelMeta, texBrickValue, spTexSampler, segmentLength, curOpacity);
+        curColor = ray_cast(finalColor, curBrickCoords, curEnter, curLeave, ray.Direction, curLevel - 1, bufVoxelMeta, texBrickValue, spTexSampler, segmentLength, curOpacity);
 
 
         leafPointer = bufSvoNodeColor.Load(get_child_index(cNodeData) * 8 * 4);
@@ -77,8 +76,7 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         float3 childEnter = (posTex - childMin) / childScale;
         float3 childLeave = ((posTex + ray.Direction * (tChildLeave - tChildEnter)) - childMin) / childScale;
         float childOpacity = 0.0f;
-        childColor = ray_cast(finalColor, childBrickCoords, childEnter, childLeave, ray.Direction, curLevel, childScale,
-            bufVoxelMeta, texBrickValue, spTexSampler, segmentLength, childOpacity);
+        childColor = ray_cast(finalColor, childBrickCoords, childEnter, childLeave, ray.Direction, curLevel, bufVoxelMeta, texBrickValue, spTexSampler, segmentLength, childOpacity);
 
         finalColor = lerp(curColor, childColor, cScale);
         float composOpacity = lerp(curOpacity, childOpacity, cScale);

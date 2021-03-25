@@ -44,8 +44,7 @@ struct BrickTracingHitInfo : ITracingHitInfo {
         float3 childEnter = (posTex - minPos) / childScale;
         float3 childLeave = ((posTex + Ray.Direction * (tLeave - tEnter)) - minPos) / childScale;
         float opacity = 0.0f;
-        Color = ray_cast(Color, brickCoords, childEnter, childLeave, Ray.Direction, MAX_LEVEL - scale, childScale,
-            bufVoxelMeta, texBrickValue, spTexSampler, segmentLength, opacity);
+        Color = ray_cast(Color, brickCoords, childEnter, childLeave, Ray.Direction, MAX_LEVEL - scale, bufVoxelMeta, texBrickValue, spTexSampler, segmentLength, opacity);
         bool hitted =  Color.w > 0.99f;
 #else
         Color = texBrickValue[brickCoords + 2 * childOffsets[childShift]];
