@@ -79,8 +79,8 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
             childColor = ray_cast(finalColor, childBrickCoords, childEnter, childLeave, ray.Direction, curLevel, bufVoxelMeta, texBrickValue, spTexSampler, segmentLength, childOpacity);
         }
 
-        finalColor = lerp(curColor, childColor, cScale);
-        float composOpacity = lerp(curOpacity, childOpacity, cScale);
+        finalColor = lerp(childColor, curColor, cScale);
+        float composOpacity = lerp(childOpacity, curOpacity, cScale);
         occlusion += (1.0f - occlusion) * composOpacity / (1.0f + (tCur + g_NodeSizes[curLevel]) * fOcclusionDecay);
     }
     return finalColor;
