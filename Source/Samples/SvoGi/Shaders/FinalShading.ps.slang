@@ -9,7 +9,6 @@ cbuffer PerFrameCB : register(b0) {
     int2 iPcfKernel;
     int2 iShadowMapDimension; 
     VoxelizationMeta bufVoxelMeta;
-    float fOcclusionDecay;
 };
 
 
@@ -45,18 +44,20 @@ float4 main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
     float4 finalColor = {};
     float4 directColor = float4(0, 0, 0, 1);
     float4 tracingColor = {};
-    float tracingOcclusion = 0.0f;
+
+    float maxDistance = 0.3f;
+
+#ifdef DUMP_AO 
+    maxDistance = 0.0001;
+#endif
 
     for(int32_t i = 0; i < DIFFUSE_CONE_COUNT; i++) {
         RayDesc ray = {};
         ray.Origin = convert_world_to_svo_space(vOut.posW, bufVoxelMeta.Min, bufVoxelMeta.Max);
         ray.Direction = normalize(local_to_world(DIFFUSE_CONE_DIRECTIONS[i], sd.N, sd.T, sd.B));
-        float coneOcclusion = 0.0f;
-        tracingColor += cone_tracing(ray, DIFFUSE_CONE_APETURE, bufVoxelMeta, bufSvoNodeNext, bufSvoNodeColor, texBrickValue, spTexSampler, fOcclusionDecay, coneOcclusion);
-        tracingOcclusion += coneOcclusion;
+        tracingColor += cone_tracing(ray, DIFFUSE_CONE_APETURE, bufVoxelMeta, bufSvoNodeNext, bufSvoNodeColor, texBrickValue, spTexSampler, maxDistance);
     }
     tracingColor /= DIFFUSE_CONE_COUNT;
-    tracingOcclusion /= DIFFUSE_CONE_COUNT;
 
     for (int i = 0; i < gScene.getLightCount(); i++) {
         directColor.rgb += evalMaterial(sd, gScene.getLight(i), 1).color;
@@ -69,7 +70,7 @@ float4 main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
     directColor = lerp(float4(0,0,0,1), directColor, factor);
 
 #ifdef DUMP_AO 
-    finalColor = lerp(float4(1,1,1,1), float4(0,0,0,1), tracingOcclusion);
+    finalColor = float4(1.0 - tracingColor.aaa, 1.0f);
 #else
     finalColor = directColor;
 #endif

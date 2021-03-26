@@ -113,7 +113,6 @@ void SvoGi::normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& p
     mpFinalShading_->getVars()["PerFrameCB"]["iPcfKernel"] = mpShadowMap_->get_pcf_kernel();
     mpFinalShading_->getVars()["PerFrameCB"]["iShadowMapDimension"] = mpShadowMap_->get_shadow_map_dimension();
     mpFinalShading_->getVars()["PerFrameCB"]["bufVoxelMeta"].setBlob(mpVoxelizationPass_->get_voxelization_meta());
-    mpFinalShading_->getVars()["PerFrameCB"]["fOcclusionDecay"] = 5.0f;
     mpFinalShading_->renderScene(pRenderContext, mpHDRFbo_);
 
     mpPostEffects_->set_input(mpHDRFbo_->getColorTexture(0)->getSRV());
