@@ -27,9 +27,6 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
     float cScale = 1.0f;
     int32_t curLevel = get_lod_level(bufVoxelMeta, tCur, cScale);
 
-    // first step
-    tCur += g_NodeSizes[curLevel] * CONE_COEffICIENT1;
-
     while(tCur < tLeave && finalColor.a <= 0.99f) {
 
         tCur += g_NodeSizes[curLevel] * CONE_COEffICIENT1;
