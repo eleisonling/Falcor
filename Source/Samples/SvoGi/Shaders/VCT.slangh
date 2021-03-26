@@ -25,6 +25,7 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
     float tLast = 0.0f;
     float tCur = max(tEnter, 0.0f);
     float cScale = 1.0f;
+    float voxelStep = 1.0f / bufVoxelMeta.BrickPoolResolution;
     int32_t curLevel = get_lod_level(bufVoxelMeta, tCur, cScale);
 
     while(tCur < tLeave && finalColor.a <= 0.99f) {
@@ -42,43 +43,38 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         uint32_t onLevel = 0;
         uint3 childRelative = {};
         float childScale = 1.0f;
-        float curOpacity = 0.0f;
-        float childOpacity = 0.0f;
 
 
         uint32_t cNodeAddress = traverse_level(posCell, bufVoxelMeta.CellDim, curLevel, svoNodeNext, onLevel, childRelative, pNodeAddress, curMin, curMax, childMin, childMax, childScale);
+        if(onLevel != curLevel - 1) continue;
+
         uint32_t pNodeData = svoNodeNext.Load(pNodeAddress * 4);
         uint32_t cNodeData = svoNodeNext.Load(cNodeAddress * 4);
 
-        if(onLevel != curLevel - 1) continue;
-
-        float curScale = childScale * 2.0f;
         float segmentLength = tCur - tLast;
         tLast = tCur;
 
-        float tCurEnter = 0.f;
-        float tCurLeave = 0.f;
-        if(is_valid_node(pNodeData) && intersect_ray_with_AABB(ray, curMin, curMax, tCurEnter, tCurLeave)) {
-            uint32_t leafPointer = bufSvoNodeColor.Load(get_child_index(pNodeData) * 8 * 4);
-            uint3 curBrickCoords = uint_XYZ10_to_uint3(leafPointer);
-            float3 curEnter = (posTex - curMin) / curScale;
-            float3 curLeave = ((posTex + ray.Direction * (tCurLeave - tCurEnter)) - curMin) / curScale;
-            curColor = ray_cast(finalColor, curBrickCoords, curEnter, curLeave, ray.Direction, curLevel - 1, bufVoxelMeta, texBrickValue, spTexSampler, segmentLength, curOpacity);
-        }
+        uint32_t leafPointer = bufSvoNodeColor.Load(get_child_index(pNodeData) * 8 * 4);
+        uint3 curBrickCoords = uint_XYZ10_to_uint3(leafPointer);
+        float3 cBrickUVW = (float3(curBrickCoords) + 0.5) / bufVoxelMeta.BrickPoolResolution;
+        float3 curEnter = (posTex - curMin) / (2 * childScale);
+        float3 cEnterUVW = cBrickUVW + curEnter * (2 * voxelStep);
+        curColor = texBrickVal.SampleLevel(spTexSampler, curEnter, 0);
+        float alphaCorrection = (segmentLength + g_NodeSizes[curLevel - 1]) / g_NodeSizes[curLevel - 1];
+        correct_alpha(curColor, alphaCorrection);
 
-        float tChildEnter = 0.f;
-        float tChildLeave = 0.f;
-        if(is_valid_node(cNodeData) && intersect_ray_with_AABB(ray, childMin, childMax, tChildEnter, tChildLeave)) {
-            uint32_t leafPointer = bufSvoNodeColor.Load(get_child_index(cNodeData) * 8 * 4);
-            uint3 childBrickCoords = uint_XYZ10_to_uint3(leafPointer);
-            float3 childEnter = (posTex - childMin) / childScale;
-            float3 childLeave = ((posTex + ray.Direction * (tChildLeave - tChildEnter)) - childMin) / childScale;
-            childColor = ray_cast(finalColor, childBrickCoords, childEnter, childLeave, ray.Direction, curLevel, bufVoxelMeta, texBrickValue, spTexSampler, segmentLength, childOpacity);
-        }
 
-        finalColor = lerp(childColor, curColor, cScale);
-        float composOpacity = lerp(childOpacity, curOpacity, cScale);
-        occlusion += (1.0f - occlusion) * composOpacity / (1.0f + (tCur + g_NodeSizes[curLevel]) * fOcclusionDecay);
+        leafPointer = bufSvoNodeColor.Load(get_child_index(cNodeData) * 8 * 4);
+        uint3 childBrickCoords = uint_XYZ10_to_uint3(leafPointer);
+        float3 childBrickUVW =  (float3(childBrickCoords) + 0.5) / bufVoxelMeta.BrickPoolResolution;
+        float3 childEnter = (posTex - childMin) / childScale;
+        float3 childEnterUVW = childBrickUVW + childEnter * (2 * voxelStep);
+        childColor = texBrickVal.SampleLevel(spTexSampler, childEnterUVW, 0);
+        alphaCorrection = (segmentLength + g_NodeSizes[curLevel]) / g_NodeSizes[curLevel];
+        correct_alpha(childColor, alphaCorrection);
+
+        finalColor += lerp(childColor, curColor, cScale);
+        occlusion += (1.0f - occlusion) * finalColor.a / (1.0f + (tCur + g_NodeSizes[curLevel]) * fOcclusionDecay);
     }
     return finalColor;
 }
