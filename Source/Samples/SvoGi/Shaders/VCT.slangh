@@ -19,7 +19,7 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
     float3 childMax = {};
 
     float nodeSize = g_NodeSizes[bufVoxelMeta.TotalLevel];
-    const float voxelStep = 1 / bufVoxelMeta.BrickPoolResolution;
+    const float voxelStep = 1.0f / float(bufVoxelMeta.BrickPoolResolution);
 
     if (!intersect_ray_with_AABB(ray, float3(1.0), float3(2.0), tEnter, tLeave)) {
         return finalColor;
