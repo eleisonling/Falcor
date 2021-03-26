@@ -409,7 +409,7 @@ inline uint32_t traverse_level(uint3 cellIndex, uint3 curCellDim, uint32_t numLe
         childRelative = step(childDim, cellIndex);
         cellIndex -= childDim * childRelative;
         childScale *= 0.5f;
-        uint32_t offset = childRelative.x | childRelative.y << 1 | childRelative.z << 4;
+        uint32_t offset = childRelative.x | childRelative.y << 1 | childRelative.z << 2;
         childMin += childScale * childOffsets[offset];
 
         if(get_child_index(curNodeData) == 0) {
