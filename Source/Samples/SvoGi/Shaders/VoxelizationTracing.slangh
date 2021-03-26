@@ -29,7 +29,9 @@ inline float3 local_to_world(in float3 v, in float3 ns, in float3 ts, in float3 
     );
 }
 
-static const float g_NodeSizes[] = {1, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625, 0.0078125, 0.00390625};
+
+static const uint g_Pow2[] = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024};
+static const float g_NodeSizes[] = {1, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625, 0.0078125, 0.00390625, 0.001953125, 0.0009765625};
 
 
 
@@ -60,7 +62,7 @@ inline bool intersect_ray_with_AABB(in RayDesc ray, float3 posMin, float3 posMax
     float3 tMin = min(tempMax, tempMin);
     
     tLeave = min(tMax.x, min(tMax.y, tMax.z));
-    tEnter = max(tMin.x, max(tMin.y, tMin.z));
+    tEnter = max(max(tMin.x, 0.0), max(tMin.y, tMin.z));
 
     return tLeave > tEnter;
 }
