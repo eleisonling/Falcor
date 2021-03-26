@@ -73,8 +73,9 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         alphaCorrection = (segmentLength + g_NodeSizes[curLevel]) / g_NodeSizes[curLevel];
         correct_alpha(childColor, alphaCorrection);
 
-        finalColor += lerp(childColor, curColor, cScale);
-        occlusion += (1.0f - occlusion) * finalColor.a / (1.0f + (tCur + g_NodeSizes[curLevel]) * fOcclusionDecay);
+        float4 composedColor = lerp(childColor, curColor, cScale);
+        finalColor += (1 - finalColor.a) * composedColor;
+        occlusion += (1.0f - occlusion) * composedColor.a / (1.0f + (tCur + g_NodeSizes[curLevel]) * fOcclusionDecay);
     }
     return finalColor;
 }
