@@ -50,7 +50,7 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         float3 cBrickUVW = (float3(curBrickCoords) + 0.5) / bufVoxelMeta.BrickPoolResolution;
         float3 curEnter = (posTex - curMin) / (2 * childScale);
         float3 cEnterUVW = cBrickUVW + curEnter * (2 * voxelStep);
-        curColor = texBrickVal.SampleLevel(spTexSampler, curEnter, 0);
+        curColor = texBrickVal.SampleLevel(spTexSampler, cEnterUVW, 0);
         correct_alpha(curColor, alphaCorrection * 2);
 
 
