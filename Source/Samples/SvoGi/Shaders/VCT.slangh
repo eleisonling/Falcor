@@ -31,7 +31,7 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         const uint32_t cLevel = uint32_t(ceil(sampleLOD));
         nodeSize = g_NodeSizes[cLevel];
 
-        uint3 posCell = (posTex - float3(1.0f)) * bufVoxelMeta.CellDim;
+        uint3 posCell = uint3(floor(posTex * (bufVoxelMeta.CellDim - 1)));
         uint32_t pNodeAddress = 0;
         uint32_t onLevel = 0;
         uint3 childRelative = {};
