@@ -5,17 +5,17 @@
 float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufVoxelMeta, in RWByteAddressBuffer svoNodeNext, in RWByteAddressBuffer svoNodeColor,
     in Texture3D<float4> texBrickVal, in SamplerState spTexSampler,in float maxDistance) {
 
-    float4 curColor = {};
-    float4 childColor = {};
+    float4 pColor = {};
+    float4 cColor = {};
     float4 finalColor = {};
 
     float tEnter = 0.0f;
     float tLeave = 0.0f;
 
-    float3 curMin = {};
-    float3 curMax = {};
-    float3 childMin = {};
-    float3 childMax = {};
+    float3 pMin = {};
+    float3 pMax = {};
+    float3 cMin = {};
+    float3 cMax = {};
 
     float nodeSize = g_NodeSizes[bufVoxelMeta.TotalLevel - 1];
     const float voxelStep = 1.0f / float(bufVoxelMeta.BrickPoolResolution);
@@ -35,9 +35,9 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         uint32_t pNodeAddress = 0;
         uint32_t onLevel = 0;
         uint3 childRelative = {};
-        float childScale = 1.0f;
+        float cScale = 1.0f;
 
-        uint32_t cNodeAddress = traverse_level(posCell, bufVoxelMeta.CellDim, cLevel, svoNodeNext, onLevel, childRelative, pNodeAddress, curMin, curMax, childMin, childMax, childScale);
+        uint32_t cNodeAddress = traverse_level(posCell, bufVoxelMeta.CellDim, cLevel, svoNodeNext, onLevel, childRelative, pNodeAddress, pMin, pMax, cMin, cMax, cScale);
         if(onLevel != cLevel - 1) continue;
 
         float alphaCorrection = g_NodeSizes[bufVoxelMeta.TotalLevel] / g_NodeSizes[cLevel + 1];
@@ -46,23 +46,23 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         uint32_t cNodeData = svoNodeNext.Load(cNodeAddress * 4);
 
         uint32_t leafPointer = bufSvoNodeColor.Load(get_child_index(pNodeData) * 8 * 4);
-        uint3 curBrickCoords = uint_XYZ10_to_uint3(leafPointer);
-        float3 cBrickUVW = (float3(curBrickCoords) + 0.5) / bufVoxelMeta.BrickPoolResolution;
-        float3 curEnter = (posTex - curMin) / (2 * childScale);
-        float3 cEnterUVW = cBrickUVW + curEnter * (2 * voxelStep);
-        curColor = texBrickVal.SampleLevel(spTexSampler, cEnterUVW, 0);
-        correct_alpha(curColor, alphaCorrection * 2);
+        uint3 pBrickCoords = uint_XYZ10_to_uint3(leafPointer);
+        float3 pBrickUVW = (float3(pBrickCoords) + 0.5) / bufVoxelMeta.BrickPoolResolution;
+        float3 pEnter = (posTex - pMin) / (2 * cScale);
+        float3 pEnterUVW = pBrickUVW + pEnter * (2 * voxelStep);
+        pColor = texBrickVal.SampleLevel(spTexSampler, pEnterUVW, 0);
+        correct_alpha(pColor, alphaCorrection * 2);
 
 
         leafPointer = bufSvoNodeColor.Load(get_child_index(cNodeData) * 8 * 4);
-        uint3 childBrickCoords = uint_XYZ10_to_uint3(leafPointer);
-        float3 childBrickUVW =  (float3(childBrickCoords) + 0.5) / bufVoxelMeta.BrickPoolResolution;
-        float3 childEnter = (posTex - childMin) / childScale;
-        float3 childEnterUVW = childBrickUVW + childEnter * (2 * voxelStep);
-        childColor = texBrickVal.SampleLevel(spTexSampler, childEnterUVW, 0);
-        correct_alpha(childColor, alphaCorrection);
+        uint3 cBrickCoords = uint_XYZ10_to_uint3(leafPointer);
+        float3 cBrickUVW = (float3(cBrickCoords) + 0.5) / bufVoxelMeta.BrickPoolResolution;
+        float3 cEnter = (posTex - cMin) / cScale;
+        float3 cEnterUVW = cBrickUVW + cEnter * (2 * voxelStep);
+        cColor = texBrickVal.SampleLevel(spTexSampler, cEnterUVW, 0);
+        correct_alpha(cColor, alphaCorrection);
 
-        float4 composedColor = lerp(curColor, childColor, frac(sampleLOD));
+        float4 composedColor = lerp(pColor, cColor, frac(sampleLOD));
         finalColor += (1 - finalColor.a) * composedColor;
 
         if (finalColor.a > 0.99 || (maxDistance > 0.000001 && d >= maxDistance)) {
