@@ -17,14 +17,14 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
     float3 childMin = {};
     float3 childMax = {};
 
-    float nodeSize = g_NodeSizes[bufVoxelMeta.TotalLevel];
+    float nodeSize = g_NodeSizes[bufVoxelMeta.TotalLevel - 1];
     const float voxelStep = 1.0f / float(bufVoxelMeta.BrickPoolResolution);
 
-    if (!intersect_ray_with_AABB(ray, float3(1.0), float3(2.0), tEnter, tLeave)) {
+    if (!intersect_ray_with_AABB(ray, float3(0.0), float3(1.0), tEnter, tLeave)) {
         return finalColor;
     }
 
-    for(float d = tEnter + g_NodeSizes[bufVoxelMeta.TotalLevel - 1]; d < tLeave; d += nodeSize) {
+    for(float d = tEnter + nodeSize; d < tLeave; d += nodeSize) {
         const float3 posTex = ray.Origin + ray.Direction * d;
         nodeSize = clamp(CONE_COEffICIENT2 * d, g_NodeSizes[bufVoxelMeta.TotalLevel - 1], 1.0f);
         const float sampleLOD = clamp(log2(1.0f / nodeSize), 0.0f, float(bufVoxelMeta.TotalLevel) - 1.00001);
