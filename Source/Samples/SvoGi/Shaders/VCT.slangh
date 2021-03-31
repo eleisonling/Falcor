@@ -24,7 +24,7 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         return finalColor;
     }
 
-    for(float d = tEnter + nodeSize; d < tLeave; d += nodeSize) {
+    for(float d = tEnter + nodeSize * CONE_COEffICIENT1; d < tLeave; d += nodeSize * CONE_COEffICIENT1) {
         const float3 posTex = ray.Origin + ray.Direction * d;
         nodeSize = clamp(CONE_COEffICIENT2 * d, g_NodeSizes[bufVoxelMeta.TotalLevel - 1], 1.0f);
         const float sampleLOD = clamp(log2(1.0f / nodeSize), 0.0f, float(bufVoxelMeta.TotalLevel) - 1.00001);
