@@ -17,7 +17,7 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
     float3 cMin = {};
     float3 cMax = {};
 
-    float nodeSize = g_NodeSizes[bufVoxelMeta.TotalLevel - 1];
+    float nodeSize = g_NodeSizes[bufVoxelMeta.TotalLevel];
     const float voxelStep = 1.0f / float(bufVoxelMeta.BrickPoolResolution);
 
     if (!intersect_ray_with_AABB(ray, float3(0.0), float3(1.0), tEnter, tLeave)) {
@@ -26,8 +26,8 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
 
     for(float d = tEnter + nodeSize * CONE_COEffICIENT1; d < tLeave; d += nodeSize * CONE_COEffICIENT1) {
         const float3 posTex = ray.Origin + ray.Direction * d;
-        nodeSize = clamp(CONE_COEffICIENT2 * d, g_NodeSizes[bufVoxelMeta.TotalLevel - 1], 1.0f);
-        const float sampleLOD = clamp(log2(1.0f / nodeSize), 0.0f, float(bufVoxelMeta.TotalLevel) - 1.00001);
+        nodeSize = clamp(CONE_COEffICIENT2 * d, g_NodeSizes[bufVoxelMeta.TotalLevel], 1.0f);
+        const float sampleLOD = clamp(log2(1.0f / nodeSize), 0.0f, float(bufVoxelMeta.TotalLevel));
         const uint32_t cLevel = uint32_t(ceil(sampleLOD));
         nodeSize = g_NodeSizes[cLevel];
 
