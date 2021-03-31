@@ -5,8 +5,8 @@ import Scene.Raytracing;
 
 #define DIFFUSE_CONE_COUNT      8
 #define DIFFUSE_CONE_APETURE    0.872665
-#define CONE_COEffICIENT1       1.072252936752942   // size -> t
-#define CONE_COEffICIENT2       0.9326157716371078  // t -> size
+#define CONE_COEffICIENT1       2.144505873505884   // size -> t
+#define CONE_COEffICIENT2       0.4663078858185539  // t -> size
 #define TRACING_EPSILON         0.00001   
 
 static const float3 DIFFUSE_CONE_DIRECTIONS[DIFFUSE_CONE_COUNT] = {
