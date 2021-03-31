@@ -80,7 +80,7 @@ void SvoGi::onGuiRender(Gui* pGui) {
 
     auto aoEffects = Gui::Group(pGui, "VXAO");
     if (aoEffects.open()) {
-        aoEffects.var("occlusionDecay", mOcclusionDecay_, 5.0f, 20.0f, .5f);
+        aoEffects.var("occlusionDecay", mOcclusionDecay_, 5.0f, 40.0f, .5f);
     }
 
     // final output
