@@ -59,7 +59,7 @@ float4 main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
         RayDesc ray = {};
         ray.Origin = originTex;
         ray.Direction = normalize(local_to_world(DIFFUSE_CONE_DIRECTIONS[i], sd.N, sd.T, sd.B));
-        tracingColor += cone_tracing(ray, DIFFUSE_CONE_APETURE, bufVoxelMeta, bufSvoNodeNext, bufSvoNodeColor, texBrickValue, spTexSampler, maxDistance);
+        tracingColor += cone_tracing(ray, bufVoxelMeta, bufSvoNodeNext, bufSvoNodeColor, texBrickValue, spTexSampler, maxDistance);
     }
     tracingColor /= DIFFUSE_CONE_COUNT;
 

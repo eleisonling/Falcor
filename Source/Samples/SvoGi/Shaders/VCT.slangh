@@ -2,7 +2,7 @@
 #include "Samples/SvoGi/Shaders/VoxelizationTracing.slangh"
 
 
-float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufVoxelMeta, in RWByteAddressBuffer svoNodeNext, in RWByteAddressBuffer svoNodeColor,
+float4 cone_tracing(in RayDesc ray, in VoxelizationMeta bufVoxelMeta, in RWByteAddressBuffer svoNodeNext, in RWByteAddressBuffer svoNodeColor,
     in Texture3D<float4> texBrickVal, in SamplerState spTexSampler,in float maxDistance) {
 
     float4 pColor = {};
@@ -17,17 +17,18 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
     float3 cMin = {};
     float3 cMax = {};
 
-    float nodeSize = g_NodeSizes[bufVoxelMeta.TotalLevel - 1];
+    float nodeSize = g_NodeSizes[bufVoxelMeta.TotalLevel];
     const float voxelStep = 1.0f / float(bufVoxelMeta.BrickPoolResolution);
 
     if (!intersect_ray_with_AABB(ray, float3(0.0), float3(1.0), tEnter, tLeave)) {
         return finalColor;
     }
 
+    float lastD = 0.0f;
     for(float d = tEnter + nodeSize * CONE_COEffICIENT1; d < tLeave; d += nodeSize * CONE_COEffICIENT1) {
         const float3 posTex = ray.Origin + ray.Direction * d;
-        nodeSize = clamp(CONE_COEffICIENT2 * d, g_NodeSizes[bufVoxelMeta.TotalLevel - 1], 1.0f);
-        const float sampleLOD = clamp(log2(1.0f / nodeSize), 0.0f, float(bufVoxelMeta.TotalLevel) -  1.00001);
+        nodeSize = clamp(CONE_COEffICIENT2 * d, g_NodeSizes[bufVoxelMeta.TotalLevel], 1.0f);
+        const float sampleLOD = clamp(log2(1.0f / nodeSize), 0.0f, float(bufVoxelMeta.TotalLevel));
         const uint32_t cLevel = uint32_t(ceil(sampleLOD));
         nodeSize = g_NodeSizes[cLevel];
 
@@ -40,8 +41,8 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         uint32_t cNodeAddress = traverse_level(posCell, bufVoxelMeta.CellDim, cLevel, svoNodeNext, onLevel, childRelative, pNodeAddress, pMin, pMax, cMin, cMax, cScale);
         if(onLevel != cLevel - 1) continue;
 
-        float alphaCorrection = g_NodeSizes[bufVoxelMeta.TotalLevel] / g_NodeSizes[cLevel + 1];
-
+        float segmentLength = d - lastD;
+        lastD = d;
         uint32_t pNodeData = svoNodeNext.Load(pNodeAddress * 4);
         uint32_t cNodeData = svoNodeNext.Load(cNodeAddress * 4);
 
@@ -51,7 +52,9 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         float3 pEnter = (posTex - pMin) / (2 * cScale);
         float3 pEnterUVW = pBrickUVW + pEnter * (2 * voxelStep);
         pColor = texBrickVal.SampleLevel(spTexSampler, pEnterUVW, 0);
-        correct_alpha(pColor, alphaCorrection * 2);
+
+        float alphaCorrection = segmentLength / g_NodeSizes[cLevel - 1];
+        correct_alpha(pColor, alphaCorrection);
 
 
         leafPointer = bufSvoNodeColor.Load(get_child_index(cNodeData) * 8 * 4);
@@ -60,6 +63,7 @@ float4 cone_tracing(in RayDesc ray, in float3 aperture, in VoxelizationMeta bufV
         float3 cEnter = (posTex - cMin) / cScale;
         float3 cEnterUVW = cBrickUVW + cEnter * (2 * voxelStep);
         cColor = texBrickVal.SampleLevel(spTexSampler, cEnterUVW, 0);
+        alphaCorrection = segmentLength / g_NodeSizes[cLevel];
         correct_alpha(cColor, alphaCorrection);
 
         float4 composedColor = lerp(pColor, cColor, frac(sampleLOD));
