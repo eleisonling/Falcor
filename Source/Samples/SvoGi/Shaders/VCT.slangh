@@ -3,7 +3,7 @@
 
 
 float4 cone_tracing(in RayDesc ray, in VoxelizationMeta bufVoxelMeta, in RWByteAddressBuffer svoNodeNext, in RWByteAddressBuffer svoNodeColor,
-    in Texture3D<float4> texBrickVal, in SamplerState spTexSampler,in float maxDistance) {
+    in Texture3D<float4> texBrickVal, in SamplerState spTexSampler,in float occlusionDecay) {
 
     float4 pColor = {};
     float4 cColor = {};
@@ -25,6 +25,8 @@ float4 cone_tracing(in RayDesc ray, in VoxelizationMeta bufVoxelMeta, in RWByteA
     }
 
     float lastD = 0.0f;
+    float occlusion = 0.0f;
+
     for(float d = tEnter + nodeSize * CONE_COEffICIENT1; d < tLeave; d += nodeSize * CONE_COEffICIENT1) {
         const float3 posTex = ray.Origin + ray.Direction * d;
         nodeSize = clamp(CONE_COEffICIENT2 * d, g_NodeSizes[bufVoxelMeta.TotalLevel], 1.0f);
@@ -68,11 +70,13 @@ float4 cone_tracing(in RayDesc ray, in VoxelizationMeta bufVoxelMeta, in RWByteA
 
         float4 composedColor = lerp(pColor, cColor, frac(sampleLOD));
         finalColor += (1 - finalColor.a) * composedColor;
+        occlusion += (1.0 - occlusion) * finalColor.a / (1.0 + (d + lerp(g_NodeSizes[cLevel - 1], g_NodeSizes[cLevel], frac(sampleLOD))) * occlusionDecay);
 
-        if (finalColor.a > 0.99 || (maxDistance > 0.000001 && d >= maxDistance)) {
+        if (finalColor.a > 0.99 || occlusion > 0.99  || d >= tLeave) {
             break;
         }
 
     }
+    finalColor.a = occlusion;
     return finalColor;
 }

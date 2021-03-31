@@ -32,7 +32,7 @@ uint32_t mSampleGuiPositionX = 20;
 uint32_t mSampleGuiPositionY = 40;
 
 namespace {
-    static const std::string kDefaultScene = "Arcade/Arcade.pyscene";
+    static const std::string kDefaultScene = "sponza/sponza.pyscene";
     static const std::string kRasterProg = "Samples/SvoGi/Shaders/FinalShading.ps.slang";
     static const std::string kDumpAO = "DUMP_AO";
 
@@ -78,6 +78,11 @@ void SvoGi::onGuiRender(Gui* pGui) {
         mpPostEffects_->on_gui(postEffects);
     }
 
+    auto aoEffects = Gui::Group(pGui, "VXAO");
+    if (aoEffects.open()) {
+        aoEffects.var("occlusionDecay", mOcclusionDecay_, 5.0f, 20.0f, .5f);
+    }
+
     // final output
     auto finalOutputGroup = Gui::Group(pGui, "Final Output");
     if (finalOutputGroup.open()) {
@@ -113,6 +118,7 @@ void SvoGi::normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& p
     mpFinalShading_->getVars()["PerFrameCB"]["iPcfKernel"] = mpShadowMap_->get_pcf_kernel();
     mpFinalShading_->getVars()["PerFrameCB"]["iShadowMapDimension"] = mpShadowMap_->get_shadow_map_dimension();
     mpFinalShading_->getVars()["PerFrameCB"]["bufVoxelMeta"].setBlob(mpVoxelizationPass_->get_voxelization_meta());
+    mpFinalShading_->getVars()["PerFrameCB"]["fOcclusionDecay"] = mOcclusionDecay_;
     mpFinalShading_->renderScene(pRenderContext, mpHDRFbo_);
 
     mpPostEffects_->set_input(mpHDRFbo_->getColorTexture(0)->getSRV());

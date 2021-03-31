@@ -9,6 +9,7 @@ cbuffer PerFrameCB : register(b0) {
     int2 iPcfKernel;
     int2 iShadowMapDimension; 
     VoxelizationMeta bufVoxelMeta;
+    float fOcclusionDecay;
 };
 
 
@@ -45,12 +46,6 @@ float4 main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
     float4 directColor = float4(0, 0, 0, 1);
     float4 tracingColor = {};
 
-    float maxDistance = 0.3f;
-
-#ifdef DUMP_AO 
-    maxDistance = 0.0001;
-#endif
-
     float3 worldExtent = bufVoxelMeta.Max - bufVoxelMeta.Min;
     float maxAxis = max(worldExtent.x, max(worldExtent.y, worldExtent.z));
     float3 originTex = (vOut.posW - bufVoxelMeta.Min) / float3(maxAxis);
@@ -59,7 +54,7 @@ float4 main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
         RayDesc ray = {};
         ray.Origin = originTex;
         ray.Direction = normalize(local_to_world(DIFFUSE_CONE_DIRECTIONS[i], sd.N, sd.T, sd.B));
-        tracingColor += cone_tracing(ray, bufVoxelMeta, bufSvoNodeNext, bufSvoNodeColor, texBrickValue, spTexSampler, maxDistance);
+        tracingColor += cone_tracing(ray, bufVoxelMeta, bufSvoNodeNext, bufSvoNodeColor, texBrickValue, spTexSampler, fOcclusionDecay);
     }
     tracingColor /= DIFFUSE_CONE_COUNT;
 
