@@ -54,13 +54,18 @@ float4 main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
         RayDesc ray = {};
         ray.Origin = originTex;
         ray.Direction = normalize(local_to_world(DIFFUSE_CONE_DIRECTIONS[i], sd.N, sd.T, sd.B));
-        tracingColor += cone_tracing(ray, bufVoxelMeta, bufSvoNodeNext, bufSvoNodeColor, texBrickValue, spTexSampler, fOcclusionDecay);
+        float cosTheta = dot(sd.N, ray.Direction);
+        tracingColor += cone_tracing(ray, bufVoxelMeta, bufSvoNodeNext, bufSvoNodeColor, texBrickValue, spTexSampler, fOcclusionDecay) * cosTheta;
     }
     tracingColor /= DIFFUSE_CONE_COUNT;
 
     for (int i = 0; i < gScene.getLightCount(); i++) {
         directColor.rgb += evalMaterial(sd, gScene.getLight(i), 1).color;
     }
+
+#ifdef USE_AO
+    directColor *= tracingColor.a;
+#endif
 
     float4 lightposH = mul(float4(vOut.posW, 1.0f), matShadowMatrix);
     lightposH /= lightposH.w;
@@ -69,7 +74,7 @@ float4 main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
     directColor = lerp(float4(0,0,0,1), directColor, factor);
 
 #ifdef DUMP_AO 
-    finalColor = float4(1.0 - tracingColor.aaa, 1.0f);
+    finalColor = float4(tracingColor.aaa, 1.0f);
 #else
     finalColor = directColor;
 #endif

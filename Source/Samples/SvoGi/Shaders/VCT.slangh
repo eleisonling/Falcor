@@ -77,6 +77,6 @@ float4 cone_tracing(in RayDesc ray, in VoxelizationMeta bufVoxelMeta, in RWByteA
         }
 
     }
-    finalColor.a = occlusion;
+    finalColor.a = 1.0f - occlusion;
     return finalColor;
 }

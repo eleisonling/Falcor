@@ -35,6 +35,8 @@ namespace {
     static const std::string kDefaultScene = "sponza/sponza.pyscene";
     static const std::string kRasterProg = "Samples/SvoGi/Shaders/FinalShading.ps.slang";
     static const std::string kDumpAO = "DUMP_AO";
+    static const std::string kUseAO = "USE_AO";
+
 
     enum class FinalType {
         Defulat,
@@ -80,7 +82,10 @@ void SvoGi::onGuiRender(Gui* pGui) {
 
     auto aoEffects = Gui::Group(pGui, "VXAO");
     if (aoEffects.open()) {
-        aoEffects.var("occlusionDecay", mOcclusionDecay_, 5.0f, 40.0f, .5f);
+        aoEffects.var("occlusionDecay", mOcclusionDecay_, 10.0f, 40.0f, .5f);
+        if (aoEffects.checkbox("USE AO", mUseAO_)) {
+            refresh_shader_macros();
+        }
     }
 
     // final output
@@ -128,9 +133,14 @@ void SvoGi::normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& p
 void SvoGi::refresh_shader_macros() {
 
     mpFinalShading_->getProgram()->removeDefine(kDumpAO);
+    mpFinalShading_->getProgram()->removeDefine(kUseAO);
 
     if (mFinalOutputType_ == (uint32_t)FinalType::VXAO) {
         mpFinalShading_->getProgram()->addDefine(kDumpAO);
+    }
+
+    if (mUseAO_) {
+        mpFinalShading_->getProgram()->addDefine(kUseAO);
     }
 }
 
