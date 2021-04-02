@@ -21,9 +21,9 @@ float4 ps_main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
 
     float3 posW = vOut.posW;
     float3 worldExtent = bufVoxelMeta.Max - bufVoxelMeta.Min;
-    float maxAxis = max(worldExtent.x, max(worldExtent.y, worldExtent.z));
+    float maxAxis = ceil(max(worldExtent.x, max(worldExtent.y, worldExtent.z)));
     float3 posTex = (posW - bufVoxelMeta.Min) / float3(maxAxis);
-    uint3 posCell = uint3(floor(posTex * (bufVoxelMeta.CellDim - 1)));
+    uint3 posCell = uint3(floor(posTex * bufVoxelMeta.CellDim));
 
     uint32_t foundLevel = 0;
     uint3 childRelative = uint3(0);

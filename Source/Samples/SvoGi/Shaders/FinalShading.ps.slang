@@ -47,7 +47,7 @@ float4 main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
     float4 tracingColor = {};
 
     float3 worldExtent = bufVoxelMeta.Max - bufVoxelMeta.Min;
-    float maxAxis = max(worldExtent.x, max(worldExtent.y, worldExtent.z));
+    float maxAxis = ceil(max(worldExtent.x, max(worldExtent.y, worldExtent.z)));
     float3 originTex = (vOut.posW - bufVoxelMeta.Min) / float3(maxAxis);
 
     for(int32_t i = 0; i < DIFFUSE_CONE_COUNT; i++) {

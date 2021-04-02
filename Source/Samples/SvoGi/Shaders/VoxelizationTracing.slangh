@@ -37,7 +37,7 @@ static const float g_NodeSizes[] = {1, 0.5, 0.25, 0.125, 0.0625, 0.03125, 0.0156
 
 inline float3 convert_world_to_svo_space(float3 worldPos, float3 cellMin, float3 cellMax) {
     float3 worldExtent = cellMax - cellMin;  
-    float maxAxis = max(worldExtent.x, max(worldExtent.y, worldExtent.z));
+    float maxAxis = ceil(max(worldExtent.x, max(worldExtent.y, worldExtent.z)));
     float3 convertedPos = (worldPos - cellMin) / float3(maxAxis) + float3(1.0);
     return convertedPos;
 }

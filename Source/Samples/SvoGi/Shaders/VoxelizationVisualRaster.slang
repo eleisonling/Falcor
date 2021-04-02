@@ -30,7 +30,7 @@ vs_out vs_main(vs_in vIn)
     // from instance id to input position
     uint3 cellIndex = extract_index_form_linear(vIn.instanceID, bufVoxelMeta.CellDim);
     float3 worldExtent = bufVoxelMeta.Max - bufVoxelMeta.Min;
-    float maxAxis = max(worldExtent.x, max(worldExtent.y, worldExtent.z));
+    float maxAxis = ceil(max(worldExtent.x, max(worldExtent.y, worldExtent.z)));
     float3 cellSize = float3(maxAxis) / float3(bufVoxelMeta.CellDim);
 
     vIn.pos *= cellSize;
@@ -51,9 +51,9 @@ float4 raster_brick(vs_out vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGE
     uint32_t pixelCount = 0;
     float3 posW = vOut.posW;
     float3 worldExtent = bufVoxelMeta.Max - bufVoxelMeta.Min;
-    float maxAxis = max(worldExtent.x, max(worldExtent.y, worldExtent.z));
+    float maxAxis = ceil(max(worldExtent.x, max(worldExtent.y, worldExtent.z)));
     float3 posTex = (posW - bufVoxelMeta.Min) / float3(maxAxis);
-    uint3 cellIndex = uint3(floor(posTex * (bufVoxelMeta.CellDim - 1)));
+    uint3 cellIndex = uint3(floor(posTex * bufVoxelMeta.CellDim));
 
     uint32_t foundLevel = 0;
     uint3 relative = uint3(0);
