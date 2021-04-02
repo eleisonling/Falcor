@@ -3,6 +3,7 @@
 namespace {
     static std::string kDebugVolProg = "Samples/SvoGi/Shaders/VoxelizationVisualRaster.slang";
     static std::string kDebugSvoProg = "Samples/SvoGi/Shaders/VoxelizationVisualTracing.ps.slang";
+    static std::string kDebugTraverseProg = "Samples/SvoGi/Shaders/VoxelizationVisualTraverse.ps.slang";
     static std::string kSamplerDefine = "USE_SAMPLER";
 
     enum class VisualType {
@@ -61,6 +62,11 @@ void VoxelVisualizer::create_visualize_shaders(const Program::DefineList& progra
         mpVisualTracing_ = FullScreenPass::create(dBrick, programDefines);
         mpVisualTracing_->getState()->setBlendState(blendState);
     }
+
+    // surface traverse
+    {
+        mpRasterScene_ = RasterScenePass::create(mpScene_, kDebugTraverseProg, "", "ps_main", programDefines);
+    }
 }
 
 void VoxelVisualizer::create_visualize_resources() {
@@ -112,6 +118,13 @@ void VoxelVisualizer::do_visual_brick(RenderContext* pContext, const Fbo::Shared
     }
         break;
     case VisualType::SurfaceTraverse:
+        mpRasterScene_->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
+        mpRasterScene_->getVars()["texBrickTexValue"] = mpBrickAlbedoTexture_;
+        mpRasterScene_->getVars()["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
+        mpRasterScene_->getVars()["bufSvoNodeColor"] = mpSVONodeColorBuffer_;
+        mpRasterScene_->getVars()["spTexture"] = mpSampler_;
+        mpRasterScene_->getVars()["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
+        mpRasterScene_->renderScene(pContext, pDstFbo);
     default:
         break;
     }
@@ -144,10 +157,12 @@ void VoxelVisualizer::on_gui(Gui::Group& group) {
         if (mUseSampler_) {
             mpVisualTracing_->addDefine(kSamplerDefine);
             mpVisualR_->getProgram()->addDefine(kSamplerDefine);
+            mpRasterScene_->getProgram()->addDefine(kSamplerDefine);
         }
         else {
             mpVisualTracing_->removeDefine(kSamplerDefine);
             mpVisualR_->getProgram()->removeDefine(kSamplerDefine);
+            mpRasterScene_->getProgram()->removeDefine(kSamplerDefine);
         }
     }
 }

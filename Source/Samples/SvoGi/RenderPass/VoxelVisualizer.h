@@ -4,6 +4,7 @@
 using namespace Falcor;
 
 #include "../Shaders/VoxelizationMeta.slangh"
+#include "RenderGraph/BasePasses/RasterScenePass.h"
 
 
 class VoxelVisualizer : public std::enable_shared_from_this<VoxelVisualizer> {
@@ -31,6 +32,8 @@ private:
 
     TriangleMesh::SharedPtr mpRasterMesh_ = nullptr;
     Vao::SharedPtr mpRasterVao_ = nullptr;
+
+    RasterScenePass::SharedPtr mpRasterScene_ = nullptr;
 
 public:
     using SharedPtr = std::shared_ptr<VoxelVisualizer>;

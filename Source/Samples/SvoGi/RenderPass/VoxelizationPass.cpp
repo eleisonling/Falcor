@@ -59,7 +59,7 @@ VoxelizationPass::SharedPtr VoxelizationPass::create(const Scene::SharedPtr& pSc
 }
 
 void VoxelizationPass::on_render(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
-    PROFILE("voxelization");
+    PROFILE("Voxelization");
 
     // do clear
     do_clear(pContext);
