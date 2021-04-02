@@ -90,5 +90,8 @@
     <ShaderSource Include="Shaders\VCT.slangh">
       <Filter>Shaders</Filter>
     </ShaderSource>
+    <ShaderSource Include="Shaders\VoxelizationVisualTraverse.ps.slang">
+      <Filter>Shaders</Filter>
+    </ShaderSource>
   </ItemGroup>
 </Project>

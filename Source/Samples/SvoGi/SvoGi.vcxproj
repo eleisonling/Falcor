@@ -47,6 +47,7 @@
     <ShaderSource Include="Shaders\VoxelizationTracing.slangh" />
     <ShaderSource Include="Shaders\VoxelizationVisualRaster.slang" />
     <ShaderSource Include="Shaders\VoxelizationVisualTracing.ps.slang" />
+    <ShaderSource Include="Shaders\VoxelizationVisualTraverse.ps.slang" />
   </ItemGroup>
   <ItemGroup>
   </ItemGroup>
