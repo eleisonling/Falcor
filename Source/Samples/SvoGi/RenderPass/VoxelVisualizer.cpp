@@ -4,6 +4,22 @@ namespace {
     static std::string kDebugVolProg = "Samples/SvoGi/Shaders/VoxelizationVisualRaster.slang";
     static std::string kDebugSvoProg = "Samples/SvoGi/Shaders/VoxelizationVisualTracing.ps.slang";
     static std::string kSamplerDefine = "USE_SAMPLER";
+
+    enum class VisualType {
+        VoxelRaster,
+        VoxelTracing,
+        SurfaceTraverse,
+
+        MAX_COUNT,
+    };
+
+    const Gui::RadioButtonGroup kVisualTypeSelectButtons = {
+        { (uint32_t)VisualType::VoxelRaster,        "VoxelRaster",      false },
+        { (uint32_t)VisualType::VoxelTracing,       "VoxelTracing",     true },
+        { (uint32_t)VisualType::SurfaceTraverse,    "SurfaceTraverse",  true }
+    };
+
+
 }
 
 VoxelVisualizer::VoxelVisualizer(const Scene::SharedPtr& pScene, Program::DefineList& programDefines)
@@ -66,17 +82,11 @@ void VoxelVisualizer::create_visualize_resources() {
 
 void VoxelVisualizer::do_visual_brick(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo) {
     mVoxelizationMeta_.CurLevel = mLevel_;
-    if (mUseTacing_) {
-        mpVisualTracing_->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
-        mpVisualTracing_["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
-        mpVisualTracing_["texBrickValue"] = mpBrickAlbedoTexture_;
-        mpVisualTracing_["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
-        mpVisualTracing_["bufSvoNodeColor"] = mpSVONodeColorBuffer_;
-        mpVisualTracing_["spTexSampler"] = mpSampler_;
-        mpVisualTracing_["CB"]["fViewportDims"] = float2{ pDstFbo->getWidth(), pDstFbo->getHeight() };
-        mpVisualTracing_->execute(pContext, pDstFbo);
-    }
-    else {
+
+    switch ((VisualType)mVisualType_)
+    {
+    case VisualType::VoxelRaster:
+    {
         uint32_t instanceCount = mVoxelizationMeta_.CellDim.x * mVoxelizationMeta_.CellDim.y * mVoxelizationMeta_.CellDim.z;
         mpVisualR_->setFbo(pDstFbo);
         mpVisualR_->setVao(mpRasterVao_);
@@ -87,6 +97,23 @@ void VoxelVisualizer::do_visual_brick(RenderContext* pContext, const Fbo::Shared
         mpVisualVarsR_["spTexture"] = mpSampler_;
         mpVisualVarsR_["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
         pContext->drawIndexedInstanced(mpVisualR_.get(), mpVisualVarsR_.get(), (uint32_t)mpRasterMesh_->getIndices().size(), instanceCount, 0, 0, 0);
+    }
+        break;
+    case VisualType::VoxelTracing:
+    {
+        mpVisualTracing_->getVars()->setParameterBlock("gScene", mpScene_->getParameterBlock());
+        mpVisualTracing_["CB"]["bufVoxelMeta"].setBlob(mVoxelizationMeta_);
+        mpVisualTracing_["texBrickValue"] = mpBrickAlbedoTexture_;
+        mpVisualTracing_["bufSvoNodeNext"] = mpSVONodeNextBuffer_;
+        mpVisualTracing_["bufSvoNodeColor"] = mpSVONodeColorBuffer_;
+        mpVisualTracing_["spTexSampler"] = mpSampler_;
+        mpVisualTracing_["CB"]["fViewportDims"] = float2{ pDstFbo->getWidth(), pDstFbo->getHeight() };
+        mpVisualTracing_->execute(pContext, pDstFbo);
+    }
+        break;
+    case VisualType::SurfaceTraverse:
+    default:
+        break;
     }
 }
 
@@ -110,8 +137,8 @@ VoxelVisualizer::SharedPtr VoxelVisualizer::create(const Scene::SharedPtr& pScen
 }
 
 void VoxelVisualizer::on_gui(Gui::Group& group) {
-    group.checkbox("Use Tracing Method", mUseTacing_);
     group.var("Level", mLevel_, 1u, 8u);
+    group.radioButtons(kVisualTypeSelectButtons, mVisualType_);
 
     if (group.checkbox("Use Sampler", mUseSampler_)) {
         if (mUseSampler_) {

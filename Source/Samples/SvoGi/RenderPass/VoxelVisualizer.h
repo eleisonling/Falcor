@@ -15,7 +15,7 @@ private:
     void do_visual_brick(RenderContext* pContext, const Fbo::SharedPtr& pDstFbo);
 
     Scene::SharedPtr mpScene_ = nullptr;
-    bool mUseTacing_ = true;
+    uint32_t mVisualType_ = 1;
     bool mUseSampler_ = false;
     uint32_t mLevel_ = 8u;
     VoxelizationMeta mVoxelizationMeta_ = {};

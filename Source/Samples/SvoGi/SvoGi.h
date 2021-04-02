@@ -62,7 +62,7 @@ private:
     VoxelizationPass::SharedPtr mpVoxelizationPass_ = nullptr;
     VoxelVisualizer::SharedPtr mpVoxelVisualizer_ = nullptr;
 
-    uint32_t mFinalOutputType_ = 0;
+    uint32_t mFinalOutputType_ = 1;
     Sampler::SharedPtr mpTextureSampler_ = nullptr;
 
     float mOcclusionDecay_ = 15.0f;
