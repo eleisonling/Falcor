@@ -82,7 +82,7 @@ void SvoGi::onGuiRender(Gui* pGui) {
 
     auto aoEffects = Gui::Group(pGui, "VXAO");
     if (aoEffects.open()) {
-        aoEffects.var("occlusionDecay", mOcclusionDecay_, 10.0f, 40.0f, .5f);
+        aoEffects.var("occlusionDecay", mOcclusionDecay_, 5.0f, 40.0f, .5f);
         if (aoEffects.checkbox("USE AO", mUseAO_)) {
             refresh_shader_macros();
         }
