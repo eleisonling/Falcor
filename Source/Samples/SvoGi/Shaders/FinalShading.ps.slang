@@ -10,6 +10,7 @@ cbuffer PerFrameCB : register(b0) {
     int2 iShadowMapDimension; 
     VoxelizationMeta bufVoxelMeta;
     float fOcclusionDecay;
+    float fOcclusionFactor;
 };
 
 
@@ -58,6 +59,7 @@ float4 main(VSOut vOut, uint triangleIndex : SV_PrimitiveID) : SV_TARGET {
         tracingColor += cone_tracing(ray, bufVoxelMeta, bufSvoNodeNext, bufSvoNodeColor, texBrickValue, spTexSampler, fOcclusionDecay) * cosTheta;
     }
     tracingColor /= DIFFUSE_CONE_COUNT;
+    tracingColor.a = clamp(tracingColor.a * fOcclusionFactor, 0.0, 1.0);
 
     for (int i = 0; i < gScene.getLightCount(); i++) {
         directColor.rgb += evalMaterial(sd, gScene.getLight(i), 1).color;

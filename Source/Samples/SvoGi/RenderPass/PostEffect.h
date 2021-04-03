@@ -13,7 +13,7 @@ class PostEffect : public std::enable_shared_from_this<PostEffect> {
     uint32_t mCurIndx_ = 0;
 
     // bloom
-    float mExpExposure_ = 1.25f;
+    float mExpExposure_ = .5f;
     const float mInitialMinLog_ = -12.0f;
     const float mInitialMaxLog_ = 4.0f;
     float mBloomThreshold_ = 0.03f;
