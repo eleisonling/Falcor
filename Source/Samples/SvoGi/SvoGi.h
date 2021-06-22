@@ -65,6 +65,7 @@ private:
     uint32_t mFinalOutputType_ = 1;
     Sampler::SharedPtr mpTextureSampler_ = nullptr;
 
-    float mOcclusionDecay_ = 10.0f;
+    float mOcclusionDecay_ = 6.5f;
+    float mOcclusionFacotr_ = .6f;
     bool mUseAO_ = true;
 };

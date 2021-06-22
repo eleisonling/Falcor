@@ -82,7 +82,8 @@ void SvoGi::onGuiRender(Gui* pGui) {
 
     auto aoEffects = Gui::Group(pGui, "VXAO");
     if (aoEffects.open()) {
-        aoEffects.var("occlusionDecay", mOcclusionDecay_, 5.0f, 40.0f, .5f);
+        aoEffects.var("OcclusionDecay", mOcclusionDecay_, 0.0f, 40.0f, .5f);
+        aoEffects.var("OcclusionFactor", mOcclusionFacotr_, 0.1f, 4.0f, 0.1f);
         if (aoEffects.checkbox("USE AO", mUseAO_)) {
             refresh_shader_macros();
         }
@@ -124,6 +125,7 @@ void SvoGi::normal_render(RenderContext* pRenderContext, const Fbo::SharedPtr& p
     mpFinalShading_->getVars()["PerFrameCB"]["iShadowMapDimension"] = mpShadowMap_->get_shadow_map_dimension();
     mpFinalShading_->getVars()["PerFrameCB"]["bufVoxelMeta"].setBlob(mpVoxelizationPass_->get_voxelization_meta());
     mpFinalShading_->getVars()["PerFrameCB"]["fOcclusionDecay"] = mOcclusionDecay_;
+    mpFinalShading_->getVars()["PerFrameCB"]["fOcclusionFactor"] = mOcclusionFacotr_;
     mpFinalShading_->renderScene(pRenderContext, mpHDRFbo_);
 
     mpPostEffects_->set_input(mpHDRFbo_->getColorTexture(0)->getSRV());
